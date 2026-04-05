@@ -610,7 +610,7 @@
       border: 1px solid #e5e7eb;
       border-radius: 8px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-      max-height: 300px;
+      max-height: 400px;
       overflow-y: auto;
       z-index: 30;
       margin-top: 2px;
@@ -1467,7 +1467,7 @@
 
             // Open detection panel with images
             if (featureId) {
-              const label = isSigns ? val.replace(/--/g, ' › ').replace(/_/g, ' ') : (POINT_TYPES_MAP[val]?.label || val);
+              const label = isSigns ? (SIGN_TYPES_MAP[val]?.label || val.replace(/--/g, ' › ').replace(/_/g, ' ')) : (POINT_TYPES_MAP[val]?.label || val);
               const iconUrl = isSigns ? getSignIconUrl(val) : getPointIconUrl(val);
               openDetectionPanel(featureId, label, iconUrl, feat.geometry.coordinates);
             }
@@ -1880,13 +1880,114 @@
     const POINT_TYPES_MAP = {};
     POINT_TYPES.forEach(t => POINT_TYPES_MAP[t.value] = t);
 
-    // ===== DATA: TRAFFIC SIGN CATEGORIES =====
-    const SIGN_CATEGORIES = [
-      { value: 'regulatory', label: 'Regulatory', desc: 'Stop, speed limit, no entry...' },
-      { value: 'warning', label: 'Warning', desc: 'Curves, pedestrians, hazards...' },
-      { value: 'information', label: 'Information', desc: 'Hospital, parking, gas...' },
-      { value: 'complementary', label: 'Complementary', desc: 'Distance, speed sub-signs...' },
+    // ===== DATA: TRAFFIC SIGN TYPES =====
+    const SIGN_TYPES = [
+      // Regulatory
+      { value: 'regulatory--stop--g1', label: 'Stop', cat: 'regulatory' },
+      { value: 'regulatory--yield--g1', label: 'Yield', cat: 'regulatory' },
+      { value: 'regulatory--no-entry--g1', label: 'No entry', cat: 'regulatory' },
+      { value: 'regulatory--maximum-speed-limit-30--g1', label: 'Speed limit 30', cat: 'regulatory' },
+      { value: 'regulatory--maximum-speed-limit-40--g1', label: 'Speed limit 40', cat: 'regulatory' },
+      { value: 'regulatory--maximum-speed-limit-50--g1', label: 'Speed limit 50', cat: 'regulatory' },
+      { value: 'regulatory--maximum-speed-limit-60--g1', label: 'Speed limit 60', cat: 'regulatory' },
+      { value: 'regulatory--maximum-speed-limit-70--g1', label: 'Speed limit 70', cat: 'regulatory' },
+      { value: 'regulatory--maximum-speed-limit-80--g1', label: 'Speed limit 80', cat: 'regulatory' },
+      { value: 'regulatory--maximum-speed-limit-100--g1', label: 'Speed limit 100', cat: 'regulatory' },
+      { value: 'regulatory--maximum-speed-limit-120--g1', label: 'Speed limit 120', cat: 'regulatory' },
+      { value: 'regulatory--no-overtaking--g1', label: 'No overtaking', cat: 'regulatory' },
+      { value: 'regulatory--no-parking--g1', label: 'No parking', cat: 'regulatory' },
+      { value: 'regulatory--no-stopping--g1', label: 'No stopping', cat: 'regulatory' },
+      { value: 'regulatory--no-u-turn--g1', label: 'No U-turn', cat: 'regulatory' },
+      { value: 'regulatory--no-left-turn--g1', label: 'No left turn', cat: 'regulatory' },
+      { value: 'regulatory--no-right-turn--g1', label: 'No right turn', cat: 'regulatory' },
+      { value: 'regulatory--no-pedestrians--g1', label: 'No pedestrians', cat: 'regulatory' },
+      { value: 'regulatory--no-bicycles--g1', label: 'No bicycles', cat: 'regulatory' },
+      { value: 'regulatory--no-motor-vehicles--g1', label: 'No motor vehicles', cat: 'regulatory' },
+      { value: 'regulatory--no-heavy-goods-vehicles--g1', label: 'No heavy vehicles', cat: 'regulatory' },
+      { value: 'regulatory--go-straight--g1', label: 'Go straight', cat: 'regulatory' },
+      { value: 'regulatory--turn-left--g1', label: 'Turn left', cat: 'regulatory' },
+      { value: 'regulatory--turn-right--g1', label: 'Turn right', cat: 'regulatory' },
+      { value: 'regulatory--go-straight-or-turn-left--g1', label: 'Straight or left', cat: 'regulatory' },
+      { value: 'regulatory--go-straight-or-turn-right--g1', label: 'Straight or right', cat: 'regulatory' },
+      { value: 'regulatory--keep-left--g1', label: 'Keep left', cat: 'regulatory' },
+      { value: 'regulatory--keep-right--g1', label: 'Keep right', cat: 'regulatory' },
+      { value: 'regulatory--roundabout--g1', label: 'Roundabout', cat: 'regulatory' },
+      { value: 'regulatory--one-way-left--g1', label: 'One way left', cat: 'regulatory' },
+      { value: 'regulatory--one-way-right--g1', label: 'One way right', cat: 'regulatory' },
+      { value: 'regulatory--pedestrians-only--g1', label: 'Pedestrians only', cat: 'regulatory' },
+      { value: 'regulatory--bicycles-only--g1', label: 'Bicycles only', cat: 'regulatory' },
+      { value: 'regulatory--priority-over-oncoming-vehicles--g1', label: 'Priority over oncoming', cat: 'regulatory' },
+      { value: 'regulatory--give-way-to-oncoming-traffic--g1', label: 'Give way to oncoming', cat: 'regulatory' },
+      { value: 'regulatory--priority-road--g1', label: 'Priority road', cat: 'regulatory' },
+      { value: 'regulatory--end-of-priority-road--g1', label: 'End of priority road', cat: 'regulatory' },
+      { value: 'regulatory--end-of-no-overtaking--g1', label: 'End of no overtaking', cat: 'regulatory' },
+      { value: 'regulatory--road-closed-to-vehicles--g1', label: 'Road closed', cat: 'regulatory' },
+      { value: 'regulatory--weight-limit--g1', label: 'Weight limit', cat: 'regulatory' },
+      { value: 'regulatory--height-limit--g1', label: 'Height limit', cat: 'regulatory' },
+      { value: 'regulatory--width-limit--g1', label: 'Width limit', cat: 'regulatory' },
+      // Warning
+      { value: 'warning--curve-left--g1', label: 'Curve left', cat: 'warning' },
+      { value: 'warning--curve-right--g1', label: 'Curve right', cat: 'warning' },
+      { value: 'warning--double-curve-first-left--g1', label: 'Double curve left', cat: 'warning' },
+      { value: 'warning--double-curve-first-right--g1', label: 'Double curve right', cat: 'warning' },
+      { value: 'warning--steep-ascent--g1', label: 'Steep ascent', cat: 'warning' },
+      { value: 'warning--steep-descent--g1', label: 'Steep descent', cat: 'warning' },
+      { value: 'warning--slippery-road-surface--g1', label: 'Slippery road', cat: 'warning' },
+      { value: 'warning--road-narrows--g1', label: 'Road narrows', cat: 'warning' },
+      { value: 'warning--roadworks--g1', label: 'Road works', cat: 'warning' },
+      { value: 'warning--traffic-signals--g1', label: 'Traffic signals', cat: 'warning' },
+      { value: 'warning--pedestrians-crossing--g1', label: 'Pedestrian crossing', cat: 'warning' },
+      { value: 'warning--children--g1', label: 'Children', cat: 'warning' },
+      { value: 'warning--bicycles-crossing--g1', label: 'Bicycles crossing', cat: 'warning' },
+      { value: 'warning--wild-animals--g1', label: 'Wild animals', cat: 'warning' },
+      { value: 'warning--domestic-animals--g1', label: 'Domestic animals', cat: 'warning' },
+      { value: 'warning--crossroads--g1', label: 'Crossroads', cat: 'warning' },
+      { value: 'warning--roundabout--g1', label: 'Roundabout ahead', cat: 'warning' },
+      { value: 'warning--two-way-traffic--g1', label: 'Two-way traffic', cat: 'warning' },
+      { value: 'warning--railroad-crossing--g1', label: 'Railroad crossing', cat: 'warning' },
+      { value: 'warning--railroad-crossing-with-barriers--g1', label: 'Railroad w/ barriers', cat: 'warning' },
+      { value: 'warning--railroad-crossing-without-barriers--g1', label: 'Railroad w/o barriers', cat: 'warning' },
+      { value: 'warning--falling-rocks-or-debris-right--g1', label: 'Falling rocks', cat: 'warning' },
+      { value: 'warning--other-danger--g1', label: 'Other danger', cat: 'warning' },
+      { value: 'warning--road-bump--g1', label: 'Road bump', cat: 'warning' },
+      { value: 'warning--uneven-road--g1', label: 'Uneven road', cat: 'warning' },
+      { value: 'warning--stop-ahead--g1', label: 'Stop ahead', cat: 'warning' },
+      { value: 'warning--yield-ahead--g1', label: 'Yield ahead', cat: 'warning' },
+      { value: 'warning--t-roads--g1', label: 'T-junction', cat: 'warning' },
+      { value: 'warning--divided-highway--g1', label: 'Divided highway', cat: 'warning' },
+      { value: 'warning--narrow-bridge--g1', label: 'Narrow bridge', cat: 'warning' },
+      { value: 'warning--loose-road-surface--g1', label: 'Loose road surface', cat: 'warning' },
+      // Information
+      { value: 'information--parking--g1', label: 'Parking', cat: 'information' },
+      { value: 'information--hospital--g1', label: 'Hospital', cat: 'information' },
+      { value: 'information--gas-station--g1', label: 'Gas station', cat: 'information' },
+      { value: 'information--food--g1', label: 'Food', cat: 'information' },
+      { value: 'information--lodging--g1', label: 'Lodging', cat: 'information' },
+      { value: 'information--airport--g1', label: 'Airport', cat: 'information' },
+      { value: 'information--bus-stop--g1', label: 'Bus stop', cat: 'information' },
+      { value: 'information--pedestrians-crossing--g1', label: 'Pedestrian crossing', cat: 'information' },
+      { value: 'information--dead-end--g1', label: 'Dead end', cat: 'information' },
+      { value: 'information--motorway--g1', label: 'Motorway', cat: 'information' },
+      { value: 'information--end-of-motorway--g1', label: 'End of motorway', cat: 'information' },
+      { value: 'information--living-street--g1', label: 'Living street', cat: 'information' },
+      { value: 'information--highway-exit--g1', label: 'Highway exit', cat: 'information' },
+      { value: 'information--telephone--g1', label: 'Telephone', cat: 'information' },
+      { value: 'information--camping--g1', label: 'Camping', cat: 'information' },
+      { value: 'information--disabled-persons--g1', label: 'Disabled persons', cat: 'information' },
+      // Complementary
+      { value: 'complementary--chevron-left--g1', label: 'Chevron left', cat: 'complementary' },
+      { value: 'complementary--chevron-right--g1', label: 'Chevron right', cat: 'complementary' },
+      { value: 'complementary--distance--g1', label: 'Distance', cat: 'complementary' },
+      { value: 'complementary--both-directions--g1', label: 'Both directions', cat: 'complementary' },
+      { value: 'complementary--obstacle-delineator--g1', label: 'Obstacle delineator', cat: 'complementary' },
+      { value: 'complementary--one-direction-left--g1', label: 'One direction left', cat: 'complementary' },
+      { value: 'complementary--one-direction-right--g1', label: 'One direction right', cat: 'complementary' },
+      { value: 'complementary--tow-away-zone--g1', label: 'Tow-away zone', cat: 'complementary' },
+      { value: 'complementary--trucks--g1', label: 'Trucks', cat: 'complementary' },
+      { value: 'complementary--maximum-speed-limit-30--g1', label: 'Speed 30 (sub)', cat: 'complementary' },
     ];
+    const SIGN_TYPES_MAP = {};
+    SIGN_TYPES.forEach(t => SIGN_TYPES_MAP[t.value] = t);
 
     // ===== FILTER STATE =====
     const activePointFilters = new Set();
@@ -1900,6 +2001,21 @@
       const tagsEl = document.getElementById(tagsId);
       const countEl = document.getElementById(countId);
       const downloadBtn = document.getElementById(downloadBtnId);
+
+      // Add search input for filtering
+      const searchEl = document.createElement('div');
+      searchEl.style.cssText = 'padding:8px 10px;border-bottom:1px solid #e5e7eb;position:sticky;top:0;background:#fff;z-index:1;';
+      searchEl.innerHTML = '<input type="text" placeholder="Search..." style="width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.82rem;outline:none;">';
+      dropdownList.appendChild(searchEl);
+      const searchInput = searchEl.querySelector('input');
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase();
+        dropdownList.querySelectorAll('.filter-dropdown-item').forEach(el => {
+          const text = el.textContent.toLowerCase();
+          el.style.display = text.includes(q) ? '' : 'none';
+        });
+      });
+      searchInput.addEventListener('click', e => e.stopPropagation());
 
       // Build dropdown items — "All" option first
       const allItems = [{ value: ALL_OPTION, label: allLabel || 'All' }, ...items];
@@ -2011,13 +2127,11 @@
       if (selected.has(ALL_OPTION)) {
         map.setFilter('mly-traffic-signs', null); // show all
       } else if (selected.size === 0) {
-        map.setFilter('mly-traffic-signs', ['==', ['get', 'value'], '__none__']); // hide all
+        map.setFilter('mly-traffic-signs', null); // show all when nothing selected
       } else {
-        const conditions = [...selected].map(cat => {
-          const prefix = cat + '--';
-          return ['==', ['slice', ['get', 'value'], 0, prefix.length], prefix];
-        });
-        map.setFilter('mly-traffic-signs', conditions.length === 1 ? conditions[0] : ['any', ...conditions]);
+        map.setFilter('mly-traffic-signs', [
+          'match', ['get', 'value'], [...selected], true, false
+        ]);
       }
     }
 
@@ -2058,9 +2172,9 @@
         tagsId: 'signsTags',
         countId: 'signsCount',
         downloadBtnId: 'downloadSignsBtn',
-        items: SIGN_CATEGORIES,
+        items: SIGN_TYPES,
         selectedSet: activeSignFilters,
-        getIconUrl: null,
+        getIconUrl: getSignIconUrl,
         layerId: 'mly-traffic-signs',
         onApply: applySignFilter,
         allLabel: 'All signs',
