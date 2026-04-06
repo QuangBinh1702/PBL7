@@ -1,2 +1,26 @@
-docs
+# Dependencies
+node_modules/
+
+# Environment & secrets
+.env
+backend/.env
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Backend temp
+backend/api.log
+backend/api.err
+
+# Docs & PDFs (large files)
 MapObjectCollect_Automated_Mapping.pdf.pdf
+
+docs

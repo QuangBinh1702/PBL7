@@ -854,6 +854,9 @@
       <button class="layer-toggle active" data-layer="signs" title="Traffic signs">
         <span class="dot" style="background:var(--orange)"></span> Signs
       </button>
+      <button class="layer-toggle active" data-layer="local" title="Local DB images" style="border-color:var(--blue)">
+        <span class="dot" style="background:var(--blue)"></span> Local DB
+      </button>
     </div>
   </div>
 
@@ -902,6 +905,7 @@
         <div class="legend-item"><span class="legend-dot" style="background:var(--green); border:2px solid white; width:10px; height:10px;"></span> Ảnh</div>
         <div class="legend-item"><span class="legend-dot" style="background:#7c3aed"></span> Đối tượng</div>
         <div class="legend-item"><span class="legend-dot" style="background:var(--orange)"></span> Biển báo</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span> Local DB</div>
       </div>
       <div class="coords-display" id="coordsDisplay">—</div>
     </div>
@@ -1379,27 +1383,63 @@
             return;
           }
 
-          // Check image dots for hover preview + green ring
+          // Check image dots for hover preview + ring (both Coverage AND Local DB)
+          const imgLayers = ['mly-images'];
+          if (map.getLayer('local-images-dots')) imgLayers.push('local-images-dots');
+
           const imgHit = map.queryRenderedFeatures(
             [[e.point.x - 8, e.point.y - 8], [e.point.x + 8, e.point.y + 8]],
-            { layers: ['mly-images'] }
+            { layers: imgLayers }
           )[0];
 
           if (imgHit) {
             map.getCanvas().style.cursor = 'pointer';
             if (hoveredKey) { hoveredKey = null; clearRing('feature-hover'); }
 
-            // Show green ring around hovered image
+            const isLocal = imgHit.layer.id === 'local-images-dots';
             const imgId = imgHit.properties.id;
-            map.getSource('feature-hover').setData({
-              type: 'FeatureCollection',
-              features: [{ type: 'Feature', geometry: imgHit.geometry, properties: { kind: 'image' } }],
-            });
+            const ringColor = isLocal ? 'local' : 'image';
+
+            // Show hover ring — cyan for local, green for coverage
+            const emptyFC = { type: 'FeatureCollection', features: [] };
+            if (isLocal && map.getSource('local-hover')) {
+              map.getSource('local-hover').setData({
+                type: 'FeatureCollection',
+                features: [{ type: 'Feature', geometry: imgHit.geometry, properties: {} }],
+              });
+              clearRing('feature-hover');
+
+              // Show compass fan (mini cone showing camera direction)
+              const compass = imgHit.properties.compass_angle;
+              if (compass != null && map.getSource('local-compass')) {
+                const [lng, lat] = imgHit.geometry.coordinates;
+                const fanFov = 70;
+                const fanDist = 8; // meters
+                const fanSteps = 8;
+                const fanCoords = [[lng, lat]];
+                for (let fi = 0; fi <= fanSteps; fi++) {
+                  const angle = compass - fanFov / 2 + (fanFov * fi / fanSteps);
+                  fanCoords.push(offsetPoint(lng, lat, angle, fanDist));
+                }
+                fanCoords.push([lng, lat]);
+                map.getSource('local-compass').setData({
+                  type: 'FeatureCollection',
+                  features: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [fanCoords] }, properties: {} }],
+                });
+              }
+            } else {
+              map.getSource('feature-hover').setData({
+                type: 'FeatureCollection',
+                features: [{ type: 'Feature', geometry: imgHit.geometry, properties: { kind: 'image' } }],
+              });
+              if (map.getSource('local-hover')) map.getSource('local-hover').setData(emptyFC);
+              if (map.getSource('local-compass')) map.getSource('local-compass').setData(emptyFC);
+            }
 
             // Show thumbnail preview
-            if (imgId && imgId !== hoveredImageId) {
+            if (imgId && String(imgId) !== String(hoveredImageId)) {
               hoveredImageId = imgId;
-              showImagePreview(imgId, e.originalEvent);
+              showImagePreview(String(imgId), e.originalEvent);
             } else {
               positionPreview(e.originalEvent);
             }
@@ -1414,6 +1454,8 @@
           map.getCanvas().style.cursor = seqHit ? 'pointer' : '';
 
           if (hoveredKey) { hoveredKey = null; clearRing('feature-hover'); }
+          if (map.getSource('local-hover')) map.getSource('local-hover').setData({ type: 'FeatureCollection', features: [] });
+          if (map.getSource('local-compass')) map.getSource('local-compass').setData({ type: 'FeatureCollection', features: [] });
           hideImagePreview();
         });
 
@@ -1477,15 +1519,33 @@
             return;
           }
 
-          // 2. Check image dots
+          // 2. Check image dots (Coverage + Local DB)
+          const clickImgLayers = ['mly-images'];
+          if (map.getLayer('local-images-dots')) clickImgLayers.push('local-images-dots');
+
           const imgHit = map.queryRenderedFeatures(
             [[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]],
-            { layers: ['mly-images'] }
+            { layers: clickImgLayers }
           )[0];
           if (imgHit) {
             const imageId = imgHit.properties.id;
+            const isLocal = imgHit.layer.id === 'local-images-dots';
+
+            // Show selected ring
+            if (isLocal && map.getSource('local-selected')) {
+              map.getSource('local-selected').setData({
+                type: 'FeatureCollection',
+                features: [{ type: 'Feature', geometry: imgHit.geometry, properties: {} }],
+              });
+              clearRing('feature-selected');
+            } else {
+              if (map.getSource('local-selected')) {
+                map.getSource('local-selected').setData({ type: 'FeatureCollection', features: [] });
+              }
+            }
+
             if (imageId) navigateViewer(String(imageId));
-            selectedKey = null; clearRing('feature-selected');
+            selectedKey = null;
             return;
           }
 
@@ -1505,6 +1565,9 @@
           // 4. Clicked empty map — clear selection
           selectedKey = null;
           clearRing('feature-selected');
+          if (map.getSource('local-selected')) {
+            map.getSource('local-selected').setData({ type: 'FeatureCollection', features: [] });
+          }
           if (currentPopup) currentPopup.remove();
           closeDetectionPanel();
         });
@@ -1520,6 +1583,167 @@
         // Setup icon loading & filter panels
         setupIconLoading();
         initFilterPanels();
+
+        // ===== LOCAL API LAYER =====
+        const LOCAL_API = 'http://localhost:3000/api/v1';
+
+        // Sources
+        map.addSource('local-images', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addSource('local-lines', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addSource('local-hover', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addSource('local-selected', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addSource('local-compass', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+
+        // Sequence lines — cyan, like coverage green lines
+        map.addLayer({
+          id: 'local-lines-layer',
+          type: 'line',
+          source: 'local-lines',
+          minzoom: 10,
+          layout: { 'line-cap': 'round', 'line-join': 'round' },
+          paint: {
+            'line-color': '#00bdff',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 2, 18, 3],
+            'line-opacity': 0.7,
+          },
+        });
+
+        // Image dots — white with cyan border
+        map.addLayer({
+          id: 'local-images-dots',
+          type: 'circle',
+          source: 'local-images',
+          minzoom: 14,
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 3, 20, 6],
+            'circle-color': '#ffffff',
+            'circle-stroke-color': '#00bdff',
+            'circle-stroke-width': 2,
+            'circle-opacity': 0.9,
+          },
+        });
+
+        // Compass fan (mini cone) on hover
+        map.addLayer({
+          id: 'local-compass-fill',
+          type: 'fill',
+          source: 'local-compass',
+          paint: {
+            'fill-color': '#00bdff',
+            'fill-opacity': 0.25,
+          },
+        });
+        map.addLayer({
+          id: 'local-compass-line',
+          type: 'line',
+          source: 'local-compass',
+          paint: {
+            'line-color': '#00bdff',
+            'line-width': 2,
+            'line-opacity': 0.6,
+          },
+        });
+
+        // Hover ring
+        map.addLayer({
+          id: 'local-hover-ring',
+          type: 'circle',
+          source: 'local-hover',
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 11, 20, 19],
+            'circle-color': 'rgba(0,189,255,0.15)',
+            'circle-stroke-color': '#00bdff',
+            'circle-stroke-width': 2.5,
+            'circle-stroke-opacity': 0.9,
+          },
+        });
+
+        // Selected ring
+        map.addLayer({
+          id: 'local-selected-ring',
+          type: 'circle',
+          source: 'local-selected',
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 14, 20, 24],
+            'circle-color': 'rgba(0,189,255,0.18)',
+            'circle-stroke-color': '#00bdff',
+            'circle-stroke-width': 3,
+          },
+        });
+
+        // Build sequence lines from sorted images (connect nearby consecutive points)
+        function buildSequenceLines(images) {
+          const lines = [];
+          let currentLine = [];
+          for (let i = 0; i < images.length; i++) {
+            const img = images[i];
+            if (currentLine.length === 0) {
+              currentLine.push([img.lon, img.lat]);
+              continue;
+            }
+            const prev = images[i - 1];
+            const dist = Math.hypot(img.lon - prev.lon, img.lat - prev.lat);
+            const timeDiff = Math.abs(new Date(img.captured_at) - new Date(prev.captured_at));
+            // Connect if < ~100m apart and < 30s time gap
+            if (dist < 0.001 && timeDiff < 30000) {
+              currentLine.push([img.lon, img.lat]);
+            } else {
+              if (currentLine.length >= 2) {
+                lines.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: currentLine }, properties: {} });
+              }
+              currentLine = [[img.lon, img.lat]];
+            }
+          }
+          if (currentLine.length >= 2) {
+            lines.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: currentLine }, properties: {} });
+          }
+          return { type: 'FeatureCollection', features: lines };
+        }
+
+        // Fetch & render local images
+        async function loadLocalImages() {
+          const empty = { type: 'FeatureCollection', features: [] };
+          if (map.getZoom() < 10) {
+            map.getSource('local-images').setData(empty);
+            map.getSource('local-lines').setData(empty);
+            return;
+          }
+          const bounds = map.getBounds();
+          const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
+          // Load more at higher zoom, fewer at lower zoom
+          const zoom = map.getZoom();
+          const limit = zoom >= 16 ? 5000 : zoom >= 14 ? 3000 : zoom >= 12 ? 1500 : 500;
+          try {
+            const res = await fetch(`${LOCAL_API}/images?bbox=${bbox}&limit=${limit}`);
+            const json = await res.json();
+            const images = json.data;
+
+            // Points
+            map.getSource('local-images').setData({
+              type: 'FeatureCollection',
+              features: images.map(img => ({
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [img.lon, img.lat] },
+                properties: {
+                  id: img.provider_image_id,
+                  captured_at: img.captured_at,
+                  compass_angle: img.compass_angle,
+                  is_pano: img.is_pano,
+                },
+              })),
+            });
+
+            // Lines
+            map.getSource('local-lines').setData(buildSequenceLines(images));
+          } catch (e) {
+            // API chưa chạy thì bỏ qua
+          }
+        }
+
+        map.on('moveend', loadLocalImages);
+        loadLocalImages();
+
+
       });
     }
 
@@ -1714,6 +1938,7 @@
             sequences: ['mly-sequences', 'mly-images'],
             features: ['mly-feature-points'],
             signs: ['mly-traffic-signs'],
+            local: ['local-lines-layer', 'local-images-dots', 'local-hover-ring', 'local-selected-ring', 'local-compass-fill', 'local-compass-line'],
           };
 
           (layerMap[layer] || []).forEach(id => {
@@ -2127,7 +2352,7 @@
       if (selected.has(ALL_OPTION)) {
         map.setFilter('mly-traffic-signs', null); // show all
       } else if (selected.size === 0) {
-        map.setFilter('mly-traffic-signs', null); // show all when nothing selected
+        map.setFilter('mly-traffic-signs', ['==', ['get', 'value'], '__none__']); // hide all
       } else {
         map.setFilter('mly-traffic-signs', [
           'match', ['get', 'value'], [...selected], true, false
