@@ -9,7 +9,10 @@
 5. [Giải thích API & Dữ liệu](#5-giải-thích-api--dữ-liệu)
 6. [Giải thích từng thành phần code](#6-giải-thích-từng-thành-phần-code)
 7. [Cách hoạt động chi tiết](#7-cách-hoạt-động-chi-tiết)
-8. [Xử lý sự cố](#8-xử-lý-sự-cố)
+8. [Backend — Database & API](#8-backend--database--api)
+9. [Xử lý sự cố](#9-xử-lý-sự-cố)
+10. [Danh sách đối tượng được hỗ trợ](#10-danh-sách-đối-tượng-được-hỗ-trợ)
+11. [State Management](#11-state-management)
 
 ---
 
@@ -32,6 +35,8 @@ Mapillary Explorer là ứng dụng web **khám phá bản đồ đường phố
 
 ### Công nghệ sử dụng
 
+#### Frontend
+
 | Công nghệ | Vai trò | Link |
 |---|---|---|
 | **MapillaryJS v4.1.2** | Viewer xem ảnh đường phố (WebGL) | [GitHub](https://github.com/mapillary/mapillary-js) |
@@ -40,6 +45,16 @@ Mapillary Explorer là ứng dụng web **khám phá bản đồ đường phố
 | **OpenStreetMap Tiles** | Lớp bản đồ nền (miễn phí) | [openstreetmap.org](https://www.openstreetmap.org/) |
 | **Nominatim API** | Tìm kiếm địa điểm (geocoding, miễn phí) | [nominatim.org](https://nominatim.org/) |
 | **Mapillary Sprite Source** | Icon SVG cho map features & traffic signs | [GitHub](https://github.com/mapillary/mapillary_sprite_source) |
+
+#### Backend
+
+| Công nghệ | Vai trò | Link |
+|---|---|---|
+| **Node.js + Express 4.21** | API server phục vụ dữ liệu từ DB | [expressjs.com](https://expressjs.com/) |
+| **PostgreSQL + PostGIS** | Lưu trữ metadata ảnh với spatial queries | [postgis.net](https://postgis.net/) |
+| **BullMQ 5.x + Redis** | Hàng đợi tải ảnh thumbnail (background jobs) | [GitHub](https://github.com/taskforcesh/bullmq) |
+| **@mapbox/vector-tile + pbf** | Parse Mapillary Vector Tiles (MVT/Protobuf) | [GitHub](https://github.com/mapbox/vector-tile-js) |
+| **pg 8.13** | PostgreSQL client cho Node.js | [GitHub](https://github.com/brianc/node-postgres) |
 
 ### Tại sao chọn MapLibre thay vì Mapbox?
 
@@ -77,33 +92,40 @@ Mapillary Explorer là ứng dụng web **khám phá bản đồ đường phố
 │  │  │ Legend   │  │ Coords      │  │ Hover Preview│  │  │
 │  │  └──────────┘  └─────────────┘  └──────────────┘  │  │
 │  └────────────────────────────────────────────────────┘  │
-└─────────┬──────────────────────────────┬────────────────┘
-          │                              │
-          ▼                              ▼
-  ┌───────────────┐          ┌──────────────────────┐
-  │ Mapillary API │          │ Mapillary Tiles       │
-  │ (Graph API)   │          │ (Vector Tiles)        │
-  │               │          │                       │
-  │ • Ảnh theo ID │          │ • Coverage lines      │
-  │ • Ảnh theo    │          │ • Image dots          │
-  │   bbox        │          │ • Map feature points  │
-  │ • Detections  │          │ • Traffic signs       │
-  │ • Thumbnails  │          │                       │
-  └───────────────┘          └──────────────────────┘
+└─────────┬──────────────────┬───────────────────────────┘
+          │                  │
+          ▼                  ▼
+  ┌───────────────┐  ┌──────────────────────┐
+  │ Mapillary API │  │ Mapillary Tiles       │
+  │ (Graph API)   │  │ (Vector Tiles)        │
+  │               │  │                       │
+  │ • Ảnh theo ID │  │ • Coverage lines      │
+  │ • Ảnh theo    │  │ • Image dots          │
+  │   bbox        │  │ • Map feature points  │
+  │ • Detections  │  │ • Traffic signs       │
+  │ • Thumbnails  │  │                       │
+  └───────────────┘  └──────────────────────┘
           │
           ▼
-  ┌───────────────────┐
-  │ Mapillary Sprite  │
-  │ Source (GitHub)    │
-  │ • Icon SVG objects│
-  │ • Icon SVG signs  │
-  └───────────────────┘
-          │
-          ▼
-  ┌───────────────────┐
-  │ Nominatim API     │
-  │ (geocoding)       │
-  └───────────────────┘
+  ┌───────────────────┐       ┌──────────────────────────────────┐
+  │ Mapillary Sprite  │       │         BACKEND SERVER           │
+  │ Source (GitHub)    │       │                                  │
+  │ • Icon SVG objects│       │  ┌──────────┐   ┌────────────┐  │
+  │ • Icon SVG signs  │       │  │ Express  │   │ PostgreSQL │  │
+  └───────────────────┘       │  │ API :3000│◄─►│ + PostGIS  │  │
+          │                   │  └──────────┘   └─────┬──────┘  │
+          ▼                   │                       │         │
+  ┌───────────────────┐       │  ┌──────────┐   ┌─────┴──────┐ │
+  │ Nominatim API     │       │  │ BullMQ   │   │  Crawler   │ │
+  │ (geocoding)       │       │  │ Worker   │◄──│ (MVT tiles)│ │
+  └───────────────────┘       │  │ (Redis)  │   └────────────┘ │
+                              │  └─────┬────┘                  │
+                              │        ▼                       │
+                              │  ┌────────────┐                │
+                              │  │ storage/   │                │
+                              │  │ thumbs/    │                │
+                              │  └────────────┘                │
+                              └──────────────────────────────────┘
 ```
 
 ### Luồng dữ liệu
@@ -166,13 +188,51 @@ Mapillary Explorer là ứng dụng web **khám phá bản đồ đường phố
 ### Yêu cầu
 
 - Trình duyệt hiện đại (Chrome, Firefox, Edge)
-- Node.js hoặc Python 3.x (để chạy local server)
+- **Node.js** (v18+)
+- **PostgreSQL** với extension **PostGIS**
+- **Redis** (cho BullMQ queue)
 - Kết nối Internet
 - Mapillary Access Token
 
+### Cấu trúc dự án
+
+```
+pbl7/
+├── index.html              # Frontend (single-file app ~2700 dòng)
+├── server.js               # Static file server (port 8080)
+├── backend/
+│   ├── .env.example        # Mẫu biến môi trường
+│   ├── package.json        # Dependencies backend
+│   ├── storage/
+│   │   └── thumbs/         # Ảnh thumbnail đã tải (hash-based subdirs)
+│   └── src/
+│       ├── api/
+│       │   └── server.js   # Express API server (port 3000)
+│       ├── config/
+│       │   ├── db.js       # PostgreSQL connection pool
+│       │   └── redis.js    # Redis connection (ioredis)
+│       ├── crawler/
+│       │   ├── crawl-metadata.js  # Crawl metadata từ Mapillary MVT
+│       │   ├── tile-utils.js      # Hàm tính tile từ bbox
+│       │   ├── stats.js           # Thống kê DB
+│       │   └── test-one-tile.js   # Test fetch 1 tile
+│       ├── db/
+│       │   ├── init.js     # Khởi tạo DB schema
+│       │   └── schema.sql  # SQL tạo bảng + indexes
+│       ├── queue/
+│       │   ├── queues.js           # Định nghĩa BullMQ queue
+│       │   ├── enqueue-downloads.js # Đẩy ảnh vào hàng đợi
+│       │   └── queue-stats.js      # Thống kê queue
+│       └── worker/
+│           └── download-worker.js  # Worker tải thumbnail
+└── docs/                   # Tài liệu bổ sung
+```
+
 ### Cách chạy
 
-#### Cách 1: Node.js Server (khuyến nghị — có sẵn `server.js`)
+#### A. Frontend (Static Server)
+
+##### Cách 1: Node.js Server (khuyến nghị — có sẵn `server.js`)
 
 ```bash
 cd d:\pbl7\pbl7
@@ -183,18 +243,87 @@ Mở trình duyệt: **http://localhost:8080**
 
 > `server.js` là static file server tự viết bằng Node.js, chạy trên port **8080**, hỗ trợ serve HTML/CSS/JS/JSON/PNG/SVG/...
 
-#### Cách 2: Python HTTP Server
+##### Cách 2: Python HTTP Server
 
 ```bash
 cd d:\pbl7\pbl7
 python -m http.server 8080
 ```
 
-#### Cách 3: VS Code Live Server
+##### Cách 3: VS Code Live Server
 
 1. Cài extension **"Live Server"** trong VS Code
 2. Mở file `index.html`
 3. Click **"Go Live"** ở thanh status bar
+
+#### B. Backend (Crawler + API + Worker)
+
+##### Bước 1: Cài đặt dependencies
+
+```bash
+cd backend
+npm install
+```
+
+##### Bước 2: Cấu hình biến môi trường
+
+```bash
+cp .env.example .env
+# Sửa file .env với thông tin thực tế:
+```
+
+```env
+# Mapillary
+MAPILLARY_TOKEN=MLY|xxxx|yyyy
+
+# PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=mapillary_explorer
+DB_USER=postgres
+DB_PASSWORD=your_password
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# API
+API_PORT=3000
+```
+
+##### Bước 3: Khởi tạo database
+
+```bash
+npm run db:init       # Tạo bảng crawl_jobs, sequences, images + PostGIS indexes
+```
+
+##### Bước 4: Crawl metadata
+
+```bash
+npm run crawl -- danang      # Crawl toàn bộ Đà Nẵng
+npm run crawl -- hoakhanh    # Hoặc chỉ khu vực Hòa Khánh
+npm run crawl:stats          # Xem thống kê sau khi crawl
+```
+
+##### Bước 5: Tải thumbnail (tùy chọn)
+
+```bash
+# Đẩy ảnh vào hàng đợi download
+npm run enqueue -- 5000                                           # 5000 ảnh bất kỳ
+npm run enqueue -- 50000 --bbox=108.20,16.04,108.24,16.08         # Theo khu vực
+
+# Chạy worker tải ảnh (cần Redis đang chạy)
+npm run worker
+
+# Xem trạng thái queue
+npm run queue:stats
+```
+
+##### Bước 6: Chạy API server
+
+```bash
+npm run api           # Express API tại http://localhost:3000
+```
 
 ### Tại sao cần server? Mở file trực tiếp không được sao?
 
@@ -819,7 +948,132 @@ Thêm `ScaleControl` ở góc dưới phải bản đồ.
 
 ---
 
-## 8. Xử lý sự cố
+## 8. Backend — Database & API
+
+### 8.1 Database Schema
+
+Hệ thống sử dụng PostgreSQL + PostGIS với 3 bảng chính:
+
+#### Bảng `crawl_jobs` — Theo dõi trạng thái crawl từng tile
+
+| Cột | Kiểu | Mô tả |
+|---|---|---|
+| `id` | BIGSERIAL PK | ID tự tăng |
+| `tile_key` | TEXT | Tọa độ tile `z/x/y` (vd: `14/13456/7890`) |
+| `status` | TEXT | `pending` → `running` → `done` / `failed` |
+| `images_found` | INT | Số ảnh tìm thấy trong tile |
+| `error_message` | TEXT | Lỗi nếu failed |
+
+#### Bảng `sequences` — Danh sách sequence (chuỗi ảnh)
+
+| Cột | Kiểu | Mô tả |
+|---|---|---|
+| `id` | BIGSERIAL PK | ID nội bộ |
+| `provider_sequence_id` | TEXT | ID sequence từ Mapillary |
+
+#### Bảng `images` — Metadata từng ảnh
+
+| Cột | Kiểu | Mô tả |
+|---|---|---|
+| `id` | BIGSERIAL PK | ID nội bộ |
+| `provider_image_id` | TEXT | ID ảnh từ Mapillary |
+| `geom` | GEOMETRY(Point, 4326) | Tọa độ PostGIS (cho spatial query) |
+| `lat`, `lon` | DOUBLE PRECISION | Tọa độ |
+| `captured_at` | TIMESTAMPTZ | Thời điểm chụp |
+| `compass_angle` | REAL | Hướng la bàn (0–360°) |
+| `is_pano` | BOOLEAN | Ảnh panorama hay không |
+| `status` | TEXT | `metadata_only` → `queued` → `downloaded` |
+| `tile_key` | TEXT | Tile đã phát hiện ảnh này |
+
+**Indexes:** GIST index trên `geom` cho spatial queries nhanh, B-tree trên `captured_at`, `status`, `sequence_id`, `tile_key`.
+
+### 8.2 Backend API Endpoints
+
+API server chạy tại `http://localhost:3000`:
+
+#### `GET /api/v1/images?bbox=minLon,minLat,maxLon,maxLat&limit=100&cursor=ID`
+
+Lấy danh sách ảnh trong bounding box (cursor-based pagination).
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "provider_image_id": "1234567890",
+      "lat": 16.074,
+      "lon": 108.149,
+      "captured_at": "2023-06-15T10:30:00Z",
+      "compass_angle": 180.5,
+      "is_pano": false,
+      "tile_key": "14/13456/7890"
+    }
+  ],
+  "cursor": 100,
+  "count": 100
+}
+```
+
+#### `GET /api/v1/images/nearby?lat=16.074&lon=108.149&radius=500&limit=20`
+
+Tìm ảnh gần nhất trong bán kính (mét), sắp xếp theo khoảng cách.
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "provider_image_id": "1234567890",
+      "lat": 16.074,
+      "lon": 108.149,
+      "distance_m": 42
+    }
+  ],
+  "count": 5
+}
+```
+
+#### `GET /api/v1/images/:id`
+
+Lấy chi tiết 1 ảnh theo ID nội bộ.
+
+#### `GET /api/v1/stats`
+
+Thống kê tổng quan database.
+
+```json
+{
+  "images": 150000,
+  "sequences": 3200,
+  "tiles_crawled": 450,
+  "bounds": {
+    "min_lat": 15.95,
+    "max_lat": 16.15,
+    "min_lon": 107.90,
+    "max_lon": 108.35
+  }
+}
+```
+
+### 8.3 Crawler
+
+- Sử dụng **Mapillary Vector Tiles** (MVT) tại zoom level **14**
+- Parse protobuf bằng `@mapbox/vector-tile` + `pbf`
+- Rate limit: ~6–7 requests/giây (150ms delay), tự retry tối đa 3 lần
+- Hỗ trợ resume — bỏ qua tile đã crawl thành công
+- Khu vực có sẵn: `danang` `[107.9, 15.95, 108.35, 16.15]`, `hoakhanh` `[108.13, 16.05, 108.17, 16.09]`
+
+### 8.4 Queue & Worker (BullMQ + Redis)
+
+- **Enqueue:** Lọc ảnh `status = 'metadata_only'` theo bbox, đẩy vào Redis queue
+- **Worker:** Lấy `thumb_256_url` từ Mapillary Graph API → tải ảnh về `storage/thumbs/`
+- **Lưu trữ:** Hash-based subdirectory (vd: `storage/thumbs/ab/cd/image_id.jpg`) tránh quá nhiều file trong 1 thư mục
+- **Rate limit:** 10 requests/giây (100ms delay)
+- **Idempotent:** Bỏ qua ảnh đã tải, cập nhật status → `downloaded`
+
+---
+
+## 9. Xử lý sự cố
 
 ### Token không hoạt động
 
@@ -883,9 +1137,9 @@ npx serve . -p 8080
 
 ---
 
-## 9. Danh sách đối tượng được hỗ trợ
+## 10. Danh sách đối tượng được hỗ trợ
 
-### 9.1 Point Objects (30 loại)
+### 10.1 Point Objects (30 loại)
 
 | Value | Label |
 |---|---|
@@ -920,7 +1174,7 @@ npx serve . -p 8080
 | `construction--flat--driveway` | Driveway |
 | `construction--barrier--temporary` | Temporary barrier |
 
-### 9.2 Traffic Sign Categories (4 nhóm)
+### 10.2 Traffic Sign Categories (4 nhóm)
 
 | Category | Label | Ví dụ |
 |---|---|---|
@@ -931,7 +1185,7 @@ npx serve . -p 8080
 
 ---
 
-## 10. State Management
+## 11. State Management
 
 App quản lý state hoàn toàn bằng biến global JavaScript:
 

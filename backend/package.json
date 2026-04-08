@@ -7,12 +7,17 @@
     "crawl": "node src/crawler/crawl-metadata.js",
     "crawl:stats": "node src/crawler/stats.js",
     "db:init": "node src/db/init.js",
-    "api": "node src/api/server.js"
+    "api": "node src/api/server.js",
+    "enqueue": "node src/queue/enqueue-downloads.js",
+    "worker": "node src/worker/download-worker.js",
+    "queue:stats": "node src/queue/queue-stats.js"
   },
   "dependencies": {
     "@mapbox/vector-tile": "^2.0.3",
+    "bullmq": "^5.73.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "ioredis": "^5.10.1",
     "pbf": "^4.0.1",
     "pg": "^8.13.0"
   }

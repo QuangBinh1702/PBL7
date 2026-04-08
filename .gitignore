@@ -19,8 +19,12 @@ Thumbs.db
 # Backend temp
 backend/api.log
 backend/api.err
+backend/storage/
 
 # Docs & PDFs (large files)
 MapObjectCollect_Automated_Mapping.pdf.pdf
 
 docs
+
+.opencode
+.codex
