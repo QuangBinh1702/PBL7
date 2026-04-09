@@ -7,6 +7,7 @@
     "crawl": "node src/crawler/crawl-metadata.js",
     "crawl:stats": "node src/crawler/stats.js",
     "db:init": "node src/db/init.js",
+    "db:fix-sequences": "node src/db/fix-sequence-links.js",
     "api": "node src/api/server.js",
     "enqueue": "node src/queue/enqueue-downloads.js",
     "worker": "node src/worker/download-worker.js",

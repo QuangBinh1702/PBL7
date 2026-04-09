@@ -252,7 +252,7 @@ async function upsertImages(images, tileKey) {
   if (images.length === 0) return 0;
 
   let totalInserted = 0;
-  const BATCH_SIZE = 500; // PostgreSQL has ~65535 param limit, 8 params × 500 = 4000
+  const BATCH_SIZE = 500; // PostgreSQL has ~65535 param limit, 9 params × 500 = 4500
 
   for (let start = 0; start < images.length; start += BATCH_SIZE) {
     const batch = images.slice(start, start + BATCH_SIZE);
@@ -262,7 +262,8 @@ async function upsertImages(images, tileKey) {
 
     for (const img of batch) {
       valueRows.push(
-        `('mapillary', $${paramIdx}, $${paramIdx + 1}, ` +
+        `('mapillary', $${paramIdx}, ` +
+          `(SELECT id FROM sequences WHERE provider = 'mapillary' AND provider_sequence_id = $${paramIdx + 1}), ` +
           `ST_SetSRID(ST_MakePoint($${paramIdx + 2}, $${paramIdx + 3}), 4326), ` +
           `$${paramIdx + 3}, $${paramIdx + 2}, ` +
           `$${paramIdx + 4}, $${paramIdx + 5}, $${paramIdx + 6}, $${paramIdx + 7})`
@@ -270,7 +271,7 @@ async function upsertImages(images, tileKey) {
 
       params.push(
         img.providerId,             // provider_image_id
-        null,                       // sequence_id (will link later)
+        img.sequenceId || null,     // provider_sequence_id → subquery gets sequences.id
         img.lon,                    // lon → ST_MakePoint
         img.lat,                    // lat → ST_MakePoint
         img.capturedAt,             // captured_at

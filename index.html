@@ -1587,9 +1587,9 @@
         // ===== LOCAL API LAYER =====
         const LOCAL_API = 'http://localhost:3000/api/v1';
 
-        // Sources
-        map.addSource('local-images', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-        map.addSource('local-lines', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        // Sources — use buffer: true to let MapLibre process on worker thread
+        map.addSource('local-images', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, buffer: 64 });
+        map.addSource('local-lines', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, buffer: 64 });
         map.addSource('local-hover', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addSource('local-selected', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addSource('local-compass', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
@@ -1674,33 +1674,33 @@
         // Build sequence lines from sorted images (connect nearby consecutive points)
         function buildSequenceLines(images) {
           const lines = [];
-          let currentLine = [];
-          for (let i = 0; i < images.length; i++) {
-            const img = images[i];
-            if (currentLine.length === 0) {
-              currentLine.push([img.lon, img.lat]);
-              continue;
-            }
-            const prev = images[i - 1];
-            const dist = Math.hypot(img.lon - prev.lon, img.lat - prev.lat);
-            const timeDiff = Math.abs(new Date(img.captured_at) - new Date(prev.captured_at));
-            // Connect if < ~100m apart and < 30s time gap
-            if (dist < 0.001 && timeDiff < 30000) {
-              currentLine.push([img.lon, img.lat]);
-            } else {
-              if (currentLine.length >= 2) {
-                lines.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: currentLine }, properties: {} });
-              }
-              currentLine = [[img.lon, img.lat]];
-            }
+          // Group images by sequence_id
+          const groups = {};
+          for (const img of images) {
+            if (!img.sequence_id) continue; // skip images without sequence
+            if (!groups[img.sequence_id]) groups[img.sequence_id] = [];
+            groups[img.sequence_id].push(img);
           }
-          if (currentLine.length >= 2) {
-            lines.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: currentLine }, properties: {} });
+          // For each sequence, sort by captured_at and build a LineString
+          for (const seqId of Object.keys(groups)) {
+            const seqImages = groups[seqId];
+            if (seqImages.length < 2) continue;
+            seqImages.sort((a, b) => new Date(a.captured_at) - new Date(b.captured_at));
+            const coords = seqImages.map(img => [img.lon, img.lat]);
+            lines.push({
+              type: 'Feature',
+              geometry: { type: 'LineString', coordinates: coords },
+              properties: { sequence_id: seqId }
+            });
           }
           return { type: 'FeatureCollection', features: lines };
         }
 
-        // Fetch & render local images
+        // Fetch & render local images — with debounce + abort
+        let _loadAbort = null;
+        let _loadTimer = null;
+        let _lastBbox = '';
+
         async function loadLocalImages() {
           const empty = { type: 'FeatureCollection', features: [] };
           if (map.getZoom() < 10) {
@@ -1710,12 +1710,23 @@
           }
           const bounds = map.getBounds();
           const bbox = `${bounds.getWest()},${bounds.getSouth()},${bounds.getEast()},${bounds.getNorth()}`;
-          // Load more at higher zoom, fewer at lower zoom
+
+          // Skip if bbox hasn't changed
+          if (bbox === _lastBbox) return;
+          _lastBbox = bbox;
+
+          // Abort previous in-flight request
+          if (_loadAbort) _loadAbort.abort();
+          _loadAbort = new AbortController();
+          const signal = _loadAbort.signal;
+
           const zoom = map.getZoom();
           const limit = zoom >= 16 ? 5000 : zoom >= 14 ? 3000 : zoom >= 12 ? 1500 : 500;
           try {
-            const res = await fetch(`${LOCAL_API}/images?bbox=${bbox}&limit=${limit}`);
+            const res = await fetch(`${LOCAL_API}/images?bbox=${bbox}&limit=${limit}`, { signal });
+            if (signal.aborted) return;
             const json = await res.json();
+            if (signal.aborted) return;
             const images = json.data;
 
             // Points
@@ -1736,11 +1747,16 @@
             // Lines
             map.getSource('local-lines').setData(buildSequenceLines(images));
           } catch (e) {
-            // API chưa chạy thì bỏ qua
+            if (e.name === 'AbortError') return;
           }
         }
 
-        map.on('moveend', loadLocalImages);
+        function debouncedLoadLocalImages() {
+          clearTimeout(_loadTimer);
+          _loadTimer = setTimeout(loadLocalImages, 200);
+        }
+
+        map.on('moveend', debouncedLoadLocalImages);
         loadLocalImages();
 
 

@@ -29,11 +29,13 @@ app.get('/api/v1/images', async (req, res) => {
     const safeLimit = Math.min(Math.max(parseInt(limit) || 100, 1), 5000);
 
     const result = await pool.query(
-      `SELECT id, provider_image_id, lat, lon, captured_at, compass_angle, is_pano, tile_key
-       FROM images
-       WHERE geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
-         AND ($5::bigint IS NULL OR id > $5)
-       ORDER BY captured_at, id
+      `SELECT i.id, i.provider_image_id, i.lat, i.lon, i.captured_at, i.compass_angle, i.is_pano, i.tile_key,
+              s.provider_sequence_id as sequence_id
+       FROM images i
+       LEFT JOIN sequences s ON i.sequence_id = s.id
+       WHERE i.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
+         AND ($5::bigint IS NULL OR i.id > $5)
+       ORDER BY i.captured_at, i.id
        LIMIT $6`,
       [minLon, minLat, maxLon, maxLat, cursor || null, safeLimit]
     );
@@ -47,6 +49,7 @@ app.get('/api/v1/images', async (req, res) => {
       compass_angle: r.compass_angle,
       is_pano: r.is_pano,
       tile_key: r.tile_key,
+      sequence_id: r.sequence_id,
     }));
 
     const nextCursor = data.length === safeLimit ? data[data.length - 1].id : null;
