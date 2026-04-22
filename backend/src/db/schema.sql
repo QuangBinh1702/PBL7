@@ -80,6 +80,19 @@ CREATE TABLE IF NOT EXISTS map_feature_detection_cache (
   fetched_at           TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- ====== IMAGE ANALYSES (mock now, AI later) ======
+CREATE TABLE IF NOT EXISTS image_analyses (
+  provider_image_id  TEXT PRIMARY KEY,
+  scene_text         TEXT NOT NULL,
+  road_text          TEXT NOT NULL,
+  vehicle_text       TEXT NOT NULL,
+  sign_text          TEXT NOT NULL,
+  safety_text        TEXT NOT NULL,
+  source             TEXT NOT NULL DEFAULT 'mock',
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Add width/height to images for detection panel bbox calculation
 DO $$ BEGIN
   ALTER TABLE images ADD COLUMN IF NOT EXISTS width INT;

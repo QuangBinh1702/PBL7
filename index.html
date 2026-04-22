@@ -134,12 +134,21 @@
       inset: 0;
     }
 
+    :root {
+      --viewer-left: 16px;
+      --viewer-bottom: 16px;
+      --viewer-width: clamp(340px, 32vw, 460px);
+      --viewer-height: clamp(230px, 30vh, 340px);
+      --analysis-gap: 10px;
+      --analysis-dot-size: 28px;
+    }
+
     #viewer {
       position: absolute;
-      left: 16px;
-      bottom: 16px;
-      width: clamp(340px, 32vw, 460px);
-      height: clamp(230px, 30vh, 340px);
+      left: var(--viewer-left);
+      bottom: var(--viewer-bottom);
+      width: var(--viewer-width);
+      height: var(--viewer-height);
       z-index: 20;
       border-radius: 14px;
       overflow: hidden;
@@ -191,6 +200,106 @@
     .viewer-bar button:hover { opacity: 1; }
 
     .viewer-date { color: rgba(255,255,255,0.7); font-size: 0.7rem; }
+
+    .analysis-dots {
+      --analysis-accent: #f6c36b;
+      --analysis-accent-strong: #ffdf9a;
+      --analysis-accent-glow: rgba(246,195,107,0.34);
+      position: absolute;
+      left: calc(var(--viewer-left) + 14px);
+      bottom: calc(var(--viewer-bottom) + var(--viewer-height) + var(--analysis-gap));
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 24;
+    }
+
+    .analysis-dot {
+      width: var(--analysis-dot-size);
+      height: var(--analysis-dot-size);
+      border-radius: 999px;
+      border: 2px solid var(--analysis-accent);
+      background:
+        radial-gradient(circle at 35% 35%, rgba(255,255,255,0.52), rgba(255,255,255,0.06) 42%, rgba(255,255,255,0) 44%),
+        linear-gradient(180deg, rgba(246,195,107,0.16), rgba(246,195,107,0.04));
+      box-shadow:
+        0 8px 18px rgba(0,0,0,0.25),
+        0 0 0 1px rgba(255,255,255,0.06) inset;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+
+    .analysis-dot:hover,
+    .analysis-dot.active {
+      transform: translateY(-1px);
+      border-color: var(--analysis-accent-strong);
+      background:
+        radial-gradient(circle at 35% 35%, rgba(255,255,255,0.66), rgba(255,255,255,0.14) 38%, rgba(255,255,255,0) 42%),
+        linear-gradient(180deg, rgba(246,195,107,0.95), rgba(225,160,58,0.88));
+      box-shadow:
+        0 10px 24px rgba(0,0,0,0.3),
+        0 0 22px var(--analysis-accent-glow);
+    }
+
+    .analysis-popup {
+      position: absolute;
+      left: calc(var(--viewer-left) + 12px);
+      width: min(calc(var(--viewer-width) - 24px), 420px);
+      bottom: calc(var(--viewer-bottom) + var(--viewer-height) + var(--analysis-gap) + var(--analysis-dot-size) + 12px);
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(18,22,28,0.96), rgba(10,12,16,0.94));
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 18px 48px rgba(0,0,0,0.35);
+      backdrop-filter: blur(12px);
+      z-index: 24;
+    }
+
+    .analysis-popup[hidden] { display: none; }
+
+    #viewer.expanded ~ .analysis-dots {
+      left: 12px;
+      bottom: 164px;
+      gap: 14px;
+    }
+
+    #viewer.expanded ~ .analysis-popup {
+      left: 12px;
+      width: min(420px, calc(50vw - 24px));
+      bottom: 40px;
+    }
+
+    .analysis-popup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .analysis-popup-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.96);
+    }
+
+    .analysis-popup-source {
+      font-size: 0.74rem;
+      color: rgba(255,255,255,0.62);
+      text-transform: lowercase;
+    }
+
+    .analysis-popup-body {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.92);
+      font-size: 0.8rem;
+      line-height: 1.5;
+      min-height: 48px;
+    }
 
     .viewer-expand-btn {
       position: absolute;
@@ -289,10 +398,11 @@
       top: 12px;
       left: 12px;
       z-index: 5;
+      width: 320px;
     }
 
     .search-input {
-      width: 280px;
+      width: 100%;
       padding: 10px 14px 10px 38px;
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.1);
@@ -308,6 +418,88 @@
     .search-input:focus {
       border-color: var(--green);
       box-shadow: 0 0 0 3px rgba(5, 203, 99, 0.15);
+    }
+
+    .search-suggestions {
+      display: none;
+      margin-top: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      background: rgba(24, 26, 31, 0.96);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.34);
+    }
+
+    .search-suggestions.visible { display: block; }
+
+    .search-suggestion-item {
+      width: 100%;
+      padding: 11px 14px;
+      border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      background: transparent;
+      color: #f3f4f6;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.84rem;
+      line-height: 1.35;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search-suggestion-item:last-child { border-bottom: none; }
+    .search-suggestion-item:hover,
+    .search-suggestion-item.active { background: rgba(255,255,255,0.06); }
+
+    .search-suggestion-icon {
+      width: 18px;
+      flex: 0 0 18px;
+      color: rgba(255,255,255,0.66);
+      font-size: 1rem;
+      line-height: 1;
+      text-align: center;
+    }
+
+    .search-suggestion-label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .search-status {
+      display: none;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(36, 37, 40, 0.92);
+      color: rgba(255,255,255,0.82);
+      font-size: 0.75rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.24);
+    }
+
+    .search-status.visible { display: block; }
+
+    .search-pin {
+      width: 28px;
+      height: 28px;
+      border-radius: 50% 50% 50% 0;
+      background: linear-gradient(180deg, #f84e4e, #c92f2f);
+      border: 2px solid #fff6f6;
+      transform: rotate(-45deg);
+      box-shadow: 0 10px 18px rgba(140, 12, 12, 0.35);
+      position: relative;
+    }
+
+    .search-pin::after {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border-radius: 50%;
+      background: #fff4f4;
     }
 
     .search-icon {
@@ -802,10 +994,31 @@
         height: 35vh;
         min-height: 180px;
       }
-      .search-input { width: 180px; }
+      :root {
+        --viewer-left: 8px;
+        --viewer-bottom: 8px;
+        --viewer-width: calc(100vw - 16px);
+        --viewer-height: 35vh;
+      }
+      .search-box { width: 220px; }
+      .search-input { width: 100%; }
       .filter-panels { right: 8px; top: 56px; }
       .filter-panel { width: 220px; }
       .legend { display: none; }
+      .analysis-dots {
+        left: calc(var(--viewer-left) + 12px);
+        bottom: calc(var(--viewer-bottom) + var(--viewer-height) + 8px);
+        gap: 10px;
+      }
+      .analysis-dot {
+        width: 24px;
+        height: 24px;
+      }
+      .analysis-popup {
+        left: calc(var(--viewer-left) + 8px);
+        width: calc(var(--viewer-width) - 16px);
+        bottom: calc(var(--viewer-bottom) + var(--viewer-height) + 8px + 24px + 10px);
+      }
     }
   </style>
 </head>
@@ -878,6 +1091,20 @@
         </div>
       </div>
     </div>
+    <div class="analysis-dots" id="analysisDots">
+      <button class="analysis-dot" type="button" data-field="scene_text" title="SCENE"></button>
+      <button class="analysis-dot" type="button" data-field="road_text" title="ROAD"></button>
+      <button class="analysis-dot" type="button" data-field="vehicle_text" title="VEHICLE"></button>
+      <button class="analysis-dot" type="button" data-field="sign_text" title="SIGN"></button>
+      <button class="analysis-dot" type="button" data-field="safety_text" title="SAFETY"></button>
+    </div>
+    <div class="analysis-popup" id="analysisPopup" hidden>
+      <div class="analysis-popup-header">
+        <div class="analysis-popup-title" id="analysisPopupTitle">Phân tích ảnh</div>
+        <div class="analysis-popup-source" id="analysisSource">mock</div>
+      </div>
+      <div class="analysis-popup-body" id="analysisBody">Chọn một chấm tròn để xem nội dung.</div>
+    </div>
 
     <!-- Image hover preview tooltip -->
     <div class="image-hover-preview" id="imageHoverPreview">
@@ -892,6 +1119,8 @@
       <div class="search-box">
         <span class="search-icon">🔍</span>
         <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm địa điểm...">
+        <div class="search-suggestions" id="searchSuggestions"></div>
+        <div class="search-status" id="searchStatus">—</div>
       </div>
       <div class="map-controls">
         <button class="map-btn" id="btnZoomIn" title="Phóng to">+</button>
@@ -975,6 +1204,8 @@
     const DEFAULT_ZOOM = 18;
     const DEFAULT_PKEY = '1137674664114306';
     const STORAGE_KEY = 'mapillary_token';
+    const LOCAL_API = 'http://localhost:3000/api/v1';
+    const RECENT_SEARCHES_KEY = 'mapillary_recent_searches';
 
     // ===== STATE =====
     let mlToken = localStorage.getItem(STORAGE_KEY) || '';
@@ -986,6 +1217,30 @@
     let syncingFromViewer = false;
     let syncingFromMap = false;
     let urlUpdateTimer = null;
+    let searchMarker = null;
+    let searchAbortController = null;
+    let searchSuggestionAbort = null;
+    let activeSuggestions = [];
+    let currentAnalysis = null;
+    let activeAnalysisField = 'scene_text';
+    let analysisPopupOpen = false;
+
+    function loadRecentSearches() {
+      try {
+        const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
+        const parsed = JSON.parse(raw || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveRecentSearch(entry) {
+      if (!entry?.label) return;
+      const recent = loadRecentSearches().filter((item) => item.label !== entry.label);
+      recent.unshift({ label: entry.label, lat: entry.lat, lon: entry.lon, kind: 'recent' });
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recent.slice(0, 6)));
+    }
 
     // ===== URL PARAMS =====
     function getUrlParams() {
@@ -1045,6 +1300,7 @@
       initDivider();
       initLayerToggles();
       initMapControls();
+      initAnalysisDots();
     }
 
     // ===== MAPILLARY VIEWER =====
@@ -1082,6 +1338,7 @@
 
         // Fetch and show date
         fetchImageDate(img.id);
+        fetchImageAnalysis(img.id);
         document.getElementById('infoDate').textContent = `📷 ${img.id}`;
 
         // Sync map
@@ -1152,8 +1409,6 @@
       map.addControl(new maplibregl.ScaleControl(), 'bottom-right');
 
       map.on('load', () => {
-        const LOCAL_API = 'http://localhost:3000/api/v1';
-
         // ===== COVERAGE SOURCE =====
         map.addSource('mly-coverage', {
           type: 'vector',
@@ -1388,6 +1643,7 @@
           // Check image dots for hover preview + ring (both Coverage AND Local DB)
           const imgLayers = ['mly-images'];
           if (map.getLayer('local-images-dots')) imgLayers.push('local-images-dots');
+          if (map.getLayer('search-results-dots')) imgLayers.push('search-results-dots');
 
           const imgHit = map.queryRenderedFeatures(
             [[e.point.x - 8, e.point.y - 8], [e.point.x + 8, e.point.y + 8]],
@@ -1398,7 +1654,7 @@
             map.getCanvas().style.cursor = 'pointer';
             if (hoveredKey) { hoveredKey = null; clearRing('feature-hover'); }
 
-            const isLocal = imgHit.layer.id === 'local-images-dots';
+            const isLocal = imgHit.layer.id === 'local-images-dots' || imgHit.layer.id === 'search-results-dots';
             const imgId = imgHit.properties.id;
             const ringColor = isLocal ? 'local' : 'image';
 
@@ -1464,7 +1720,7 @@
         function showImagePreview(imageId, evt) {
           clearTimeout(previewTimeout);
           // Fetch thumb URL via local backend API
-          fetch(`http://localhost:3000/api/v1/images/provider/${imageId}`)
+          fetch(`${LOCAL_API}/images/provider/${imageId}`)
           .then(r => r.json())
           .then(json => {
             if (json.data?.thumb_256_url && hoveredImageId === imageId) {
@@ -1522,6 +1778,7 @@
           // 2. Check image dots (Coverage + Local DB)
           const clickImgLayers = ['mly-images'];
           if (map.getLayer('local-images-dots')) clickImgLayers.push('local-images-dots');
+          if (map.getLayer('search-results-dots')) clickImgLayers.push('search-results-dots');
 
           const imgHit = map.queryRenderedFeatures(
             [[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]],
@@ -1591,6 +1848,7 @@
         map.addSource('local-hover', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addSource('local-selected', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addSource('local-compass', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addSource('search-results', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 
         // Sequence lines — cyan, like coverage green lines
         map.addLayer({
@@ -1666,6 +1924,19 @@
             'circle-color': 'rgba(0,189,255,0.18)',
             'circle-stroke-color': '#00bdff',
             'circle-stroke-width': 3,
+          },
+        });
+
+        map.addLayer({
+          id: 'search-results-dots',
+          type: 'circle',
+          source: 'search-results',
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 4, 18, 7],
+            'circle-color': '#ff7a59',
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 2,
+            'circle-opacity': 0.95,
           },
         });
 
@@ -1776,9 +2047,7 @@
     // ===== NEAREST IMAGE FALLBACK =====
     async function findNearestImage(lng, lat) {
       try {
-        const res = await fetch(
-          `http://localhost:3000/api/v1/images/nearby?lat=${lat}&lon=${lng}&radius=50&limit=5`
-        );
+        const res = await fetch(`${LOCAL_API}/images/nearby?lat=${lat}&lon=${lng}&radius=50&limit=5`);
         const json = await res.json();
         if (json.data && json.data.length > 0) {
           navigateViewer(String(json.data[0].provider_image_id));
@@ -1798,9 +2067,7 @@
       }
       dateEl.textContent = '...';
       try {
-        const res = await fetch(
-          `http://localhost:3000/api/v1/images/provider/${imageId}`
-        );
+        const res = await fetch(`${LOCAL_API}/images/provider/${imageId}`);
         const json = await res.json();
         if (json.data?.captured_at) {
           const d = new Date(json.data.captured_at);
@@ -1811,6 +2078,83 @@
       } catch (e) {
         dateEl.textContent = '—';
       }
+    }
+
+    async function fetchImageAnalysis(imageId) {
+      const analysisPopup = document.getElementById('analysisPopup');
+      const analysisBody = document.getElementById('analysisBody');
+      const analysisSource = document.getElementById('analysisSource');
+      const analysisPopupTitle = document.getElementById('analysisPopupTitle');
+      if (!imageId) return;
+
+      currentAnalysis = null;
+      analysisPopupOpen = true;
+      analysisSource.textContent = 'loading...';
+      analysisPopupTitle.textContent = 'Phân tích ảnh';
+      analysisBody.textContent = 'Đang tải mô tả hiện trường...';
+      analysisPopup.hidden = false;
+      setActiveAnalysisField(activeAnalysisField);
+
+      try {
+        let json = null;
+        const snapshot = await captureViewerSnapshot();
+
+        if (snapshot) {
+          const postRes = await fetch(`${LOCAL_API}/images/provider/${imageId}/analysis`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_base64: snapshot }),
+          });
+          json = await postRes.json();
+          if (!postRes.ok) throw new Error(json.error || 'Snapshot analysis failed');
+        } else {
+          const res = await fetch(`${LOCAL_API}/images/provider/${imageId}/analysis`);
+          json = await res.json();
+          if (!json.data) throw new Error('No analysis data');
+        }
+
+        currentAnalysis = json.data;
+        analysisSource.textContent = json.data.source || 'mock';
+        setActiveAnalysisField(activeAnalysisField);
+      } catch (e) {
+        analysisSource.textContent = 'error';
+        analysisPopupTitle.textContent = 'Phân tích ảnh';
+        analysisBody.textContent = 'Không tải được mô tả ảnh.';
+      }
+    }
+
+    async function captureViewerSnapshot() {
+      try {
+        const viewerEl = document.getElementById('viewer');
+        const canvas = viewerEl.querySelector('canvas');
+        if (!canvas) return null;
+        return canvas.toDataURL('image/jpeg', 0.92);
+      } catch (e) {
+        console.warn('Viewer snapshot failed:', e);
+        return null;
+      }
+    }
+
+    function setActiveAnalysisField(field) {
+      activeAnalysisField = field;
+      const analysisPopup = document.getElementById('analysisPopup');
+      const analysisBody = document.getElementById('analysisBody');
+      const analysisPopupTitle = document.getElementById('analysisPopupTitle');
+      const labels = {
+        scene_text: 'SCENE',
+        road_text: 'ROAD',
+        vehicle_text: 'VEHICLE',
+        sign_text: 'SIGN',
+        safety_text: 'SAFETY',
+      };
+
+      document.querySelectorAll('.analysis-dot').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.field === field);
+      });
+
+      analysisPopup.hidden = !analysisPopupOpen;
+      analysisPopupTitle.textContent = labels[field] || 'Phân tích ảnh';
+      analysisBody.textContent = currentAnalysis?.[field] || 'Chưa có nội dung cho mục này.';
     }
 
     // ===== VIEWER EXPAND / COLLAPSE =====
@@ -1963,29 +2307,214 @@
           map.flyTo({ center: [currentLngLat.lng, currentLngLat.lat], zoom: 18, duration: 1000 });
         }
       });
-
-      // Search box — simple geocoding via Nominatim
       const searchInput = document.getElementById('searchInput');
-      let searchTimeout = null;
-      searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          clearTimeout(searchTimeout);
-          const q = searchInput.value.trim();
-          if (!q) return;
-          searchTimeout = setTimeout(async () => {
-            try {
-              const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`);
-              const data = await res.json();
-              if (data.length > 0) {
-                const { lat, lon } = data[0];
-                map.flyTo({ center: [parseFloat(lon), parseFloat(lat)], zoom: 16, duration: 1500 });
-              }
-            } catch (e) {
-              console.warn('Search failed:', e);
-            }
-          }, 100);
+      const searchSuggestions = document.getElementById('searchSuggestions');
+      const searchStatus = document.getElementById('searchStatus');
+      let activeIndex = -1;
+      let searchSuggestTimer = null;
+
+      function setSearchStatus(text) {
+        searchStatus.textContent = text || '';
+        searchStatus.classList.toggle('visible', Boolean(text));
+      }
+
+      function hideSuggestions() {
+        searchSuggestions.classList.remove('visible');
+        searchSuggestions.innerHTML = '';
+        activeSuggestions = [];
+        activeIndex = -1;
+      }
+
+      function setSearchResultFeatures(images) {
+        if (!map || !map.getSource('search-results')) return;
+        map.getSource('search-results').setData({
+          type: 'FeatureCollection',
+          features: images.map((img) => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [img.lon, img.lat] },
+            properties: { id: img.provider_image_id, distance_m: img.distance_m || 0 },
+          })),
+        });
+      }
+
+      function getSearchBiasParams() {
+        const center = map ? map.getCenter() : null;
+        const zoom = map ? map.getZoom() : 16;
+        if (!center) return `zoom=${encodeURIComponent(zoom.toFixed(2))}`;
+        return `lat=${encodeURIComponent(center.lat.toFixed(6))}&lon=${encodeURIComponent(center.lng.toFixed(6))}&zoom=${encodeURIComponent(zoom.toFixed(2))}`;
+      }
+
+      async function performAddressSearch(query) {
+        if (!query) return;
+        if (searchAbortController) searchAbortController.abort();
+        searchAbortController = new AbortController();
+        setSearchStatus('');
+
+        try {
+          const res = await fetch(`${LOCAL_API}/search/images?q=${encodeURIComponent(query)}&radius=50&limit=50&${getSearchBiasParams()}`, {
+            signal: searchAbortController.signal,
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error || 'Search failed');
+
+          const center = [json.center.lon, json.center.lat];
+          map.flyTo({ center, zoom: 17, duration: 1400, essential: true });
+          saveRecentSearch({ label: json.selected_address, lat: json.center.lat, lon: json.center.lon });
+
+          if (searchMarker) searchMarker.remove();
+          const pinEl = document.createElement('div');
+          pinEl.className = 'search-pin';
+          searchMarker = new maplibregl.Marker({ element: pinEl, anchor: 'bottom' })
+            .setLngLat(center)
+            .setPopup(new maplibregl.Popup({ offset: 24 }).setText(json.selected_address))
+            .addTo(map);
+
+          setSearchResultFeatures(json.data || []);
+          setSearchStatus('');
+
+          if (json.data && json.data.length > 0) {
+            navigateViewer(String(json.data[0].provider_image_id));
+          }
+        } catch (e) {
+          if (e.name === 'AbortError') return;
+          setSearchResultFeatures([]);
+          setSearchStatus('');
+          console.warn('Address search failed:', e);
+        }
+      }
+
+      function renderSuggestions(items) {
+        activeSuggestions = items;
+        activeIndex = -1;
+        if (!items.length) {
+          hideSuggestions();
+          return;
+        }
+
+        searchSuggestions.innerHTML = items.map((item, index) =>
+          `<button class="search-suggestion-item" data-index="${index}" type="button">
+            <span class="search-suggestion-icon">${item.kind === 'recent' ? '◷' : '📍'}</span>
+            <span class="search-suggestion-label">${item.label}</span>
+          </button>`
+        ).join('');
+        searchSuggestions.classList.add('visible');
+
+        searchSuggestions.querySelectorAll('.search-suggestion-item').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const idx = Number(btn.dataset.index);
+            const item = activeSuggestions[idx];
+            if (!item) return;
+            searchInput.value = item.label;
+            hideSuggestions();
+            await performAddressSearch(item.label);
+          });
+        });
+      }
+
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.trim();
+        clearTimeout(searchSuggestTimer);
+
+        if (!q) {
+          const recent = loadRecentSearches();
+          renderSuggestions(recent);
+          setSearchStatus('');
+          return;
+        }
+
+        if (q.length < 2) {
+          const recent = loadRecentSearches().filter((item) => item.label.toLowerCase().includes(q.toLowerCase()));
+          renderSuggestions(recent);
+          setSearchStatus('');
+          return;
+        }
+
+        searchSuggestTimer = setTimeout(async () => {
+          try {
+            if (searchSuggestionAbort) searchSuggestionAbort.abort();
+            searchSuggestionAbort = new AbortController();
+            const res = await fetch(`${LOCAL_API}/geocode/suggest?q=${encodeURIComponent(q)}&limit=5&${getSearchBiasParams()}`, {
+              signal: searchSuggestionAbort.signal,
+            });
+            const json = await res.json();
+            const recent = loadRecentSearches().filter((item) => item.label.toLowerCase().includes(q.toLowerCase()));
+            const remote = (json.data || []).map((item) => ({ ...item, kind: 'address' }));
+            const merged = [...recent, ...remote].filter((item, index, arr) =>
+              item?.label && arr.findIndex((x) => x.label === item.label) === index
+            );
+            renderSuggestions(merged);
+          } catch (e) {
+            if (e.name === 'AbortError') return;
+            const recent = loadRecentSearches().filter((item) => item.label.toLowerCase().includes(q.toLowerCase()));
+            renderSuggestions(recent);
+          }
+        }, 250);
+      });
+
+      searchInput.addEventListener('focus', () => {
+        const q = searchInput.value.trim();
+        if (!q) {
+          renderSuggestions(loadRecentSearches());
         }
       });
+
+      searchInput.addEventListener('keydown', async (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          if (!activeSuggestions.length) return;
+          e.preventDefault();
+          activeIndex = e.key === 'ArrowDown'
+            ? (activeIndex + 1) % activeSuggestions.length
+            : (activeIndex - 1 + activeSuggestions.length) % activeSuggestions.length;
+          searchSuggestions.querySelectorAll('.search-suggestion-item').forEach((el, idx) => {
+            el.classList.toggle('active', idx === activeIndex);
+          });
+          return;
+        }
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (activeIndex >= 0) {
+            const item = activeSuggestions[activeIndex];
+            if (!item) return;
+            searchInput.value = item.label;
+            hideSuggestions();
+            await performAddressSearch(item.label);
+            return;
+          }
+
+          hideSuggestions();
+          await performAddressSearch(searchInput.value.trim());
+          return;
+        }
+
+        if (e.key === 'Escape') hideSuggestions();
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!searchSuggestions.contains(e.target) && e.target !== searchInput) {
+          hideSuggestions();
+        }
+      });
+    }
+
+    function initAnalysisDots() {
+      document.querySelectorAll('.analysis-dot').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const field = btn.dataset.field;
+          if (activeAnalysisField === field && analysisPopupOpen) {
+            analysisPopupOpen = false;
+            document.getElementById('analysisPopup').hidden = true;
+            btn.classList.remove('active');
+            return;
+          }
+
+          analysisPopupOpen = true;
+          setActiveAnalysisField(field);
+        });
+      });
+      analysisPopupOpen = false;
+      document.getElementById('analysisPopup').hidden = true;
+      setActiveAnalysisField(activeAnalysisField);
     }
     // ===== ICON LOADING SYSTEM =====
     const POINT_ICON_BASE = 'https://raw.githubusercontent.com/mapillary/mapillary_sprite_source/master/package_objects/';
