@@ -1152,6 +1152,8 @@
       map.addControl(new maplibregl.ScaleControl(), 'bottom-right');
 
       map.on('load', () => {
+        const LOCAL_API = 'http://localhost:3000/api/v1';
+
         // ===== COVERAGE SOURCE =====
         map.addSource('mly-coverage', {
           type: 'vector',
@@ -1193,11 +1195,11 @@
           },
         });
 
-        // ===== MAP FEATURES (POINTS) =====
+        // ===== MAP FEATURES (POINTS) — served from local backend MVT =====
         map.addSource('mly-features', {
           type: 'vector',
           tiles: [
-            `https://tiles.mapillary.com/maps/vtp/mly_map_feature_point/2/{z}/{x}/{y}?access_token=${encodedToken}`,
+            `${LOCAL_API.replace('/api/v1', '')}/api/v1/tiles/map-features/{z}/{x}/{y}.mvt`,
           ],
           minzoom: 14,
           maxzoom: 14,
@@ -1219,11 +1221,11 @@
           },
         });
 
-        // ===== TRAFFIC SIGNS =====
+        // ===== TRAFFIC SIGNS — served from local backend MVT =====
         map.addSource('mly-signs', {
           type: 'vector',
           tiles: [
-            `https://tiles.mapillary.com/maps/vtp/mly_map_feature_traffic_sign/2/{z}/{x}/{y}?access_token=${encodedToken}`,
+            `${LOCAL_API.replace('/api/v1', '')}/api/v1/tiles/traffic-signs/{z}/{x}/{y}.mvt`,
           ],
           minzoom: 14,
           maxzoom: 14,
@@ -1461,14 +1463,12 @@
 
         function showImagePreview(imageId, evt) {
           clearTimeout(previewTimeout);
-          // Fetch thumb URL via Graph API
-          fetch(`https://graph.mapillary.com/${imageId}?fields=thumb_256_url`, {
-            headers: { Authorization: `OAuth ${mlToken}` }
-          })
+          // Fetch thumb URL via local backend API
+          fetch(`http://localhost:3000/api/v1/images/provider/${imageId}`)
           .then(r => r.json())
-          .then(data => {
-            if (data.thumb_256_url && hoveredImageId === imageId) {
-              hoverImg.src = data.thumb_256_url;
+          .then(json => {
+            if (json.data?.thumb_256_url && hoveredImageId === imageId) {
+              hoverImg.src = `http://localhost:3000${json.data.thumb_256_url}`;
               hoverPreview.style.display = 'block';
             }
           })
@@ -1585,8 +1585,6 @@
         initFilterPanels();
 
         // ===== LOCAL API LAYER =====
-        const LOCAL_API = 'http://localhost:3000/api/v1';
-
         // Sources — use buffer: true to let MapLibre process on worker thread
         map.addSource('local-images', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, buffer: 64 });
         map.addSource('local-lines', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, buffer: 64 });
@@ -1777,26 +1775,13 @@
 
     // ===== NEAREST IMAGE FALLBACK =====
     async function findNearestImage(lng, lat) {
-      const d = 0.0005;
-      const bbox = `${lng - d},${lat - d},${lng + d},${lat + d}`;
       try {
         const res = await fetch(
-          `https://graph.mapillary.com/images?access_token=${encodeURIComponent(mlToken)}&fields=id,geometry&bbox=${bbox}&limit=5`
+          `http://localhost:3000/api/v1/images/nearby?lat=${lat}&lon=${lng}&radius=50&limit=5`
         );
-        const data = await res.json();
-        if (data.data && data.data.length > 0) {
-          // Pick closest
-          let best = data.data[0];
-          let bestDist = Infinity;
-          for (const img of data.data) {
-            const coords = img.geometry.coordinates;
-            const dist = Math.hypot(coords[0] - lng, coords[1] - lat);
-            if (dist < bestDist) {
-              bestDist = dist;
-              best = img;
-            }
-          }
-          navigateViewer(String(best.id));
+        const json = await res.json();
+        if (json.data && json.data.length > 0) {
+          navigateViewer(String(json.data[0].provider_image_id));
         }
       } catch (e) {
         console.warn('Nearest image search failed:', e);
@@ -1814,11 +1799,11 @@
       dateEl.textContent = '...';
       try {
         const res = await fetch(
-          `https://graph.mapillary.com/${imageId}?access_token=${encodeURIComponent(mlToken)}&fields=captured_at`
+          `http://localhost:3000/api/v1/images/provider/${imageId}`
         );
-        const data = await res.json();
-        if (data.captured_at) {
-          const d = new Date(data.captured_at);
+        const json = await res.json();
+        if (json.data?.captured_at) {
+          const d = new Date(json.data.captured_at);
           const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
           dateCache.set(imageId, formatted);
           if (currentImageId === imageId) dateEl.textContent = formatted;
@@ -2464,40 +2449,21 @@
       detPanel.classList.add('open');
 
       try {
-        // Fetch detections for this map feature
+        // Fetch detections via local backend API (cache-on-read)
         const res = await fetch(
-          `https://graph.mapillary.com/${mapFeatureId}/detections?fields=geometry,image,value`,
-          { headers: { Authorization: `OAuth ${mlToken}` } }
+          `http://localhost:3000/api/v1/map-features/${mapFeatureId}/detections`
         );
-        const data = await res.json();
+        const json = await res.json();
+        const detData = json.data || [];
 
-        if (!data.data || data.data.length === 0) {
+        if (detData.length === 0) {
           detList.innerHTML = '<div style="padding:32px;text-align:center;color:#9ca3af;">No detections found.</div>';
           return;
         }
 
-        allDetections = data.data;
+        // Detections already have _thumb data from backend (cached with thumb URLs)
+        allDetections = detData;
         detPage = 0;
-
-        // Fetch thumbnail URLs for all detections
-        const imageIds = [...new Set(allDetections.map(d => d.image.id))];
-        const thumbPromises = imageIds.map(async (imgId) => {
-          try {
-            const r = await fetch(
-              `https://graph.mapillary.com/${imgId}?fields=thumb_1024_url,width,height`,
-              { headers: { Authorization: `OAuth ${mlToken}` } }
-            );
-            return await r.json();
-          } catch { return { id: imgId }; }
-        });
-        const thumbResults = await Promise.all(thumbPromises);
-        const thumbMap = {};
-        thumbResults.forEach(t => { if (t.id) thumbMap[t.id] = t; });
-
-        // Attach thumb data to detections
-        allDetections.forEach(d => {
-          d._thumb = thumbMap[d.image.id] || {};
-        });
 
         renderDetectionPage();
       } catch (err) {
@@ -2516,7 +2482,9 @@
 
       pageItems.forEach((det, i) => {
         const num = start + i + 1;
-        const thumbUrl = det._thumb?.thumb_1024_url || '';
+        const thumbUrl = det._thumb?.thumb_1024_url
+          ? (det._thumb.thumb_1024_url.startsWith('/') ? `http://localhost:3000${det._thumb.thumb_1024_url}` : det._thumb.thumb_1024_url)
+          : '';
         const imgW = det._thumb?.width || 1;
         const imgH = det._thumb?.height || 1;
 
