@@ -736,9 +736,13 @@ app.get('/api/v1/tiles/map-features/:z/:x/:y.mvt', async (req, res) => {
             b.geom_3857,
             4096, 64, true
           ) AS geom
-        FROM map_features f, bounds b
+          FROM map_features f
+          JOIN map_feature_detection_cache dc
+            ON dc.provider_feature_id = f.provider_feature_id,
+          bounds b
         WHERE f.feature_kind = 'point'
           AND f.geom && ST_Transform(b.geom_3857, 4326)
+            AND jsonb_array_length(dc.detections_json::jsonb) > 0
       ) AS tile`,
       [parseInt(z), parseInt(x), parseInt(y)]
     );
@@ -775,9 +779,17 @@ app.get('/api/v1/tiles/traffic-signs/:z/:x/:y.mvt', async (req, res) => {
             b.geom_3857,
             4096, 64, true
           ) AS geom
-        FROM map_features f, bounds b
+          FROM map_features f
+          JOIN map_feature_detection_cache dc
+            ON dc.provider_feature_id = f.provider_feature_id,
+          bounds b
         WHERE f.feature_kind = 'traffic_sign'
           AND f.geom && ST_Transform(b.geom_3857, 4326)
+          AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(dc.detections_json) AS det
+            WHERE det->'image'->>'id' IS NOT NULL
+          )
       ) AS tile`,
       [parseInt(z), parseInt(x), parseInt(y)]
     );

@@ -1,1203 +1,11 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BVTK Mapper</title>
-
-  <!-- MapillaryJS -->
-  <link href="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.css" rel="stylesheet">
-  <!-- MapLibre GL -->
-  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
-
-  <style>
-    :root {
-      --green: #05CB63;
-      --green-dark: #36af6d;
-      --green-dim: rgba(5, 203, 99, 0.35);
-      --blue: #00bdff;
-      --orange: #ff8400;
-      --red: #e05643;
-      --bg: #1a1b1e;
-      --surface: #242528;
-      --text: #f0f2f5;
-      --text-muted: #9ca3af;
-      --divider-width: 5px;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    /* ===== TOP BAR ===== */
-    .topbar {
-      height: 48px;
-      background: var(--surface);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      z-index: 50;
-      position: relative;
-    }
-
-    .topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      color: var(--text);
-      font-weight: 700;
-      font-size: 1rem;
-    }
-
-    .logo-dot {
-      width: 28px;
-      height: 28px;
-      background: var(--green);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .logo-dot svg { width: 16px; height: 16px; fill: white; }
-
-    .topbar-info {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .topbar-info span {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .layer-toggle {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      font-weight: 500;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: transparent;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all .2s ease;
-      user-select: none;
-    }
-
-    .layer-toggle:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
-    .layer-toggle.active { background: rgba(5,203,99,0.15); border-color: var(--green); color: var(--green); }
-
-    .layer-toggle .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    /* ===== MAIN LAYOUT ===== */
-    .app-container {
-      position: relative;
-      height: calc(100% - 48px);
-      overflow: hidden;
-    }
-
-    #map {
-      position: absolute;
-      inset: 0;
-    }
-
-    :root {
-      --viewer-left: 16px;
-      --viewer-bottom: 16px;
-      --viewer-width: clamp(340px, 32vw, 460px);
-      --viewer-height: clamp(230px, 30vh, 340px);
-      --analysis-gap: 10px;
-      --analysis-dot-size: 28px;
-    }
-
-    #viewer {
-      position: absolute;
-      left: var(--viewer-left);
-      bottom: var(--viewer-bottom);
-      width: var(--viewer-width);
-      height: var(--viewer-height);
-      z-index: 20;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 2px solid rgba(255,255,255,0.12);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-      background: #111;
-      transition: all .35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    #viewer:hover {
-      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-      border-color: rgba(255,255,255,0.2);
-    }
-
-    #viewer.expanded {
-      left: 0; bottom: 0;
-      width: 50%; height: 100%;
-      border-radius: 0;
-      border: none;
-      box-shadow: none;
-    }
-
-    .divider { display: none; }
-
-    /* ===== VIEWER CONTROLS BAR ===== */
-    .viewer-bar {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 32px;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(6px);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 10px;
-      z-index: 25;
-      font-size: 0.72rem;
-      color: rgba(255,255,255,0.85);
-    }
-
-    .viewer-bar-left { display: flex; align-items: center; gap: 4px; }
-    .viewer-bar-right { display: flex; align-items: center; gap: 4px; }
-
-    .viewer-bar button {
-      background: none; border: none; color: #fff;
-      cursor: pointer; padding: 2px 4px; font-size: 0.85rem;
-      opacity: 0.7; transition: opacity .15s;
-    }
-    .viewer-bar button:hover { opacity: 1; }
-
-    .viewer-date { color: rgba(255,255,255,0.7); font-size: 0.7rem; }
-
-    .analysis-dots {
-      --analysis-accent: #f6c36b;
-      --analysis-accent-strong: #ffdf9a;
-      --analysis-accent-glow: rgba(246,195,107,0.34);
-      position: absolute;
-      left: calc(var(--viewer-left) + 14px);
-      bottom: calc(var(--viewer-bottom) + var(--viewer-height) + var(--analysis-gap));
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      z-index: 24;
-    }
-
-    .analysis-dot {
-      width: var(--analysis-dot-size);
-      height: var(--analysis-dot-size);
-      border-radius: 999px;
-      border: 2px solid var(--analysis-accent);
-      background:
-        radial-gradient(circle at 35% 35%, rgba(255,255,255,0.52), rgba(255,255,255,0.06) 42%, rgba(255,255,255,0) 44%),
-        linear-gradient(180deg, rgba(246,195,107,0.16), rgba(246,195,107,0.04));
-      box-shadow:
-        0 8px 18px rgba(0,0,0,0.25),
-        0 0 0 1px rgba(255,255,255,0.06) inset;
-      cursor: pointer;
-      transition: transform .18s ease, background .18s ease, box-shadow .18s ease, border-color .18s ease;
-    }
-
-    .analysis-dot:hover,
-    .analysis-dot.active {
-      transform: translateY(-1px);
-      border-color: var(--analysis-accent-strong);
-      background:
-        radial-gradient(circle at 35% 35%, rgba(255,255,255,0.66), rgba(255,255,255,0.14) 38%, rgba(255,255,255,0) 42%),
-        linear-gradient(180deg, rgba(246,195,107,0.95), rgba(225,160,58,0.88));
-      box-shadow:
-        0 10px 24px rgba(0,0,0,0.3),
-        0 0 22px var(--analysis-accent-glow);
-    }
-
-    .analysis-popup {
-      position: absolute;
-      left: calc(var(--viewer-left) + 12px);
-      width: min(calc(var(--viewer-width) - 24px), 420px);
-      bottom: calc(var(--viewer-bottom) + var(--viewer-height) + var(--analysis-gap) + var(--analysis-dot-size) + 12px);
-      padding: 14px 16px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, rgba(18,22,28,0.96), rgba(10,12,16,0.94));
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 18px 48px rgba(0,0,0,0.35);
-      backdrop-filter: blur(12px);
-      z-index: 24;
-    }
-
-    .analysis-popup[hidden] { display: none; }
-
-    #viewer.expanded ~ .analysis-dots {
-      left: 12px;
-      bottom: 164px;
-      gap: 14px;
-    }
-
-    #viewer.expanded ~ .analysis-popup {
-      left: 12px;
-      width: min(420px, calc(50vw - 24px));
-      bottom: 40px;
-    }
-
-    .analysis-popup-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .analysis-popup-title {
-      font-size: 0.82rem;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.96);
-    }
-
-    .analysis-popup-source {
-      font-size: 0.74rem;
-      color: rgba(255,255,255,0.62);
-      text-transform: lowercase;
-    }
-
-    .analysis-popup-body {
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.05);
-      color: rgba(255,255,255,0.92);
-      font-size: 0.8rem;
-      line-height: 1.5;
-      min-height: 48px;
-    }
-
-    .viewer-expand-btn {
-      position: absolute;
-      top: 8px; right: 8px;
-      width: 28px; height: 28px;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 6px;
-      color: #fff; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.9rem; z-index: 26;
-      transition: background .15s;
-    }
-    .viewer-expand-btn:hover { background: rgba(0,0,0,0.7); }
-
-    /* ===== IMAGE HOVER PREVIEW ===== */
-    .image-hover-preview {
-      position: fixed;
-      width: 180px; height: 120px;
-      background: #111;
-      border-radius: 8px;
-      border: 2px solid var(--green);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      z-index: 999;
-      pointer-events: none;
-      overflow: hidden;
-      display: none;
-      transition: opacity .15s ease;
-    }
-    .image-hover-preview img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
-
-    /* ===== VIEWER OVERLAY INFO ===== */
-    .viewer-overlay {
-      position: absolute;
-      bottom: 16px;
-      left: 16px;
-      right: 16px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      pointer-events: none;
-      z-index: 5;
-    }
-
-    .image-info {
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(12px);
-      border-radius: 10px;
-      padding: 10px 16px;
-      font-size: 0.78rem;
-      color: rgba(255,255,255,0.85);
-      pointer-events: auto;
-      max-width: 320px;
-    }
-
-    .image-info .label { color: var(--text-muted); font-size: 0.7rem; }
-    .image-info .value { color: white; font-weight: 500; }
-
-    /* ===== MAP OVERLAY CONTROLS ===== */
-    .map-controls {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      z-index: 5;
-    }
-
-    .map-btn {
-      width: 36px;
-      height: 36px;
-      border: none;
-      background: rgba(36, 37, 40, 0.9);
-      backdrop-filter: blur(8px);
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      transition: background .2s ease;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .map-btn:hover { background: rgba(60, 63, 68, 0.95); }
-
-    /* ===== SEARCH BOX ===== */
-    .search-box {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 5;
-      width: 320px;
-    }
-
-    .search-input {
-      width: 100%;
-      padding: 10px 14px 10px 38px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(36, 37, 40, 0.92);
-      backdrop-filter: blur(12px);
-      color: white;
-      font-size: 0.85rem;
-      outline: none;
-      transition: border-color .2s ease, box-shadow .2s ease;
-    }
-
-    .search-input::placeholder { color: rgba(255,255,255,0.35); }
-    .search-input:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 0 3px rgba(5, 203, 99, 0.15);
-    }
-
-    .search-suggestions {
-      display: none;
-      margin-top: 8px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      background: rgba(24, 26, 31, 0.96);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 14px 40px rgba(0,0,0,0.34);
-    }
-
-    .search-suggestions.visible { display: block; }
-
-    .search-suggestion-item {
-      width: 100%;
-      padding: 11px 14px;
-      border: none;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      background: transparent;
-      color: #f3f4f6;
-      text-align: left;
-      cursor: pointer;
-      font-size: 0.84rem;
-      line-height: 1.35;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .search-suggestion-item:last-child { border-bottom: none; }
-    .search-suggestion-item:hover,
-    .search-suggestion-item.active { background: rgba(255,255,255,0.06); }
-
-    .search-suggestion-icon {
-      width: 18px;
-      flex: 0 0 18px;
-      color: rgba(255,255,255,0.66);
-      font-size: 1rem;
-      line-height: 1;
-      text-align: center;
-    }
-
-    .search-suggestion-label {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .search-status {
-      display: none;
-      margin-top: 8px;
-      padding: 8px 12px;
-      border-radius: 10px;
-      background: rgba(36, 37, 40, 0.92);
-      color: rgba(255,255,255,0.82);
-      font-size: 0.75rem;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.24);
-    }
-
-    .search-status.visible { display: block; }
-
-    .search-pin {
-      width: 28px;
-      height: 28px;
-      border-radius: 50% 50% 50% 0;
-      background: linear-gradient(180deg, #f84e4e, #c92f2f);
-      border: 2px solid #fff6f6;
-      transform: rotate(-45deg);
-      box-shadow: 0 10px 18px rgba(140, 12, 12, 0.35);
-      position: relative;
-    }
-
-    .search-pin::after {
-      content: '';
-      position: absolute;
-      inset: 6px;
-      border-radius: 50%;
-      background: #fff4f4;
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: rgba(255,255,255,0.4);
-      font-size: 0.9rem;
-      pointer-events: none;
-    }
-
-    /* ===== LEGEND ===== */
-    .legend {
-      position: absolute;
-      bottom: 12px;
-      left: 500px;
-      background: rgba(36, 37, 40, 0.9);
-      backdrop-filter: blur(12px);
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 0.72rem;
-      z-index: 5;
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .legend-title {
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      font-size: 0.65rem;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 2px 0;
-      color: rgba(255,255,255,0.75);
-    }
-
-    .legend-color {
-      width: 12px;
-      height: 3px;
-      border-radius: 1px;
-    }
-
-    .legend-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    /* ===== LOADING OVERLAY ===== */
-    .loading-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(17, 17, 17, 0.9);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 20;
-      transition: opacity .4s ease;
-    }
-
-    .loading-overlay.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: var(--green);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loading-text {
-      margin-top: 12px;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-    }
-
-    /* ===== TOKEN PROMPT ===== */
-    .token-prompt {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .token-prompt.hidden { display: none; }
-
-    .token-card {
-      background: var(--surface);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      padding: 36px;
-      max-width: 480px;
-      width: calc(100% - 32px);
-      text-align: center;
-    }
-
-    .token-card h2 {
-      font-size: 1.3rem;
-      margin-bottom: 8px;
-    }
-
-    .token-card p {
-      color: var(--text-muted);
-      font-size: 0.88rem;
-      margin-bottom: 24px;
-      line-height: 1.6;
-    }
-
-    .token-card a {
-      color: var(--green);
-      text-decoration: none;
-    }
-
-    .token-card a:hover { text-decoration: underline; }
-
-    .token-input-wrap {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .token-input {
-      flex: 1;
-      padding: 12px 16px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(0,0,0,0.3);
-      color: white;
-      font-size: 0.9rem;
-      font-family: monospace;
-      outline: none;
-    }
-
-    .token-input:focus { border-color: var(--green); }
-
-    .token-submit {
-      padding: 12px 24px;
-      border-radius: 10px;
-      border: none;
-      background: var(--green);
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: background .2s ease;
-    }
-
-    .token-submit:hover { background: var(--green-dark); }
-
-    .token-error {
-      color: var(--red);
-      font-size: 0.8rem;
-      min-height: 20px;
-    }
-
-    /* ===== COORDS DISPLAY ===== */
-    .coords-display {
-      position: absolute;
-      bottom: 12px;
-      right: 12px;
-      background: rgba(36, 37, 40, 0.9);
-      backdrop-filter: blur(8px);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      font-family: monospace;
-      z-index: 5;
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-
-    /* ===== FILTER PANELS ===== */
-    .filter-panels {
-      position: fixed;
-      top: 60px;
-      right: 16px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      pointer-events: none;
-    }
-
-    .filter-panel {
-      pointer-events: auto;
-      background: rgba(255,255,255,0.97);
-      border-radius: 10px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
-      width: 270px;
-      color: #1a1b1e;
-      font-size: 0.85rem;
-      user-select: none;
-    }
-
-    .filter-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .filter-header-left {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: #1a1b1e;
-    }
-
-    .filter-download-btn {
-      background: none;
-      border: none;
-      color: var(--green);
-      font-weight: 600;
-      font-size: 0.78rem;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-
-    .filter-download-btn:hover { background: rgba(5,203,99,0.1); }
-
-    .filter-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      padding: 8px 14px 4px;
-      min-height: 0;
-    }
-
-    .filter-tags:empty { display: none; }
-
-    .filter-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 10px;
-      border-radius: 14px;
-      background: #1a1b1e;
-      color: #fff;
-      font-size: 0.73rem;
-      font-weight: 500;
-      cursor: default;
-    }
-
-    .filter-tag img { width: 14px; height: 14px; object-fit: contain; filter: brightness(10); }
-    .filter-tag .tag-x {
-      cursor: pointer;
-      margin-left: 2px;
-      opacity: 0.7;
-      font-size: 0.7rem;
-    }
-    .filter-tag .tag-x:hover { opacity: 1; }
-
-    .filter-dropdown-wrap { position: relative; padding: 6px 14px 10px; }
-
-    .filter-dropdown-btn {
-      width: 100%;
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      background: #fff;
-      color: #9ca3af;
-      font-size: 0.82rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .filter-dropdown-btn:hover { border-color: #6b7280; }
-
-    .filter-dropdown-list {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 14px;
-      right: 14px;
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-      max-height: 400px;
-      overflow-y: auto;
-      z-index: 30;
-      margin-top: 2px;
-    }
-
-    .filter-dropdown-list.open { display: block; }
-
-    .filter-dropdown-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
-      cursor: pointer;
-      font-size: 0.82rem;
-      color: #374151;
-      transition: background .1s;
-    }
-
-    .filter-dropdown-item:first-child { border-radius: 8px 8px 0 0; }
-    .filter-dropdown-item:last-child { border-radius: 0 0 8px 8px; }
-    .filter-dropdown-item:hover { background: #f3f4f6; }
-    .filter-dropdown-item.selected { background: #eff6ff; font-weight: 600; }
-
-    .filter-dropdown-item .obj-icon {
-      width: 24px;
-      height: 24px;
-      flex-shrink: 0;
-    }
-
-    .filter-dropdown-item .obj-icon img {
-      width: 24px;
-      height: 24px;
-      object-fit: contain;
-    }
-
-    .filter-count {
-      padding: 4px 14px 8px;
-      font-size: 0.7rem;
-      color: #9ca3af;
-    }
-
-    /* ===== DETECTION PANEL ===== */
-    .detection-panel {
-      position: fixed;
-      top: 60px;
-      left: 16px;
-      bottom: 16px;
-      width: 360px;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-      z-index: 50;
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-      color: #1a1b1e;
-    }
-
-    .detection-panel.open { display: flex; }
-
-    .detection-header {
-      padding: 14px 16px;
-      border-bottom: 1px solid #e5e7eb;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .detection-header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .detection-header-left img {
-      width: 28px; height: 28px;
-      object-fit: contain;
-    }
-
-    .detection-header-left span {
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    .detection-close {
-      background: none; border: none;
-      font-size: 1.2rem; cursor: pointer;
-      color: #6b7280; padding: 4px 8px;
-      border-radius: 6px;
-    }
-    .detection-close:hover { background: #f3f4f6; }
-
-    .detection-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px 0;
-    }
-
-    .detection-card {
-      margin: 6px 14px;
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color .15s, box-shadow .15s;
-    }
-
-    .detection-card:hover {
-      border-color: #05CB63;
-      box-shadow: 0 2px 12px rgba(5,203,99,0.15);
-    }
-
-    .detection-card-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-
-    .detection-card-header .det-num {
-      font-weight: 700;
-      font-size: 1rem;
-      color: #1a1b1e;
-    }
-
-    .detection-card-img {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16/9;
-      background: #f3f4f6;
-    }
-
-    .detection-card-img img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    .detection-bbox {
-      position: absolute;
-      border: 3px solid #ff0000;
-      background: rgba(255,0,0,0.12);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.7), 0 0 8px rgba(255,0,0,0.4);
-      pointer-events: none;
-      border-radius: 2px;
-      animation: bbox-blink 1.5s ease-in-out infinite;
-    }
-
-    @keyframes bbox-blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-
-    .detection-footer {
-      padding: 10px 16px;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .detection-nav-btn {
-      padding: 8px 20px;
-      border-radius: 20px;
-      border: none;
-      background: var(--green);
-      color: #fff;
-      font-weight: 600;
-      font-size: 0.82rem;
-      cursor: pointer;
-    }
-    .detection-nav-btn:hover { background: var(--green-dark); }
-    .detection-nav-btn:disabled { background: #d1d5db; cursor: default; }
-
-    .detection-page-info {
-      font-size: 0.75rem;
-      color: #9ca3af;
-    }
-
-    /* ===== RESPONSIVE ===== */
-    @media (max-width: 768px) {
-      #viewer {
-        left: 8px;
-        right: 8px;
-        bottom: 8px;
-        width: auto;
-        height: 35vh;
-        min-height: 180px;
-      }
-      :root {
-        --viewer-left: 8px;
-        --viewer-bottom: 8px;
-        --viewer-width: calc(100vw - 16px);
-        --viewer-height: 35vh;
-      }
-      .search-box { width: 220px; }
-      .search-input { width: 100%; }
-      .filter-panels { right: 8px; top: 56px; }
-      .filter-panel { width: 220px; }
-      .legend { display: none; }
-      .analysis-dots {
-        left: calc(var(--viewer-left) + 12px);
-        bottom: calc(var(--viewer-bottom) + var(--viewer-height) + 8px);
-        gap: 10px;
-      }
-      .analysis-dot {
-        width: 24px;
-        height: 24px;
-      }
-      .analysis-popup {
-        left: calc(var(--viewer-left) + 8px);
-        width: calc(var(--viewer-width) - 16px);
-        bottom: calc(var(--viewer-bottom) + var(--viewer-height) + 8px + 24px + 10px);
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- TOKEN PROMPT -->
-  <div class="token-prompt" id="tokenPrompt">
-    <div class="token-card">
-      <div class="logo-dot" style="margin:0 auto 16px; width:48px; height:48px;">
-        <svg viewBox="0 0 24 24" style="width:24px;height:24px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-      </div>
-      <h2>BVTK Mapper</h2>
-      <p>
-        Nhập Mapillary Access Token để bắt đầu khám phá.<br>
-        Lấy token tại <a href="https://www.mapillary.com/dashboard/developers" target="_blank">mapillary.com/dashboard/developers</a>
-      </p>
-      <div class="token-input-wrap">
-        <input type="text" class="token-input" id="tokenInput" placeholder="MLY|xxxx|yyyy" spellcheck="false">
-        <button class="token-submit" id="tokenSubmit">Bắt đầu</button>
-      </div>
-      <div class="token-error" id="tokenError"></div>
-    </div>
-  </div>
-
-  <!-- TOP BAR -->
-  <div class="topbar">
-    <div class="topbar-left">
-      <a href="#" class="logo">
-        <div class="logo-dot">
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-        </div>
-        BVTK Mapper
-      </a>
-      <div class="topbar-info">
-        <span id="infoCoords">—</span>
-        <span id="infoDate">—</span>
-      </div>
-    </div>
-    <div class="topbar-right">
-      <button class="layer-toggle active" data-layer="sequences" title="Coverage lines">
-        <span class="dot" style="background:var(--green)"></span> Coverage
-      </button>
-      <button class="layer-toggle active" data-layer="features" title="Map features">
-        <span class="dot" style="background:var(--blue)"></span> Features
-      </button>
-      <button class="layer-toggle active" data-layer="signs" title="Traffic signs">
-        <span class="dot" style="background:var(--orange)"></span> Signs
-      </button>
-      <button class="layer-toggle active" data-layer="local" title="Local DB images" style="border-color:var(--blue)">
-        <span class="dot" style="background:var(--blue)"></span> Local DB
-      </button>
-    </div>
-  </div>
-
-  <!-- MAIN -->
-  <div class="app-container" id="appContainer">
-    <!-- VIEWER -->
-    <div id="viewer">
-      <div class="loading-overlay" id="viewerLoading">
-        <div class="spinner"></div>
-        <div class="loading-text">Đang tải hình ảnh...</div>
-      </div>
-      <button class="viewer-expand-btn" id="viewerExpandBtn" title="Expand / Collapse">⛶</button>
-      <div class="viewer-bar">
-        <div class="viewer-bar-left">
-          <span class="viewer-date" id="viewerDate">—</span>
-        </div>
-        <div class="viewer-bar-right">
-          <button id="viewerMinBtn" title="Thu nhỏ">—</button>
-        </div>
-      </div>
-    </div>
-    <div class="analysis-dots" id="analysisDots">
-      <button class="analysis-dot" type="button" data-field="scene_text" title="SCENE"></button>
-      <button class="analysis-dot" type="button" data-field="road_text" title="ROAD"></button>
-      <button class="analysis-dot" type="button" data-field="vehicle_text" title="VEHICLE"></button>
-      <button class="analysis-dot" type="button" data-field="sign_text" title="SIGN"></button>
-      <button class="analysis-dot" type="button" data-field="safety_text" title="SAFETY"></button>
-    </div>
-    <div class="analysis-popup" id="analysisPopup" hidden>
-      <div class="analysis-popup-header">
-        <div class="analysis-popup-title" id="analysisPopupTitle">Phân tích ảnh</div>
-        <div class="analysis-popup-source" id="analysisSource">mock</div>
-      </div>
-      <div class="analysis-popup-body" id="analysisBody">Chọn một chấm tròn để xem nội dung.</div>
-    </div>
-
-    <!-- Image hover preview tooltip -->
-    <div class="image-hover-preview" id="imageHoverPreview">
-      <img id="imageHoverImg" src="" alt="">
-    </div>
-
-    <!-- DIVIDER -->
-    <div class="divider" id="divider"></div>
-
-    <!-- MAP -->
-    <div id="map">
-      <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm địa điểm...">
-        <div class="search-suggestions" id="searchSuggestions"></div>
-        <div class="search-status" id="searchStatus">—</div>
-      </div>
-      <div class="map-controls">
-        <button class="map-btn" id="btnZoomIn" title="Phóng to">+</button>
-        <button class="map-btn" id="btnZoomOut" title="Thu nhỏ">−</button>
-        <button class="map-btn" id="btnNorth" title="Quay về hướng Bắc">⬆</button>
-        <button class="map-btn" id="btnLocate" title="Vị trí hiện tại">📍</button>
-      </div>
-      <div class="legend" id="mapLegend">
-        <div class="legend-title">Chú giải</div>
-        <div class="legend-item"><span class="legend-color" style="background:var(--green)"></span> Coverage</div>
-        <div class="legend-item"><span class="legend-dot" style="background:var(--green); border:2px solid white; width:10px; height:10px;"></span> Ảnh</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#7c3aed"></span> Đối tượng</div>
-        <div class="legend-item"><span class="legend-dot" style="background:var(--orange)"></span> Biển báo</div>
-        <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span> Local DB</div>
-      </div>
-      <div class="coords-display" id="coordsDisplay">—</div>
-    </div>
-
-  </div>
-
-  <!-- DETECTION PANEL -->
-  <div class="detection-panel" id="detectionPanel">
-    <div class="detection-header">
-      <div class="detection-header-left">
-        <img id="detectionIcon" src="" alt="">
-        <span id="detectionTitle">—</span>
-      </div>
-      <button class="detection-close" id="detectionClose" title="Close">✕</button>
-    </div>
-    <div class="detection-list" id="detectionList"></div>
-    <div class="detection-footer">
-      <span class="detection-page-info" id="detectionPageInfo"></span>
-      <button class="detection-nav-btn" id="detectionNextBtn" style="display:none">Next 3</button>
-    </div>
-  </div>
-
-  <!-- FILTER PANELS -->
-  <div class="filter-panels" id="filterPanels">
-    <!-- Show traffic signs -->
-    <div class="filter-panel" id="signsPanel">
-      <div class="filter-header">
-        <div class="filter-header-left">Show traffic signs</div>
-        <button class="filter-download-btn" id="downloadSignsBtn">Download</button>
-      </div>
-      <div class="filter-tags" id="signsTags"></div>
-      <div class="filter-dropdown-wrap">
-        <button class="filter-dropdown-btn" id="signsDropdownBtn">
-          <span>Select traffic signs to show</span>
-          <span>▼</span>
-        </button>
-        <div class="filter-dropdown-list" id="signsDropdownList"></div>
-      </div>
-      <div class="filter-count" id="signsCount"></div>
-    </div>
-    <!-- Show points -->
-    <div class="filter-panel" id="pointsPanel">
-      <div class="filter-header">
-        <div class="filter-header-left">Show points</div>
-        <button class="filter-download-btn" id="downloadPointsBtn">Download</button>
-      </div>
-      <div class="filter-tags" id="pointsTags"></div>
-      <div class="filter-dropdown-wrap">
-        <button class="filter-dropdown-btn" id="pointsDropdownBtn">
-          <span>Select points to show</span>
-          <span>▼</span>
-        </button>
-        <div class="filter-dropdown-list" id="pointsDropdownList"></div>
-      </div>
-      <div class="filter-count" id="pointsCount"></div>
-    </div>
-  </div>
-
-  <!-- SCRIPTS -->
-  <script src="https://unpkg.com/mapillary-js@4.1.2/dist/mapillary.js"></script>
-  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-
-  <script>
+import maplibregl from 'maplibre-gl';
+import { Viewer as MlyViewer } from 'mapillary-js';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import 'mapillary-js/dist/mapillary.css';
+
+/* eslint-disable no-unused-vars, no-empty */
+export function startLegacyMapillaryApp() {
+  const mapillary = { Viewer: MlyViewer };
     // ===== CONFIG =====
     const DEFAULT_LAT = 16.074492656166598;
     const DEFAULT_LNG = 108.14910494442813;
@@ -1206,9 +14,36 @@
     const STORAGE_KEY = 'mapillary_token';
     const LOCAL_API = 'http://localhost:3000/api/v1';
     const RECENT_SEARCHES_KEY = 'mapillary_recent_searches';
+    const LOCAL_ONLY_MODE = true;
+    const MAP_STYLES = {
+      standard: [
+        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+      ],
+      light: [
+        'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+        'https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+      ],
+      dark: [
+        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+      ],
+    };
+    const BASE_RASTER_PAINT = {
+      'raster-saturation': 0.22,
+      'raster-contrast': -0.02,
+      'raster-brightness-min': 0.1,
+      'raster-brightness-max': 1,
+    };
 
     // ===== STATE =====
-    let mlToken = localStorage.getItem(STORAGE_KEY) || '';
+    let mlToken = LOCAL_ONLY_MODE ? '' : (localStorage.getItem(STORAGE_KEY) || '');
     let viewer = null;
     let map = null;
     let currentImageId = null;
@@ -1271,13 +106,16 @@
     const tokenSubmit = document.getElementById('tokenSubmit');
     const tokenError = document.getElementById('tokenError');
 
-    if (mlToken) {
+    if (LOCAL_ONLY_MODE) {
+      tokenPrompt?.classList.add('hidden');
+      initApp('');
+    } else if (mlToken) {
       tokenPrompt.classList.add('hidden');
       initApp(mlToken);
     }
 
-    tokenSubmit.addEventListener('click', handleTokenSubmit);
-    tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleTokenSubmit(); });
+    tokenSubmit?.addEventListener('click', handleTokenSubmit);
+    tokenInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleTokenSubmit(); });
 
     function handleTokenSubmit() {
       const val = tokenInput.value.trim();
@@ -1295,11 +133,16 @@
     // ===== MAIN INIT =====
     function initApp(token) {
       const params = getUrlParams();
-      initViewer(token, params);
+      if (!LOCAL_ONLY_MODE) {
+        initViewer(token, params);
+      } else {
+        document.getElementById('viewerLoading')?.classList.add('hidden');
+      }
       initMap(token, params);
       initDivider();
       initLayerToggles();
       initMapControls();
+      initMapStyleControl();
       initAnalysisDots();
     }
 
@@ -1339,7 +182,6 @@
         // Fetch and show date
         fetchImageDate(img.id);
         fetchImageAnalysis(img.id);
-        document.getElementById('infoDate').textContent = `📷 ${img.id}`;
 
         // Sync map
         if (!syncingFromMap && map) {
@@ -1398,14 +240,8 @@
           sources: {
             freshBase: {
               type: 'raster',
-              tiles: [
-                'https://a.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png',
-                'https://b.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png',
-                'https://c.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png',
-                'https://d.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png',
-              ],
+              tiles: MAP_STYLES.standard,
               tileSize: 256,
-              attribution: '© OpenStreetMap contributors © CARTO',
             },
           },
           layers: [
@@ -1413,12 +249,7 @@
               id: 'fresh-base',
               type: 'raster',
               source: 'freshBase',
-              paint: {
-                'raster-saturation': 0.32,
-                'raster-contrast': 0.08,
-                'raster-brightness-min': 0.04,
-                'raster-brightness-max': 1,
-              },
+              paint: BASE_RASTER_PAINT,
             },
           ],
         },
@@ -1435,14 +266,29 @@
             features: [
               {
                 type: 'Feature',
-                properties: { name: 'Quần đảo Hoàng Sa (Việt Nam)' },
+                properties: { name: 'Hoàng Sa, Việt Nam', rank: 'island' },
                 geometry: { type: 'Point', coordinates: [112.35, 16.5] },
               },
               {
                 type: 'Feature',
-                properties: { name: 'Quần đảo Trường Sa (Việt Nam)' },
+                properties: { name: 'Trường Sa, Việt Nam', rank: 'island' },
                 geometry: { type: 'Point', coordinates: [114.25, 10.2] },
               },
+              { type: 'Feature', properties: { name: 'Việt Nam', rank: 'country' }, geometry: { type: 'Point', coordinates: [107.8, 15.9] } },
+              { type: 'Feature', properties: { name: 'Lào', rank: 'country' }, geometry: { type: 'Point', coordinates: [103.8, 18.4] } },
+              { type: 'Feature', properties: { name: 'Campuchia', rank: 'country' }, geometry: { type: 'Point', coordinates: [104.9, 12.7] } },
+              { type: 'Feature', properties: { name: 'Thái Lan', rank: 'country' }, geometry: { type: 'Point', coordinates: [101.0, 15.4] } },
+              { type: 'Feature', properties: { name: 'Trung Quốc', rank: 'country' }, geometry: { type: 'Point', coordinates: [104.1, 35.8] } },
+              { type: 'Feature', properties: { name: 'Philippines', rank: 'country' }, geometry: { type: 'Point', coordinates: [122.9, 12.9] } },
+              { type: 'Feature', properties: { name: 'Malaysia', rank: 'country' }, geometry: { type: 'Point', coordinates: [102.3, 4.2] } },
+              { type: 'Feature', properties: { name: 'Indonesia', rank: 'country' }, geometry: { type: 'Point', coordinates: [113.9, -2.4] } },
+              { type: 'Feature', properties: { name: 'Singapore', rank: 'country' }, geometry: { type: 'Point', coordinates: [103.8, 1.35] } },
+              { type: 'Feature', properties: { name: 'Myanmar', rank: 'country' }, geometry: { type: 'Point', coordinates: [96.1, 21.9] } },
+              { type: 'Feature', properties: { name: 'Ấn Độ', rank: 'country' }, geometry: { type: 'Point', coordinates: [78.9, 22.8] } },
+              { type: 'Feature', properties: { name: 'Nhật Bản', rank: 'country' }, geometry: { type: 'Point', coordinates: [138.2, 37.6] } },
+              { type: 'Feature', properties: { name: 'Hàn Quốc', rank: 'country' }, geometry: { type: 'Point', coordinates: [127.8, 36.4] } },
+              { type: 'Feature', properties: { name: 'Hoa Kỳ', rank: 'country' }, geometry: { type: 'Point', coordinates: [-98.6, 39.8] } },
+              { type: 'Feature', properties: { name: 'Úc', rank: 'country' }, geometry: { type: 'Point', coordinates: [134.5, -25.7] } },
             ],
           },
         });
@@ -1451,67 +297,71 @@
           id: 'vietnam-island-labels',
           type: 'symbol',
           source: 'vietnam-island-labels',
-          minzoom: 4,
+          minzoom: 1,
           layout: {
             'text-field': ['get', 'name'],
             'text-font': ['Open Sans Bold'],
-            'text-size': ['interpolate', ['linear'], ['zoom'], 4, 12, 8, 15],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 1, ['match', ['get', 'rank'], 'island', 13, 12], 6, ['match', ['get', 'rank'], 'island', 17, 15]],
             'text-anchor': 'center',
-            'text-allow-overlap': false,
+              'text-allow-overlap': true,
+              'text-ignore-placement': true,
           },
           paint: {
-            'text-color': '#168a4c',
-            'text-halo-color': 'rgba(255,255,255,0.92)',
-            'text-halo-width': 1.4,
+              'text-color': ['match', ['get', 'rank'], 'island', '#d13030', '#168a4c'],
+              'text-halo-color': 'rgba(255,255,255,0.98)',
+              'text-halo-width': 2.6,
           },
         });
 
-        // ===== COVERAGE SOURCE =====
-        map.addSource('mly-coverage', {
-          type: 'vector',
-          tiles: [
-            `https://tiles.mapillary.com/maps/vtp/mly1_public/2/{z}/{x}/{y}?access_token=${encodedToken}`,
-          ],
-          minzoom: 0,
-          maxzoom: 14,
-        });
+        if (!LOCAL_ONLY_MODE) {
+          // ===== COVERAGE SOURCE =====
+          map.addSource('mly-coverage', {
+            type: 'vector',
+            tiles: [
+              `https://tiles.mapillary.com/maps/vtp/mly1_public/2/{z}/{x}/{y}?access_token=${encodedToken}`,
+            ],
+            minzoom: 0,
+            maxzoom: 14,
+          });
 
-        // Sequence lines (green coverage)
-        map.addLayer({
-          id: 'mly-sequences',
-          type: 'line',
-          source: 'mly-coverage',
-          'source-layer': 'sequence',
-          minzoom: 6,
-          layout: { 'line-cap': 'round', 'line-join': 'round' },
-          paint: {
-            'line-color': '#05CB63',
-            'line-width': ['interpolate', ['linear'], ['zoom'], 6, 1, 14, 2, 18, 3],
-            'line-opacity': 0.75,
-          },
-        });
+          // Sequence lines (green coverage)
+          map.addLayer({
+            id: 'mly-sequences',
+            type: 'line',
+            source: 'mly-coverage',
+            'source-layer': 'sequence',
+            minzoom: 6,
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: {
+              'line-color': '#05CB63',
+              'line-width': ['interpolate', ['linear'], ['zoom'], 6, 1, 14, 2, 18, 3],
+              'line-opacity': 0.75,
+            },
+          });
 
-        // Image dots
-        map.addLayer({
-          id: 'mly-images',
-          type: 'circle',
-          source: 'mly-coverage',
-          'source-layer': 'image',
-          minzoom: 14,
-          paint: {
-            'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 3, 20, 6],
-            'circle-color': '#ffffff',
-            'circle-stroke-color': '#05CB63',
-            'circle-stroke-width': 2,
-            'circle-opacity': 0.9,
-          },
-        });
+          // Image dots
+          map.addLayer({
+            id: 'mly-images',
+            type: 'circle',
+            source: 'mly-coverage',
+            'source-layer': 'image',
+            minzoom: 14,
+            paint: {
+              'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 3, 20, 6],
+              'circle-color': '#ffffff',
+              'circle-stroke-color': '#05CB63',
+              'circle-stroke-width': 2,
+              'circle-opacity': 0.9,
+            },
+          });
+
+        }
 
         // ===== MAP FEATURES (POINTS) — served from local backend MVT =====
         map.addSource('mly-features', {
           type: 'vector',
           tiles: [
-            `${LOCAL_API.replace('/api/v1', '')}/api/v1/tiles/map-features/{z}/{x}/{y}.mvt`,
+            `${LOCAL_API.replace('/api/v1', '')}/api/v1/tiles/map-features/{z}/{x}/{y}.mvt?scope=has-images`,
           ],
           minzoom: 14,
           maxzoom: 14,
@@ -1537,7 +387,7 @@
         map.addSource('mly-signs', {
           type: 'vector',
           tiles: [
-            `${LOCAL_API.replace('/api/v1', '')}/api/v1/tiles/traffic-signs/{z}/{x}/{y}.mvt`,
+            `${LOCAL_API.replace('/api/v1', '')}/api/v1/tiles/traffic-signs/{z}/{x}/{y}.mvt?scope=has-images`,
           ],
           minzoom: 14,
           maxzoom: 14,
@@ -1698,7 +548,8 @@
           }
 
           // Check image dots for hover preview + ring (both Coverage AND Local DB)
-          const imgLayers = ['mly-images'];
+          const imgLayers = [];
+          if (!LOCAL_ONLY_MODE && map.getLayer('mly-images')) imgLayers.push('mly-images');
           if (map.getLayer('local-images-dots')) imgLayers.push('local-images-dots');
           if (map.getLayer('search-results-dots')) imgLayers.push('search-results-dots');
 
@@ -1762,10 +613,10 @@
           }
 
           // Check sequences for cursor
-          const seqHit = map.queryRenderedFeatures(
+          const seqHit = !LOCAL_ONLY_MODE && map.getLayer('mly-sequences') ? map.queryRenderedFeatures(
             [[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]],
             { layers: ['mly-sequences'] }
-          )[0];
+          )[0] : null;
           map.getCanvas().style.cursor = seqHit ? 'pointer' : '';
 
           if (hoveredKey) { hoveredKey = null; clearRing('feature-hover'); }
@@ -1833,7 +684,8 @@
           }
 
           // 2. Check image dots (Coverage + Local DB)
-          const clickImgLayers = ['mly-images'];
+          const clickImgLayers = [];
+          if (!LOCAL_ONLY_MODE && map.getLayer('mly-images')) clickImgLayers.push('mly-images');
           if (map.getLayer('local-images-dots')) clickImgLayers.push('local-images-dots');
           if (map.getLayer('search-results-dots')) clickImgLayers.push('search-results-dots');
 
@@ -1844,6 +696,10 @@
           if (imgHit) {
             const imageId = imgHit.properties.id;
             const isLocal = imgHit.layer.id === 'local-images-dots';
+            const [selectedLng, selectedLat] = imgHit.geometry.coordinates;
+            currentLngLat = { lng: selectedLng, lat: selectedLat };
+            currentBearing = imgHit.properties.compass_angle || currentBearing || 0;
+            updateCameraMarker(selectedLng, selectedLat, currentBearing);
 
             // Show selected ring
             if (isLocal && map.getSource('local-selected')) {
@@ -1864,10 +720,10 @@
           }
 
           // 3. Check sequence lines
-          const seqHit = map.queryRenderedFeatures(
+          const seqHit = !LOCAL_ONLY_MODE && map.getLayer('mly-sequences') ? map.queryRenderedFeatures(
             [[e.point.x - 8, e.point.y - 8], [e.point.x + 8, e.point.y + 8]],
             { layers: ['mly-sequences'] }
-          )[0];
+          )[0] : null;
           if (seqHit) {
             const imageId = seqHit.properties.image_id || seqHit.properties.id;
             if (imageId) navigateViewer(String(imageId));
@@ -1915,9 +771,9 @@
           minzoom: 10,
           layout: { 'line-cap': 'round', 'line-join': 'round' },
           paint: {
-            'line-color': '#00bdff',
-            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 2, 18, 3],
-            'line-opacity': 0.7,
+            'line-color': '#05CB63',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.2, 14, 2.4, 18, 3.8],
+            'line-opacity': 0.82,
           },
         });
 
@@ -1930,7 +786,7 @@
           paint: {
             'circle-radius': ['interpolate', ['linear'], ['zoom'], 14, 3, 20, 6],
             'circle-color': '#ffffff',
-            'circle-stroke-color': '#00bdff',
+            'circle-stroke-color': '#05CB63',
             'circle-stroke-width': 2,
             'circle-opacity': 0.9,
           },
@@ -2072,6 +928,10 @@
 
             // Lines
             map.getSource('local-lines').setData(buildSequenceLines(images));
+
+            if (LOCAL_ONLY_MODE && !currentImageId && images.length > 0) {
+              navigateViewer(String(images[0].provider_image_id));
+            }
           } catch (e) {
             if (e.name === 'AbortError') return;
           }
@@ -2091,6 +951,13 @@
 
     // ===== NAVIGATE VIEWER =====
     async function navigateViewer(imageId) {
+      if (LOCAL_ONLY_MODE) {
+        currentImageId = imageId;
+        await showLocalViewerImage(imageId);
+        fetchImageDate(imageId);
+        fetchImageAnalysis(imageId);
+        return;
+      }
       if (!viewer || !imageId) return;
       syncingFromMap = true;
       try {
@@ -2099,6 +966,39 @@
         console.warn('Navigation failed:', err);
       }
       setTimeout(() => { syncingFromMap = false; }, 600);
+    }
+
+    async function showLocalViewerImage(imageId) {
+      const imageEl = document.getElementById('localViewerImage');
+      const emptyEl = document.getElementById('localViewerEmpty');
+      const loadingEl = document.getElementById('viewerLoading');
+      if (!imageEl || !imageId) return;
+
+      loadingEl?.classList.remove('hidden');
+      try {
+        const res = await fetch(`${LOCAL_API}/images/provider/${imageId}`);
+        const json = await res.json();
+        const data = json.data || {};
+        const thumbUrl = data.thumb_1024_url || data.thumb_256_url;
+
+        if (thumbUrl) {
+          imageEl.src = thumbUrl.startsWith('http') ? thumbUrl : `http://localhost:3000${thumbUrl}`;
+          imageEl.classList.add('visible');
+          emptyEl?.classList.add('hidden');
+        } else {
+          imageEl.removeAttribute('src');
+          imageEl.classList.remove('visible');
+          emptyEl?.classList.remove('hidden');
+          if (emptyEl) emptyEl.textContent = 'Ảnh này chưa có thumbnail trong database.';
+        }
+      } catch (e) {
+        imageEl.removeAttribute('src');
+        imageEl.classList.remove('visible');
+        emptyEl?.classList.remove('hidden');
+        if (emptyEl) emptyEl.textContent = 'Không tải được ảnh từ backend.';
+      } finally {
+        loadingEl?.classList.add('hidden');
+      }
     }
 
     // ===== NEAREST IMAGE FALLBACK =====
@@ -2146,7 +1046,7 @@
 
       currentAnalysis = null;
       analysisPopupOpen = true;
-      analysisSource.textContent = 'loading...';
+      analysisSource.textContent = '';
       analysisPopupTitle.textContent = 'Phân tích ảnh';
       analysisBody.textContent = 'Đang tải mô tả hiện trường...';
       analysisPopup.hidden = false;
@@ -2171,10 +1071,10 @@
         }
 
         currentAnalysis = json.data;
-        analysisSource.textContent = json.data.source || 'mock';
+        analysisSource.textContent = '';
         setActiveAnalysisField(activeAnalysisField);
       } catch (e) {
-        analysisSource.textContent = 'error';
+        analysisSource.textContent = '';
         analysisPopupTitle.textContent = 'Phân tích ảnh';
         analysisBody.textContent = 'Không tải được mô tả ảnh.';
       }
@@ -2337,7 +1237,9 @@
           if (!map) return;
 
           const layerMap = {
-            sequences: ['mly-sequences', 'mly-images'],
+            sequences: LOCAL_ONLY_MODE
+              ? ['local-lines-layer', 'local-images-dots', 'local-hover-ring', 'local-selected-ring', 'local-compass-fill', 'local-compass-line']
+              : ['mly-sequences', 'mly-images'],
             features: ['mly-feature-points'],
             signs: ['mly-traffic-signs'],
             local: ['local-lines-layer', 'local-images-dots', 'local-hover-ring', 'local-selected-ring', 'local-compass-fill', 'local-compass-line'],
@@ -2356,12 +1258,13 @@
     function initMapControls() {
       document.getElementById('btnZoomIn').addEventListener('click', () => map && map.zoomIn());
       document.getElementById('btnZoomOut').addEventListener('click', () => map && map.zoomOut());
-      document.getElementById('btnNorth').addEventListener('click', () => {
-        if (map) map.easeTo({ bearing: 0, pitch: 0, duration: 500 });
-      });
       document.getElementById('btnLocate').addEventListener('click', () => {
         if (currentLngLat && map) {
           map.flyTo({ center: [currentLngLat.lng, currentLngLat.lat], zoom: 18, duration: 1000 });
+          } else if (map) {
+            const btn = document.getElementById('btnLocate');
+            btn.title = 'Chọn một ảnh trên bản đồ trước';
+            setTimeout(() => { btn.title = 'Vị trí ảnh đang chọn'; }, 1600);
         }
       });
       const searchInput = document.getElementById('searchInput');
@@ -2550,6 +1453,77 @@
       document.addEventListener('click', (e) => {
         if (!searchSuggestions.contains(e.target) && e.target !== searchInput) {
           hideSuggestions();
+        }
+      });
+    }
+
+    function initMapStyleControl() {
+      const control = document.getElementById('mapStyleControl');
+      const trigger = document.getElementById('mapStyleTrigger');
+      const popover = document.getElementById('mapStylePopover');
+
+      function setMapStyleOpen(open) {
+        if (!control || !trigger || !popover) return;
+        control.classList.toggle('open', open);
+        popover.hidden = !open;
+        trigger.setAttribute('aria-expanded', String(open));
+      }
+
+      trigger?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setMapStyleOpen(!control.classList.contains('open'));
+      });
+
+      function applyBaseMapStyle(tiles) {
+        if (!map || !tiles) return;
+        const beforeLayer = map.getLayer('vietnam-island-labels')
+          ? 'vietnam-island-labels'
+          : undefined;
+
+        if (map.getLayer('fresh-base')) {
+          map.removeLayer('fresh-base');
+        }
+        if (map.getSource('freshBase')) {
+          map.removeSource('freshBase');
+        }
+
+        map.addSource('freshBase', {
+          type: 'raster',
+          tiles,
+          tileSize: 256,
+          attribution: '© OpenStreetMap contributors © CARTO',
+        });
+        map.addLayer({
+          id: 'fresh-base',
+          type: 'raster',
+          source: 'freshBase',
+          paint: BASE_RASTER_PAINT,
+        }, beforeLayer);
+      }
+
+      document.querySelectorAll('.map-style-option').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const styleName = btn.dataset.style;
+          const tiles = MAP_STYLES[styleName];
+          if (!tiles) return;
+
+          applyBaseMapStyle(tiles);
+
+          document.querySelectorAll('.map-style-option').forEach((option) => {
+            option.classList.toggle('active', option === btn);
+          });
+          const activeSwatch = btn.querySelector('.map-style-swatch');
+          const triggerIcon = document.querySelector('.map-style-trigger-icon');
+          if (activeSwatch && triggerIcon) {
+            triggerIcon.className = `map-style-trigger-icon ${[...activeSwatch.classList].find((name) => name.startsWith('swatch-')) || 'swatch-standard'}`;
+          }
+          setMapStyleOpen(false);
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        if (control && !control.contains(e.target)) {
+          setMapStyleOpen(false);
         }
       });
     }
@@ -3267,6 +2241,5 @@
         return null;
       }
     }
-  </script>
-</body>
-</html>
+  
+}
