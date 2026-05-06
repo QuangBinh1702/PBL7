@@ -1,5 +1,9 @@
 export function LegacyMarkup() {
-  return <div className="local-only-app" dangerouslySetInnerHTML={{ __html: `<div class="token-prompt hidden" id="tokenPrompt"></div>
+	return (
+		<div
+			className="local-only-app"
+			dangerouslySetInnerHTML={{
+				__html: `<div class="token-prompt hidden" id="tokenPrompt"></div>
 
   <!-- TOP BAR -->
   <div class="topbar">
@@ -16,6 +20,13 @@ export function LegacyMarkup() {
       </div>
     </div>
     <div class="topbar-right">
+      <button class="upload-trigger" id="uploadTrigger" type="button" aria-expanded="false" aria-controls="uploadPanel">
+        <span class="upload-trigger-badge">AI</span>
+        <span class="upload-trigger-copy">
+          <strong>Upload video</strong>
+          <small>Frames by AI</small>
+        </span>
+      </button>
       <button class="layer-toggle active" data-layer="sequences" title="Coverage lines">
         <span class="dot" style="background:var(--green)"></span> Coverage
       </button>
@@ -30,6 +41,49 @@ export function LegacyMarkup() {
       </button>
     </div>
   </div>
+  <div class="upload-panel" id="uploadPanel" hidden>
+    <div class="upload-panel-shell">
+      <div class="upload-panel-heading">
+        <div>
+          <span>Video ingestion</span>
+          <strong>Tải video để AI tách ảnh</strong>
+        </div>
+        <button class="upload-panel-close" id="uploadPanelClose" type="button" aria-label="Đóng panel upload">✕</button>
+      </div>
+      <div class="upload-dropzone" id="uploadDropzone">
+        <input id="uploadVideoInput" class="upload-video-input" type="file" accept="video/*" />
+        <div class="upload-dropzone-copy">
+          <span class="upload-kicker">Survey pipeline</span>
+          <h3>Chọn video khảo sát</h3>
+          <p>Gửi video lên API, chờ AI xử lý rồi nhận về danh sách ảnh tương ứng để rà soát nhanh.</p>
+        </div>
+        <div class="upload-dropzone-actions">
+          <button class="upload-cta" id="uploadBrowseBtn" type="button">Chọn video</button>
+          <button class="upload-ghost-btn" id="uploadSubmitBtn" type="button">Đẩy lên xử lý</button>
+        </div>
+      </div>
+      <div class="upload-meta" id="uploadMeta">
+        <span id="uploadSelectedName">Chưa chọn video</span>
+        <span id="uploadSelectedHint">Hỗ trợ MP4, MOV, AVI hoặc video survey từ điện thoại.</span>
+      </div>
+      <div class="upload-status-board" id="uploadStatusBoard" data-state="idle">
+        <div class="upload-status-chip" id="uploadStatusChip">Idle</div>
+        <p id="uploadStatusText">Chọn video để bắt đầu pipeline upload.</p>
+      </div>
+      <div class="upload-results" id="uploadResults">
+        <div class="upload-results-head">
+          <span>AI output</span>
+          <strong id="uploadResultsTitle">Danh sách ảnh sẽ xuất hiện ở đây</strong>
+        </div>
+        <div class="upload-results-grid" id="uploadResultsGrid">
+          <div class="upload-empty-state">
+            <strong>Chưa có frame nào</strong>
+            <p>Sau khi API xử lý xong video, các ảnh đại diện sẽ xuất hiện để bạn bấm xem nhanh.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- MAIN -->
   <div class="app-container" id="appContainer">
@@ -41,13 +95,27 @@ export function LegacyMarkup() {
         <div class="spinner"></div>
         <div class="loading-text">Đang tải hình ảnh...</div>
       </div>
-      <button class="viewer-expand-btn" id="viewerExpandBtn" title="Expand / Collapse">⛶</button>
+      <button id="viewerMinBtn" class="viewer-min-btn" type="button" title="Thu nhỏ" aria-label="Thu nhỏ viewer">–</button>
+      <button class="viewer-mini-toggle" id="viewerMiniToggle" type="button" title="Mở viewer" aria-label="Mở viewer">⤢</button>
+      <div class="viewer-top-controls">
+        <button id="viewerPrevBtn" class="viewer-control-btn" type="button" title="Ảnh trước" aria-label="Ảnh trước">‹</button>
+        <button id="viewerPlayBtn" class="viewer-control-btn viewer-play-btn" type="button" title="Phát / dừng" aria-label="Phát hoặc dừng">▶</button>
+        <button id="viewerNextBtn" class="viewer-control-btn" type="button" title="Ảnh sau" aria-label="Ảnh sau">›</button>
+      </div>
+      <div class="viewer-window-actions">
+        <button class="viewer-expand-btn viewer-swap-btn" id="viewerExpandBtn" type="button" title="Đổi viewer và bản đồ" aria-label="Đổi viewer và bản đồ">⇄</button>
+        <button class="viewer-close-btn" id="viewerCloseBtn" type="button" title="Tắt viewer" aria-label="Tắt viewer">×</button>
+      </div>
+      <div class="viewer-direction-pad" aria-hidden="true">
+        <button class="viewer-dir viewer-dir-up" type="button" data-nav-slot="forward" tabindex="-1">⌃</button>
+        <button class="viewer-dir viewer-dir-left" type="button" data-nav-slot="left" tabindex="-1">‹</button>
+        <button class="viewer-dir viewer-dir-right" type="button" data-nav-slot="right" tabindex="-1">›</button>
+        <button class="viewer-dir viewer-dir-down" type="button" data-nav-slot="back" tabindex="-1">⌄</button>
+      </div>
       <div class="viewer-bar">
         <div class="viewer-bar-left">
+          <span class="viewer-source">Image by elsot888</span>
           <span class="viewer-date" id="viewerDate">—</span>
-        </div>
-        <div class="viewer-bar-right">
-          <button id="viewerMinBtn" title="Thu nhỏ">—</button>
         </div>
       </div>
     </div>
@@ -127,6 +195,7 @@ export function LegacyMarkup() {
       </div>
       <div class="coords-display" id="coordsDisplay">—</div>
     </div>
+    <button class="viewer-floating-swap" id="viewerFloatingSwap" type="button" title="Đổi về bản đồ lớn" aria-label="Đổi về bản đồ lớn">⇄</button>
 
   </div>
 
@@ -180,5 +249,8 @@ export function LegacyMarkup() {
       </div>
       <div class="filter-count" id="pointsCount"></div>
     </div>
-  </div>` }} />;
+  </div>`,
+			}}
+		/>
+	);
 }
