@@ -11,7 +11,7 @@ const DEFAULT_SEARCH_RADIUS_M = 50;
 const DEFAULT_SEARCH_LIMIT = 50;
 const GEOCODER_SUGGEST_URL = 'https://photon.komoot.io/api/';
 const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
-const CAPTION_API_URL = 'https://ttnt-diffusion--qwen3-vl-caption-server-fastapi-app-dev.modal.run/caption';
+const CAPTION_API_URL = 'https://emsimv10--qwen3-vl-caption-server-fastapi-app-dev.modal.run/caption';
 const DANANG_BBOX = {
   minLon: 107.9,
   minLat: 15.95,
@@ -48,41 +48,67 @@ function getThumbFilePath(providerImageId, sizeDir = 'thumbs_1024') {
   return path.join(__dirname, `../../storage/${sizeDir}/${hash.substring(0, 2)}/${hash.substring(2, 4)}/${providerImageId}.jpg`);
 }
 
+const ANALYSIS_FIELDS = [
+  { field: 'scene_text', label: 'Tổng quan' },
+  { field: 'vehicle_text', label: 'Phương tiện' },
+  { field: 'road_text', label: 'Tình trạng đường xá' },
+  { field: 'safety_text', label: 'An toàn' },
+  { field: 'sign_text', label: 'Sự cố' },
+];
+
+function getAnalysisFields() {
+  return ANALYSIS_FIELDS.map((item) => ({ ...item }));
+}
+
 function buildMockAnalysis(providerImageId) {
   const suffix = providerImageId ? ` (ảnh ${providerImageId})` : '';
   return {
-    scene_text: `[SCENE] Khu phố cũ${suffix}, vỉa hè xuống cấp nghiêm trọng, có rác và nhiều đoạn bong tróc.`,
-    road_text: '[ROAD] Mặt đường nhựa bị nứt, vỉa hè hư hỏng, xuất hiện rác và các khu vực bị phá vỡ.',
-    vehicle_text: '[VEHICLE] Có xe máy và ô tô, mật độ thấp, di chuyển chậm; có người điều khiển xe máy.',
-    sign_text: '[SIGN] Thiếu biển báo giao thông rõ ràng, chủ yếu là biển hiệu cửa hàng.',
-    safety_text: '[SAFETY] Giao thông tiềm ẩn rủi ro, thiếu vạch kẻ đường và hệ thống chỉ dẫn, nguy cơ tai nạn cao.',
+    scene_text: `Khu phố cũ${suffix}, vỉa hè xuống cấp nghiêm trọng, có rác và nhiều đoạn bong tróc.`,
+    road_text: 'Mặt đường nhựa bị nứt, vỉa hè hư hỏng, xuất hiện rác và các khu vực bị phá vỡ.',
+    vehicle_text: 'Có xe máy và ô tô, mật độ thấp, di chuyển chậm; có người điều khiển xe máy.',
+    sign_text: 'Thiếu biển báo giao thông rõ ràng, chủ yếu là biển hiệu cửa hàng.',
+    safety_text: 'Giao thông tiềm ẩn rủi ro, thiếu vạch kẻ đường và hệ thống chỉ dẫn, nguy cơ tai nạn cao.',
   };
+}
+
+function stripCaptionPrefix(line) {
+  return line
+    .replace(/^\d+\.\s*/, '')
+    .replace(/^\[(?:SCENE|ROAD|VEHICLE|SIGN|SAFETY|INCIDENT|TỔNG QUAN|PHƯƠNG TIỆN|TÌNH TRẠNG ĐƯỜNG XÁ|AN TOÀN|SỰ CỐ)\]\s*/i, '')
+    .replace(/^(?:SCENE|ROAD|VEHICLE|SIGN|SAFETY|INCIDENT|Tổng quan|Phương tiện|Tình trạng đường xá|An toàn|Sự cố)\s*[:：-]\s*/i, '')
+    .trim();
 }
 
 function parseCaptionResponse(text, providerImageId) {
   const lines = String(text || '')
     .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => line.replace(/^\d+\.\s*/, '').trim());
+    .map((line) => stripCaptionPrefix(line.trim()))
+    .filter(Boolean);
 
   if (lines.length < 5) {
     return null;
   }
 
-  const normalized = lines.slice(0, 5).map((line, index) => {
-    const tags = ['[SCENE]', '[ROAD]', '[VEHICLE]', '[SIGN]', '[SAFETY]'];
-    return line.startsWith('[') ? line : `${tags[index]} ${line}`;
-  });
-
   return {
     provider_image_id: providerImageId,
-    scene_text: normalized[0],
-    road_text: normalized[1],
-    vehicle_text: normalized[2],
-    sign_text: normalized[3],
-    safety_text: normalized[4],
+    scene_text: lines[0],
+    vehicle_text: lines[1],
+    road_text: lines[2],
+    safety_text: lines[3],
+    sign_text: lines[4],
     source: 'ai',
+  };
+}
+
+function sanitizeAnalysisRow(row) {
+  if (!row) return row;
+  return {
+    ...row,
+    scene_text: stripCaptionPrefix(row.scene_text || ''),
+    road_text: stripCaptionPrefix(row.road_text || ''),
+    vehicle_text: stripCaptionPrefix(row.vehicle_text || ''),
+    sign_text: stripCaptionPrefix(row.sign_text || ''),
+    safety_text: stripCaptionPrefix(row.safety_text || ''),
   };
 }
 
@@ -340,22 +366,27 @@ async function geocodeText(query, limit = 1, bias = {}) {
     .slice(0, limit);
 }
 
-async function ensureImageAnalysis(providerImageId) {
-  const existing = await pool.query(
+async function ensureImageAnalysis(providerImageId, deps = {}) {
+  const db = deps.pool || pool;
+  const generateAnalysis = deps.generateAiAnalysis || generateAiAnalysis;
+  const saveAnalysis = deps.upsertImageAnalysis || upsertImageAnalysis;
+  const buildFallbackAnalysis = deps.buildMockAnalysis || buildMockAnalysis;
+
+  const existing = await db.query(
     'SELECT provider_image_id, source FROM image_analyses WHERE provider_image_id = $1',
     [providerImageId]
   );
 
-  if (existing.rowCount > 0 && existing.rows[0].source === 'ai') {
-    console.log(`[analysis] Reusing cached AI analysis for ${providerImageId}`);
+  if (existing.rowCount > 0) {
+    console.log(`[analysis] Reusing cached ${existing.rows[0].source} analysis for ${providerImageId}`);
     return;
   }
 
   try {
     console.log(`[analysis] Trying AI analysis for ${providerImageId}`);
-    const aiAnalysis = await generateAiAnalysis(providerImageId);
+    const aiAnalysis = await generateAnalysis(providerImageId);
     if (aiAnalysis) {
-      await upsertImageAnalysis(aiAnalysis);
+      await saveAnalysis(aiAnalysis);
       console.log(`[analysis] Saved AI analysis for ${providerImageId}`);
       return;
     }
@@ -363,13 +394,8 @@ async function ensureImageAnalysis(providerImageId) {
     console.warn(`AI analysis failed for ${providerImageId}:`, err.message);
   }
 
-  if (existing.rowCount > 0) {
-    console.log(`[analysis] Keeping existing ${existing.rows[0].source} analysis for ${providerImageId}`);
-    return;
-  }
-
-  const mock = buildMockAnalysis(providerImageId);
-  await upsertImageAnalysis({
+  const mock = buildFallbackAnalysis(providerImageId);
+  await saveAnalysis({
     provider_image_id: providerImageId,
     scene_text: mock.scene_text,
     road_text: mock.road_text,
@@ -627,7 +653,7 @@ app.get('/api/v1/images/provider/:providerImageId/analysis', async (req, res) =>
       return res.status(404).json({ error: 'Analysis not found' });
     }
 
-    res.json({ data: result.rows[0] });
+    res.json({ data: sanitizeAnalysisRow(result.rows[0]) });
   } catch (err) {
     console.error('Error in /api/v1/images/provider/:providerImageId/analysis:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -662,7 +688,7 @@ app.post('/api/v1/images/provider/:providerImageId/analysis', async (req, res) =
       [providerImageId]
     );
 
-    res.json({ data: result.rows[0] });
+    res.json({ data: sanitizeAnalysisRow(result.rows[0]) });
   } catch (err) {
     console.error('Error in POST /api/v1/images/provider/:providerImageId/analysis:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -809,9 +835,20 @@ app.get('/api/v1/tiles/traffic-signs/:z/:x/:y.mvt', async (req, res) => {
 });
 
 // ====== START ======
-app.listen(PORT, () => {
-  console.log(`🚀 API server running at http://localhost:${PORT}`);
-  console.log(`📍 Try: http://localhost:${PORT}/api/v1/images?bbox=107.9,15.95,108.35,16.15&limit=10`);
-  console.log(`📍 Try: http://localhost:${PORT}/api/v1/images/nearby?lat=16.074&lon=108.149&radius=500`);
-  console.log(`📍 Try: http://localhost:${PORT}/api/v1/stats`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 API server running at http://localhost:${PORT}`);
+    console.log(`📍 Try: http://localhost:${PORT}/api/v1/images?bbox=107.9,15.95,108.35,16.15&limit=10`);
+    console.log(`📍 Try: http://localhost:${PORT}/api/v1/images/nearby?lat=16.074&lon=108.149&radius=500`);
+    console.log(`📍 Try: http://localhost:${PORT}/api/v1/stats`);
+  });
+}
+
+module.exports = {
+  app,
+  buildMockAnalysis,
+  parseCaptionResponse,
+  getAnalysisFields,
+  ensureImageAnalysis,
+  sanitizeAnalysisRow,
+};

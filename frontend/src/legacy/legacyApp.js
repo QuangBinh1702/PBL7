@@ -1748,11 +1748,11 @@ export function startLegacyMapillaryApp() {
 		const analysisBody = document.getElementById("analysisBody");
 		const analysisPopupTitle = document.getElementById("analysisPopupTitle");
 		const labels = {
-			scene_text: "SCENE",
-			road_text: "ROAD",
-			vehicle_text: "VEHICLE",
-			sign_text: "SIGN",
-			safety_text: "SAFETY",
+			scene_text: "Tổng quan",
+			vehicle_text: "Phương tiện",
+			road_text: "Tình trạng đường xá",
+			safety_text: "An toàn",
+			sign_text: "Sự cố",
 		};
 
 		document.querySelectorAll(".analysis-dot").forEach((btn) => {

@@ -120,11 +120,11 @@ export function LegacyMarkup() {
       </div>
     </div>
     <div class="analysis-dots" id="analysisDots">
-      <button class="analysis-dot" type="button" data-field="scene_text" title="SCENE"></button>
-      <button class="analysis-dot" type="button" data-field="road_text" title="ROAD"></button>
-      <button class="analysis-dot" type="button" data-field="vehicle_text" title="VEHICLE"></button>
-      <button class="analysis-dot" type="button" data-field="sign_text" title="SIGN"></button>
-      <button class="analysis-dot" type="button" data-field="safety_text" title="SAFETY"></button>
+      <button class="analysis-dot" type="button" data-field="scene_text" title="Tổng quan"></button>
+      <button class="analysis-dot" type="button" data-field="vehicle_text" title="Phương tiện"></button>
+      <button class="analysis-dot" type="button" data-field="road_text" title="Tình trạng đường xá"></button>
+      <button class="analysis-dot" type="button" data-field="safety_text" title="An toàn"></button>
+      <button class="analysis-dot" type="button" data-field="sign_text" title="Sự cố"></button>
     </div>
     <div class="analysis-popup" id="analysisPopup" hidden>
       <div class="analysis-popup-header">

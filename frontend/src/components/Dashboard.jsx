@@ -45,6 +45,14 @@ const pipeline = [
   { label: 'Ready', count: 17, tone: 'green' },
 ];
 
+const analysisFields = [
+  { field: 'scene_text', label: 'Tổng quan' },
+  { field: 'vehicle_text', label: 'Phương tiện' },
+  { field: 'road_text', label: 'Tình trạng đường xá' },
+  { field: 'safety_text', label: 'An toàn' },
+  { field: 'sign_text', label: 'Sự cố' },
+];
+
 function formatNumber(value) {
   if (value === undefined || value === null) return '—';
   return new Intl.NumberFormat('vi-VN').format(value);
@@ -213,8 +221,11 @@ export function Dashboard() {
             <strong>Caption mới nhất</strong>
           </div>
           <div className="insight-stack">
-            {['scene_text', 'road_text', 'vehicle_text', 'sign_text', 'safety_text'].map((field) => (
-              <p key={field}>{analysis?.[field] || 'Chưa có dữ liệu phân tích cho mục này.'}</p>
+            {analysisFields.map(({ field, label }) => (
+              <p key={field}>
+                <strong>{label}: </strong>
+                {analysis?.[field] || 'Chưa có dữ liệu phân tích cho mục này.'}
+              </p>
             ))}
           </div>
         </article>
