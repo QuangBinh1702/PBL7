@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const pool = require('../config/db');
+const { normalizeAiUploadFrames, normalizeAiTriangulationPoints } = require('../ai-upload/normalize');
 require('dotenv').config({ path: __dirname + '/../../.env' });
 
 const app = express();
@@ -11,7 +12,9 @@ const DEFAULT_SEARCH_RADIUS_M = 50;
 const DEFAULT_SEARCH_LIMIT = 50;
 const GEOCODER_SUGGEST_URL = 'https://photon.komoot.io/api/';
 const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
+// const CAPTION_API_URL = 'https://emsimv10--qwen3-vl-caption-server-fastapi-app-dev.modal.run/caption';
 const CAPTION_API_URL = 'https://emsimv10--qwen3-vl-caption-server-fastapi-app-dev.modal.run/caption';
+const AI_FETCH_IMAGE_URL = process.env.AI_FETCH_IMAGE_URL || 'https://emsimv10--pbl7-pipelineapi-web-dev.modal.run/fetch/image';
 const DANANG_BBOX = {
   minLon: 107.9,
   minLat: 15.95,
@@ -38,6 +41,9 @@ app.use('/thumbs_1024', express.static(path.join(__dirname, '../../storage/thumb
 }));
 
 function getThumbUrl(providerImageId, status) {
+  if (String(providerImageId || '').startsWith('ai-')) {
+    return `/api/v1/ai-images/${encodeURIComponent(providerImageId)}/image`;
+  }
   if (status !== 'downloaded') return null;
   const hash = crypto.createHash('md5').update(providerImageId).digest('hex');
   return `/thumbs/${hash.substring(0, 2)}/${hash.substring(2, 4)}/${providerImageId}.jpg`;
@@ -208,6 +214,135 @@ function normalizePositiveInt(value, fallback, max) {
   const n = parseInt(value, 10);
   if (!Number.isFinite(n)) return fallback;
   return Math.min(Math.max(n, 1), max);
+}
+
+async function upsertAiUploadFrames(payload, db = pool) {
+  const frames = normalizeAiUploadFrames(payload);
+  const saved = [];
+  const sequenceIds = new Map();
+
+  async function getSequenceId(sequenceKey) {
+    if (!sequenceKey) return null;
+    if (sequenceIds.has(sequenceKey)) return sequenceIds.get(sequenceKey);
+    const result = await db.query(
+      `INSERT INTO sequences (provider, provider_sequence_id)
+       VALUES ('ai_upload', $1)
+       ON CONFLICT (provider, provider_sequence_id) DO UPDATE SET
+         provider_sequence_id = EXCLUDED.provider_sequence_id
+       RETURNING id`,
+      [sequenceKey]
+    );
+    const id = result.rows[0]?.id || null;
+    sequenceIds.set(sequenceKey, id);
+    return id;
+  }
+
+  for (const frame of frames) {
+    const sequenceId = await getSequenceId(frame.sequence_key);
+    const result = await db.query(
+      `INSERT INTO images (
+        provider, provider_image_id, sequence_id, geom, lat, lon, captured_at, compass_angle,
+        is_pano, status, width, height, image_path, segmentation_path, segmentation_summary
+      ) VALUES (
+        'ai_upload', $1, $2, ST_SetSRID(ST_MakePoint($4, $3), 4326), $3, $4, $5, $6,
+        false, 'ready', $7, $8, $9, $10, $11
+      )
+      ON CONFLICT (provider, provider_image_id) DO UPDATE SET
+        sequence_id = EXCLUDED.sequence_id,
+        geom = EXCLUDED.geom,
+        lat = EXCLUDED.lat,
+        lon = EXCLUDED.lon,
+        captured_at = EXCLUDED.captured_at,
+        compass_angle = EXCLUDED.compass_angle,
+        status = EXCLUDED.status,
+        width = EXCLUDED.width,
+        height = EXCLUDED.height,
+        image_path = EXCLUDED.image_path,
+        segmentation_path = EXCLUDED.segmentation_path,
+        segmentation_summary = EXCLUDED.segmentation_summary,
+        updated_at = now()
+      RETURNING id, provider_image_id, lat, lon, captured_at, compass_angle, status, width, height, image_path, segmentation_path, segmentation_summary`,
+      [
+        frame.provider_image_id,
+        sequenceId,
+        frame.lat,
+        frame.lon,
+        frame.captured_at,
+        frame.compass_angle,
+        frame.width,
+        frame.height,
+        frame.image_path,
+        frame.segmentation_path,
+        frame.segmentation_summary,
+      ]
+    );
+
+    await db.query('DELETE FROM image_segmentations WHERE provider_image_id = $1', [frame.provider_image_id]);
+    for (const segment of frame.segmentations) {
+      await db.query(
+        `INSERT INTO image_segmentations (provider_image_id, label, confidence, raw_json)
+         VALUES ($1, $2, $3, $4)`,
+        [frame.provider_image_id, segment.label, segment.confidence, segment]
+      );
+    }
+
+    saved.push({
+      ...result.rows[0],
+      lat: parseFloat(result.rows[0].lat),
+      lon: parseFloat(result.rows[0].lon),
+      segmentations: frame.segmentations,
+      thumb_256_url: getThumbUrl(frame.provider_image_id, 'ready'),
+    });
+  }
+
+  return saved;
+}
+
+async function upsertAiObjectPoints(payload, db = pool) {
+  const points = normalizeAiTriangulationPoints(payload);
+  const saved = [];
+
+  for (const point of points) {
+    const result = await db.query(
+      `INSERT INTO ai_object_points (
+        point_id, track_id, class_id, label, geom, lat, lon, confidence, residual_m, num_obs, seen_in
+      ) VALUES (
+        $1, $2, $3, $4, ST_SetSRID(ST_MakePoint($6, $5), 4326), $5, $6, $7, $8, $9, $10
+      )
+      ON CONFLICT (point_id) DO UPDATE SET
+        track_id = EXCLUDED.track_id,
+        class_id = EXCLUDED.class_id,
+        label = EXCLUDED.label,
+        geom = EXCLUDED.geom,
+        lat = EXCLUDED.lat,
+        lon = EXCLUDED.lon,
+        confidence = EXCLUDED.confidence,
+        residual_m = EXCLUDED.residual_m,
+        num_obs = EXCLUDED.num_obs,
+        seen_in = EXCLUDED.seen_in,
+        updated_at = now()
+      RETURNING point_id, track_id, class_id, label, lat, lon, confidence, residual_m, num_obs, seen_in`,
+      [
+        point.point_id,
+        String(point.track_id),
+        point.class_id,
+        point.label,
+        point.lat,
+        point.lon,
+        point.confidence,
+        point.residual_m,
+        point.num_obs,
+        JSON.stringify(point.seen_in),
+      ]
+    );
+    saved.push({
+      ...result.rows[0],
+      lat: parseFloat(result.rows[0].lat),
+      lon: parseFloat(result.rows[0].lon),
+    });
+  }
+
+  return saved;
 }
 
 function parseBiasParams(query) {
@@ -407,6 +542,120 @@ async function ensureImageAnalysis(providerImageId, deps = {}) {
   console.log(`[analysis] Fallback to mock analysis for ${providerImageId}`);
 }
 
+// ====== POST /api/v1/ai-uploads ======
+app.post('/api/v1/ai-uploads', async (req, res) => {
+  try {
+    const data = await upsertAiUploadFrames(req.body || {});
+    const object_points = await upsertAiObjectPoints(req.body || {});
+    res.json({ data, object_points, count: data.length, object_point_count: object_points.length });
+  } catch (err) {
+    console.error('Error in POST /api/v1/ai-uploads:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ====== GET /api/v1/ai-object-points?bbox=minLon,minLat,maxLon,maxLat ======
+app.get('/api/v1/ai-object-points', async (req, res) => {
+  try {
+    const { bbox, limit = 1000 } = req.query;
+    if (!bbox) {
+      return res.status(400).json({ error: 'bbox parameter required (minLon,minLat,maxLon,maxLat)' });
+    }
+    const [minLon, minLat, maxLon, maxLat] = bbox.split(',').map(Number);
+    if ([minLon, minLat, maxLon, maxLat].some(isNaN)) {
+      return res.status(400).json({ error: 'Invalid bbox format' });
+    }
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 1000, 1), 5000);
+    const result = await pool.query(
+      `SELECT point_id, track_id, class_id, label, lat, lon, confidence, residual_m, num_obs, seen_in
+       FROM ai_object_points
+       WHERE geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
+       ORDER BY confidence DESC NULLS LAST, id
+       LIMIT $5`,
+      [minLon, minLat, maxLon, maxLat, safeLimit]
+    );
+    res.json({
+      data: result.rows.map((r) => ({ ...r, lat: parseFloat(r.lat), lon: parseFloat(r.lon) })),
+      count: result.rowCount,
+    });
+  } catch (err) {
+    console.error('Error in /api/v1/ai-object-points:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ====== GET /api/v1/ai-images/:providerImageId/segments ======
+app.get('/api/v1/ai-images/:providerImageId/segments', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT label, confidence, raw_json
+       FROM image_segmentations
+       WHERE provider_image_id = $1
+       ORDER BY confidence DESC NULLS LAST, label`,
+      [req.params.providerImageId]
+    );
+    res.json({ data: result.rows, count: result.rowCount });
+  } catch (err) {
+    console.error('Error in /api/v1/ai-images/:providerImageId/segments:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ====== GET /api/v1/ai-images/:providerImageId/instance-matrix ======
+app.get('/api/v1/ai-images/:providerImageId/instance-matrix', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT segmentation_path FROM images WHERE provider = $1 AND provider_image_id = $2',
+      ['ai_upload', req.params.providerImageId]
+    );
+    const segmentationPath = result.rows[0]?.segmentation_path;
+    if (!segmentationPath) {
+      return res.status(404).json({ error: 'AI segmentation not found' });
+    }
+
+    const matrixUrl = new URL(AI_FETCH_IMAGE_URL.replace(/\/fetch\/image$/, '/fetch/instance-matrix'));
+    matrixUrl.searchParams.set('path', segmentationPath);
+    const upstream = await fetch(matrixUrl, { signal: AbortSignal.timeout(30000) });
+    const payload = await upstream.json().catch(() => ({}));
+    if (!upstream.ok) {
+      return res.status(upstream.status).json(payload?.detail ? { error: payload.detail } : { error: 'AI instance matrix fetch failed' });
+    }
+    res.json(payload);
+  } catch (err) {
+    console.error('Error in /api/v1/ai-images/:providerImageId/instance-matrix:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ====== GET /api/v1/ai-images/:providerImageId/image ======
+app.get('/api/v1/ai-images/:providerImageId/image', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT image_path FROM images WHERE provider = $1 AND provider_image_id = $2',
+      ['ai_upload', req.params.providerImageId]
+    );
+    const imagePath = result.rows[0]?.image_path;
+    if (!imagePath) {
+      return res.status(404).json({ error: 'AI image not found' });
+    }
+
+    const imageUrl = new URL(AI_FETCH_IMAGE_URL);
+    imageUrl.searchParams.set('path', imagePath);
+    const upstream = await fetch(imageUrl, { signal: AbortSignal.timeout(30000) });
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ error: 'AI image fetch failed' });
+    }
+
+    res.set('Content-Type', upstream.headers.get('content-type') || 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=3600');
+    const buffer = Buffer.from(await upstream.arrayBuffer());
+    res.send(buffer);
+  } catch (err) {
+    console.error('Error in /api/v1/ai-images/:providerImageId/image:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ====== GET /api/v1/geocode/suggest?q=... ======
 app.get('/api/v1/geocode/suggest', async (req, res) => {
   try {
@@ -505,8 +754,8 @@ app.get('/api/v1/images', async (req, res) => {
     const safeLimit = Math.min(Math.max(parseInt(limit) || 100, 1), 5000);
 
     const result = await pool.query(
-      `SELECT i.id, i.provider_image_id, i.lat, i.lon, i.captured_at, i.compass_angle, i.is_pano, i.tile_key, i.status,
-              s.provider_sequence_id as sequence_id
+      `SELECT i.id, i.provider, i.provider_image_id, i.lat, i.lon, i.captured_at, i.compass_angle, i.is_pano, i.tile_key, i.status,
+              i.segmentation_summary, s.provider_sequence_id as sequence_id
        FROM images i
        LEFT JOIN sequences s ON i.sequence_id = s.id
        WHERE i.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
@@ -518,6 +767,7 @@ app.get('/api/v1/images', async (req, res) => {
 
     const data = result.rows.map((r) => ({
       id: r.id,
+      provider: r.provider,
       provider_image_id: r.provider_image_id,
       lat: parseFloat(r.lat),
       lon: parseFloat(r.lon),
@@ -526,6 +776,7 @@ app.get('/api/v1/images', async (req, res) => {
       is_pano: r.is_pano,
       tile_key: r.tile_key,
       sequence_id: r.sequence_id,
+      segmentation_summary: r.segmentation_summary,
       thumb_256_url: getThumbUrl(r.provider_image_id, r.status),
     }));
 
@@ -583,7 +834,7 @@ app.get('/api/v1/images/nearby', async (req, res) => {
 app.get('/api/v1/images/provider/:providerImageId', async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, provider_image_id, lat, lon, captured_at, compass_angle, is_pano, status, width, height
+      `SELECT id, provider, provider_image_id, lat, lon, captured_at, compass_angle, is_pano, status, width, height, image_path, segmentation_path, segmentation_summary
        FROM images WHERE provider_image_id = $1`,
       [req.params.providerImageId]
     );
@@ -594,6 +845,7 @@ app.get('/api/v1/images/provider/:providerImageId', async (req, res) => {
     res.json({
       data: {
         id: r.id,
+        provider: r.provider,
         provider_image_id: r.provider_image_id,
         lat: parseFloat(r.lat),
         lon: parseFloat(r.lon),
@@ -602,6 +854,9 @@ app.get('/api/v1/images/provider/:providerImageId', async (req, res) => {
         is_pano: r.is_pano,
         width: r.width,
         height: r.height,
+        image_path: r.image_path,
+        segmentation_path: r.segmentation_path,
+        segmentation_summary: r.segmentation_summary,
         thumb_256_url: getThumbUrl(r.provider_image_id, r.status),
       }
     });
@@ -851,4 +1106,6 @@ module.exports = {
   getAnalysisFields,
   ensureImageAnalysis,
   sanitizeAnalysisRow,
+  upsertAiUploadFrames,
+  upsertAiObjectPoints,
 };

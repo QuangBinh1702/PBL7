@@ -90,6 +90,8 @@ export function LegacyMarkup() {
     <!-- VIEWER -->
     <div id="viewer">
       <img id="localViewerImage" class="local-viewer-image" src="" alt="Selected street view image">
+      <canvas id="segmentationCanvas" class="segmentation-canvas" aria-hidden="true"></canvas>
+      <div id="segmentationLegend" class="segmentation-legend" hidden></div>
       <div id="localViewerEmpty" class="local-viewer-empty">Chọn một điểm ảnh trên bản đồ để xem ảnh.</div>
       <div class="loading-overlay" id="viewerLoading">
         <div class="spinner"></div>

@@ -13,7 +13,7 @@ export function startLegacyMapillaryApp() {
 	const DEFAULT_PKEY = "1137674664114306";
 	const STORAGE_KEY = "mapillary_token";
 	const LOCAL_API = "http://localhost:3000/api/v1";
-	const VIDEO_UPLOAD_API = `${LOCAL_API}/uploads/video`;
+	const VIDEO_UPLOAD_API = "https://emsimv10--pbl7-pipelineapi-web-dev.modal.run/pipeline/upload-from-fe";
 	const RECENT_SEARCHES_KEY = "mapillary_recent_searches";
 	const LOCAL_ONLY_MODE = true;
 	const MAP_STYLES = {
@@ -738,6 +738,25 @@ export function startLegacyMapillaryApp() {
 				}
 
 				// Check image dots for hover preview + ring (both Coverage AND Local DB)
+				const objectHit = map.getLayer("ai-object-points-dots")
+					? map.queryRenderedFeatures(
+							[
+								[e.point.x - 8, e.point.y - 8],
+								[e.point.x + 8, e.point.y + 8],
+							],
+							{ layers: ["ai-object-points-dots"] },
+						)[0]
+					: null;
+				if (objectHit) {
+					map.getCanvas().style.cursor = "pointer";
+					const props = objectHit.properties;
+					hoverPreview.dataset.summary = `${props.label}${props.confidence ? ` ${(Number(props.confidence) * 100).toFixed(0)}%` : ""}`;
+					hoverPreview.classList.add("has-summary");
+					hoverPreview.style.display = "block";
+					positionPreview(e.originalEvent);
+					return;
+				}
+
 				const imgLayers = [];
 				if (!LOCAL_ONLY_MODE && map.getLayer("mly-images"))
 					imgLayers.push("mly-images");
@@ -859,14 +878,17 @@ export function startLegacyMapillaryApp() {
 
 			function showImagePreview(imageId, evt) {
 				clearTimeout(previewTimeout);
-				// Fetch thumb URL via local backend API
 				fetch(`${LOCAL_API}/images/provider/${imageId}`)
 					.then((r) => r.json())
 					.then((json) => {
-						if (json.data?.thumb_256_url && hoveredImageId === imageId) {
+						if (!json.data || hoveredImageId !== imageId) return;
+						if (json.data.thumb_256_url) {
 							hoverImg.src = `http://localhost:3000${json.data.thumb_256_url}`;
-							hoverPreview.style.display = "block";
 						}
+						const summary = json.data.segmentation_summary;
+						hoverPreview.dataset.summary = summary ? `Segmentation: ${summary}` : "";
+						hoverPreview.classList.toggle("has-summary", Boolean(summary));
+						hoverPreview.style.display = "block";
 					})
 					.catch(() => {});
 				positionPreview(evt);
@@ -881,6 +903,8 @@ export function startLegacyMapillaryApp() {
 			function hideImagePreview() {
 				hoveredImageId = null;
 				hoverPreview.style.display = "none";
+				hoverPreview.dataset.summary = "";
+				hoverPreview.classList.remove("has-summary");
 				hoverImg.src = "";
 			}
 
@@ -925,6 +949,22 @@ export function startLegacyMapillaryApp() {
 						feat.geometry.coordinates[0],
 						feat.geometry.coordinates[1],
 					);
+					return;
+				}
+
+				const objectHit = map.getLayer("ai-object-points-dots")
+					? map.queryRenderedFeatures(
+							[
+								[e.point.x - 10, e.point.y - 10],
+								[e.point.x + 10, e.point.y + 10],
+							],
+							{ layers: ["ai-object-points-dots"] },
+						)[0]
+					: null;
+				if (objectHit) {
+					const relatedImage = getRelatedImageIdForAiObject(objectHit.properties);
+					if (relatedImage) navigateViewer(relatedImage);
+					selectedKey = null;
 					return;
 				}
 
@@ -1047,6 +1087,10 @@ export function startLegacyMapillaryApp() {
 				type: "geojson",
 				data: { type: "FeatureCollection", features: [] },
 			});
+			map.addSource("ai-object-points", {
+				type: "geojson",
+				data: { type: "FeatureCollection", features: [] },
+			});
 
 			// Sequence lines — cyan, like coverage green lines
 			map.addLayer({
@@ -1164,6 +1208,19 @@ export function startLegacyMapillaryApp() {
 				},
 			});
 
+			map.addLayer({
+				id: "ai-object-points-dots",
+				type: "symbol",
+				source: "ai-object-points",
+				minzoom: 14,
+				layout: {
+					"icon-image": ["concat", "pt:", ["get", "label"]],
+					"icon-size": ["interpolate", ["linear"], ["zoom"], 14, 0.72, 20, 1.05],
+					"icon-allow-overlap": true,
+					"icon-ignore-placement": true,
+				},
+			});
+
 			// Build sequence lines from sorted images (connect nearby consecutive points)
 			function buildSequenceLines(images) {
 				const lines = [];
@@ -1196,11 +1253,35 @@ export function startLegacyMapillaryApp() {
 			let _loadTimer = null;
 			let _lastBbox = "";
 
+			async function loadAiObjectPoints(bbox, signal) {
+				if (!map.getSource("ai-object-points")) return;
+				const res = await fetch(`${LOCAL_API}/ai-object-points?bbox=${bbox}&limit=5000`, { signal });
+				const json = await res.json();
+				if (signal.aborted) return;
+				const points = Array.isArray(json.data) ? json.data : [];
+				map.getSource("ai-object-points").setData({
+					type: "FeatureCollection",
+					features: points.map((point) => ({
+						type: "Feature",
+						geometry: { type: "Point", coordinates: [point.lon, point.lat] },
+						properties: {
+							id: point.point_id,
+							label: point.label,
+							confidence: point.confidence,
+							num_obs: point.num_obs,
+							residual_m: point.residual_m,
+							seen_in: JSON.stringify(point.seen_in || []),
+						},
+					})),
+				});
+			}
+
 			async function loadLocalImages() {
 				const empty = { type: "FeatureCollection", features: [] };
 				if (map.getZoom() < 10) {
 					map.getSource("local-images").setData(empty);
 					map.getSource("local-lines").setData(empty);
+					map.getSource("ai-object-points")?.setData(empty);
 					return;
 				}
 				const bounds = map.getBounds();
@@ -1239,12 +1320,15 @@ export function startLegacyMapillaryApp() {
 								captured_at: img.captured_at,
 								compass_angle: img.compass_angle,
 								is_pano: img.is_pano,
+								segmentation_summary: img.segmentation_summary || "",
+								provider: img.provider || "mapillary",
 							},
 						})),
 					});
 
 					// Lines
 					map.getSource("local-lines").setData(buildSequenceLines(images));
+					await loadAiObjectPoints(bbox, signal);
 
 					if (LOCAL_ONLY_MODE && !currentImageId && images.length > 0) {
 						navigateViewer(String(images[0].provider_image_id));
@@ -1289,6 +1373,35 @@ export function startLegacyMapillaryApp() {
 		}, 600);
 	}
 
+	function toComparableImageKey(value) {
+		return String(value || "")
+			.split(/[\\/]/)
+			.pop()
+			.replace(/\.[^.]+$/, "")
+			.toLowerCase()
+			.replace(/^ai[-_]/, "")
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-+|-+$/g, "");
+	}
+
+	function getRelatedImageIdForAiObject(properties) {
+		try {
+			const seenIn = typeof properties.seen_in === "string" ? JSON.parse(properties.seen_in) : properties.seen_in;
+			const first = Array.isArray(seenIn) ? seenIn[0] : null;
+			const imageName = first?.image || first?.image_path;
+			if (!imageName || !map?.getSource("local-images")) return null;
+			const features = map.getSource("local-images")._data?.features || [];
+			const seenKey = toComparableImageKey(imageName);
+			const match = features.find((feature) => {
+				const idKey = toComparableImageKey(feature.properties?.id);
+				return idKey === seenKey || idKey.includes(seenKey) || seenKey.includes(idKey);
+			});
+			return match?.properties?.id || null;
+		} catch {
+			return null;
+		}
+	}
+
 	async function showLocalViewerImage(imageId) {
 		const imageEl = document.getElementById("localViewerImage");
 		const emptyEl = document.getElementById("localViewerEmpty");
@@ -1308,6 +1421,7 @@ export function startLegacyMapillaryApp() {
 					: `http://localhost:3000${thumbUrl}`;
 				imageEl.classList.add("visible");
 				emptyEl?.classList.add("hidden");
+				imageEl.onload = () => renderSegmentationOverlay(imageId, data);
 			} else {
 				imageEl.removeAttribute("src");
 				imageEl.classList.remove("visible");
@@ -1323,6 +1437,96 @@ export function startLegacyMapillaryApp() {
 			return { data: null, hasThumb: false };
 		} finally {
 			loadingEl?.classList.add("hidden");
+		}
+	}
+
+	async function renderSegmentationOverlay(imageId, imageData) {
+		const canvas = document.getElementById("segmentationCanvas");
+		const legend = document.getElementById("segmentationLegend");
+		const imageEl = document.getElementById("localViewerImage");
+		if (!canvas || !legend || !imageEl) return;
+		const clear = () => {
+			const ctx = canvas.getContext("2d");
+			ctx?.clearRect(0, 0, canvas.width, canvas.height);
+			legend.hidden = true;
+			legend.innerHTML = "";
+		};
+		if (imageData?.provider !== "ai_upload" || !imageData?.segmentation_path) {
+			clear();
+			return;
+		}
+		try {
+			const [matrixRes, segmentsRes] = await Promise.all([
+				fetch(`${LOCAL_API}/ai-images/${imageId}/instance-matrix`),
+				fetch(`${LOCAL_API}/ai-images/${imageId}/segments`),
+			]);
+			if (!matrixRes.ok) throw new Error("Không tải được segmentation matrix");
+			const matrixJson = await matrixRes.json();
+			const segmentsJson = await segmentsRes.json().catch(() => ({ data: [] }));
+			const matrix = matrixJson.instance_matrix;
+			if (!Array.isArray(matrix) || !matrix.length || !Array.isArray(matrix[0])) {
+				clear();
+				return;
+			}
+			const height = matrix.length;
+			const width = matrix[0].length;
+			canvas.width = imageEl.clientWidth;
+			canvas.height = imageEl.clientHeight;
+			const offscreen = document.createElement("canvas");
+			offscreen.width = width;
+			offscreen.height = height;
+			const offCtx = offscreen.getContext("2d");
+			const imageDataBuffer = offCtx.createImageData(width, height);
+			const segmentByInstance = new Map();
+			(segmentsJson.data || []).forEach((row) => {
+				const raw = row.raw_json || {};
+				if (raw.instance_id != null) segmentByInstance.set(Number(raw.instance_id), raw);
+			});
+			for (let y = 0; y < height; y++) {
+				const row = matrix[y];
+				for (let x = 0; x < width; x++) {
+					const id = Number(row[x]);
+					if (!id) continue;
+					const seg = segmentByInstance.get(id);
+					const rgb = Array.isArray(seg?.rgb) ? seg.rgb : [124, 58, 237];
+					const idx = (y * width + x) * 4;
+					imageDataBuffer.data[idx] = rgb[0];
+					imageDataBuffer.data[idx + 1] = rgb[1];
+					imageDataBuffer.data[idx + 2] = rgb[2];
+					imageDataBuffer.data[idx + 3] = 88;
+				}
+			}
+			offCtx.putImageData(imageDataBuffer, 0, 0);
+			const ctx = canvas.getContext("2d");
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			const imageNaturalWidth = imageEl.naturalWidth || width;
+			const imageNaturalHeight = imageEl.naturalHeight || height;
+			const imageRatio = imageNaturalWidth / imageNaturalHeight;
+			const canvasRatio = canvas.width / canvas.height;
+			let drawWidth = canvas.width;
+			let drawHeight = canvas.height;
+			let drawX = 0;
+			let drawY = 0;
+			if (imageRatio > canvasRatio) {
+				drawHeight = canvas.width / imageRatio;
+				drawY = (canvas.height - drawHeight) / 2;
+			} else {
+				drawWidth = canvas.height * imageRatio;
+				drawX = (canvas.width - drawWidth) / 2;
+			}
+			ctx.drawImage(offscreen, drawX, drawY, drawWidth, drawHeight);
+			const topSegments = (segmentsJson.data || []).slice(0, 6);
+			legend.innerHTML = topSegments
+				.map((row) => {
+					const raw = row.raw_json || {};
+					const rgb = Array.isArray(raw.rgb) ? raw.rgb.join(",") : "124,58,237";
+					return `<span><i style="background:rgb(${rgb})"></i>${row.label}</span>`;
+				})
+				.join("");
+			legend.hidden = topSegments.length === 0;
+		} catch (error) {
+			console.warn("Segmentation overlay failed:", error);
+			clear();
 		}
 	}
 
@@ -1877,6 +2081,19 @@ export function startLegacyMapillaryApp() {
 			.filter(Boolean);
 	}
 
+	async function syncAiUploadToLocalDatabase(aiPayload) {
+		const res = await fetch(`${LOCAL_API}/ai-uploads`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(aiPayload),
+		});
+		const payload = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			throw new Error(payload?.error || `Local database sync failed with ${res.status}`);
+		}
+		return payload;
+	}
+
 	function toAbsoluteAssetUrl(url) {
 		if (!url) return "";
 		if (url.startsWith("http://") || url.startsWith("https://")) return url;
@@ -1955,7 +2172,7 @@ export function startLegacyMapillaryApp() {
 		const submitBtn = document.getElementById("uploadSubmitBtn");
 		const browseBtn = document.getElementById("uploadBrowseBtn");
 		const form = new FormData();
-		form.append("video", selectedUploadFile);
+		form.append("videos", selectedUploadFile);
 
 		setUploadState(
 			"uploading",
@@ -1975,8 +2192,14 @@ export function startLegacyMapillaryApp() {
 				throw new Error(payload?.error || `Upload failed with ${res.status}`);
 			}
 
-			uploadedFrameResults = normalizeUploadedImages(payload);
+			const localPayload = await syncAiUploadToLocalDatabase(payload);
+			uploadedFrameResults = normalizeUploadedImages(localPayload);
 			renderUploadResults(uploadedFrameResults);
+			if (map) {
+				const empty = { type: "FeatureCollection", features: [] };
+				map.getSource("local-images")?.setData(empty);
+				map.getSource("ai-object-points")?.setData(empty);
+			}
 
 			if (!uploadedFrameResults.length) {
 				setUploadState(
@@ -2735,6 +2958,11 @@ export function startLegacyMapillaryApp() {
 
 	// ===== DATA: POINT TYPES =====
 	const POINT_TYPES = [
+		{ value: "object--vehicle--car", label: "Car" },
+		{ value: "object--vehicle--bus", label: "Bus" },
+		{ value: "object--vehicle--truck", label: "Truck" },
+		{ value: "object--traffic-sign--front", label: "Traffic sign - front" },
+		{ value: "object--traffic-sign--back", label: "Traffic sign - back" },
 		{ value: "object--banner", label: "Banner" },
 		{ value: "object--bench", label: "Bench" },
 		{ value: "object--bike-rack", label: "Bike rack" },

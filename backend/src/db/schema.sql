@@ -93,9 +93,44 @@ CREATE TABLE IF NOT EXISTS image_analyses (
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Add width/height to images for detection panel bbox calculation
+-- Add metadata columns used by local detections and AI-uploaded frames
 DO $$ BEGIN
   ALTER TABLE images ADD COLUMN IF NOT EXISTS width INT;
   ALTER TABLE images ADD COLUMN IF NOT EXISTS height INT;
+  ALTER TABLE images ADD COLUMN IF NOT EXISTS image_path TEXT;
+  ALTER TABLE images ADD COLUMN IF NOT EXISTS segmentation_path TEXT;
+  ALTER TABLE images ADD COLUMN IF NOT EXISTS segmentation_summary TEXT;
 EXCEPTION WHEN others THEN NULL;
 END $$;
+
+CREATE TABLE IF NOT EXISTS image_segmentations (
+  id                  BIGSERIAL PRIMARY KEY,
+  provider_image_id   TEXT NOT NULL,
+  label               TEXT NOT NULL,
+  confidence          REAL,
+  raw_json            JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS image_segmentations_provider_idx ON image_segmentations (provider_image_id);
+CREATE INDEX IF NOT EXISTS images_provider_idx ON images (provider);
+
+CREATE TABLE IF NOT EXISTS ai_object_points (
+  id              BIGSERIAL PRIMARY KEY,
+  point_id        TEXT NOT NULL UNIQUE,
+  track_id        TEXT,
+  class_id        INT,
+  label           TEXT NOT NULL,
+  geom            GEOMETRY(Point, 4326) NOT NULL,
+  lat             DOUBLE PRECISION NOT NULL,
+  lon             DOUBLE PRECISION NOT NULL,
+  confidence      REAL,
+  residual_m      REAL,
+  num_obs         INT,
+  seen_in         JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS ai_object_points_geom_gist ON ai_object_points USING GIST (geom);
+CREATE INDEX IF NOT EXISTS ai_object_points_label_idx ON ai_object_points (label);
