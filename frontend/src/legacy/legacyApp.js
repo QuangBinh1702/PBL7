@@ -968,9 +968,31 @@ export function startLegacyMapillaryApp() {
 						)[0]
 					: null;
 				if (objectHit) {
-					const relatedImage = getRelatedImageIdForAiObject(objectHit.properties);
-					if (relatedImage) navigateViewer(relatedImage);
+					openAiObjectDetectionPanel(
+						objectHit.properties,
+						objectHit.geometry?.coordinates || null,
+					);
 					selectedKey = null;
+					return;
+				}
+
+				const seenImgLayers = ["object-seen-images-dots", "object-seen-images-labels"].filter(
+					(id) => map.getLayer(id),
+				);
+				const seenImgHit = seenImgLayers.length
+					? map.queryRenderedFeatures(
+							[
+								[e.point.x - 12, e.point.y - 12],
+								[e.point.x + 12, e.point.y + 12],
+							],
+							{ layers: seenImgLayers },
+						)[0]
+					: null;
+				if (seenImgHit?.properties?.image_id) {
+					openObjectImageModalFromMap(
+						String(seenImgHit.properties.image_id),
+						seenImgHit.properties.instance_id,
+					);
 					return;
 				}
 
@@ -1094,6 +1116,10 @@ export function startLegacyMapillaryApp() {
 				data: { type: "FeatureCollection", features: [] },
 			});
 			map.addSource("ai-object-points", {
+				type: "geojson",
+				data: { type: "FeatureCollection", features: [] },
+			});
+			map.addSource("object-seen-images", {
 				type: "geojson",
 				data: { type: "FeatureCollection", features: [] },
 			});
@@ -1242,6 +1268,36 @@ export function startLegacyMapillaryApp() {
 				},
 			});
 
+			map.addLayer({
+				id: "object-seen-images-dots",
+				type: "circle",
+				source: "object-seen-images",
+				minzoom: 14,
+				paint: {
+					"circle-radius": ["interpolate", ["linear"], ["zoom"], 14, 11, 20, 14],
+					"circle-color": "#ffffff",
+					"circle-stroke-color": "#111827",
+					"circle-stroke-width": 2,
+					"circle-opacity": 1,
+				},
+			});
+			map.addLayer({
+				id: "object-seen-images-labels",
+				type: "symbol",
+				source: "object-seen-images",
+				minzoom: 14,
+				layout: {
+					"text-field": ["get", "num"],
+					"text-size": 13,
+					"text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+					"text-allow-overlap": true,
+					"text-ignore-placement": true,
+				},
+				paint: {
+					"text-color": "#111827",
+				},
+			});
+
 			function isViewableSequenceImage(img) {
 				if (!img) return false;
 				if (img.has_image === true || img.has_thumb === true || img.is_viewable === true) return true;
@@ -1376,7 +1432,10 @@ export function startLegacyMapillaryApp() {
 	}
 
 	// ===== NAVIGATE VIEWER =====
-	async function navigateViewer(imageId) {
+	async function navigateViewer(imageId, options = {}) {
+		if (!options.keepSegmentationHover) {
+			disableViewerSegmentationHover();
+		}
 		restoreViewerFromClosed();
 		if (LOCAL_ONLY_MODE) {
 			currentImageId = imageId;
@@ -1411,11 +1470,149 @@ export function startLegacyMapillaryApp() {
 			.replace(/^-+|-+$/g, "");
 	}
 
+	function parseSeenInEntries(properties) {
+		try {
+			const raw =
+				typeof properties?.seen_in === "string"
+					? JSON.parse(properties.seen_in)
+					: properties?.seen_in;
+			return Array.isArray(raw) ? raw : [];
+		} catch {
+			return [];
+		}
+	}
+
+	function seenInEntryImageName(entry) {
+		if (typeof entry === "string") return entry;
+		return entry?.image || entry?.image_path || entry?.img_stem || "";
+	}
+
+	function findLocalImageCoordsByKey(imageName) {
+		if (!imageName || !map?.getSource("local-images")) return null;
+		const features = map.getSource("local-images")._data?.features || [];
+		const seenKey = toComparableImageKey(imageName);
+		const match = features.find((feature) => {
+			const idKey = toComparableImageKey(feature.properties?.id);
+			return idKey === seenKey || idKey.includes(seenKey) || seenKey.includes(idKey);
+		});
+		if (!match) return null;
+		const [lon, lat] = match.geometry.coordinates;
+		return {
+			lon,
+			lat,
+			provider_image_id: match.properties?.id || "",
+		};
+	}
+
+	function normalizeObjectSeenItems(items) {
+		return (items || [])
+			.map((item, index) => {
+				const imageName = item.image_name || seenInEntryImageName(item);
+				let providerImageId = item.image?.provider_image_id || item.provider_image_id || "";
+				let lon = Number(item.image?.lon ?? item.lon);
+				let lat = Number(item.image?.lat ?? item.lat);
+
+				if (!providerImageId && imageName) {
+					const resolved = findLocalImageCoordsByKey(imageName);
+					if (resolved) {
+						providerImageId = resolved.provider_image_id;
+						lon = resolved.lon;
+						lat = resolved.lat;
+					}
+				}
+
+				if ((!Number.isFinite(lon) || !Number.isFinite(lat)) && (providerImageId || imageName)) {
+					const resolved = findLocalImageCoordsByKey(providerImageId || imageName);
+					if (resolved) {
+						providerImageId = resolved.provider_image_id || providerImageId;
+						lon = resolved.lon;
+						lat = resolved.lat;
+					}
+				}
+
+				if (!providerImageId || !Number.isFinite(lon) || !Number.isFinite(lat)) return null;
+
+				return {
+					image: { provider_image_id: providerImageId, lon, lat },
+					instance_id: item.instance_id ?? null,
+					thumb_url: item.thumb_url,
+					_order: index,
+				};
+			})
+			.filter(Boolean);
+	}
+
+	function buildObjectSeenItemsFromSeenIn(seenIn) {
+		return normalizeObjectSeenItems(
+			(seenIn || []).map((entry) => {
+				const imageName = seenInEntryImageName(entry);
+				const resolved = findLocalImageCoordsByKey(imageName);
+				return {
+					image_name: imageName,
+					image: resolved
+						? { provider_image_id: resolved.provider_image_id, lon: resolved.lon, lat: resolved.lat }
+						: { provider_image_id: imageName },
+					instance_id: typeof entry === "object" ? entry.instance_id : null,
+				};
+			}),
+		);
+	}
+
+	function updateObjectSeenImageMarkers(items) {
+		const pointSource = map?.getSource("object-seen-images");
+		if (!pointSource) return;
+
+		const normalized = normalizeObjectSeenItems(items);
+		const features = normalized.map((item, index) => ({
+			type: "Feature",
+			geometry: {
+				type: "Point",
+				coordinates: [item.image.lon, item.image.lat],
+			},
+			properties: {
+				num: String(index + 1),
+				image_id: item.image.provider_image_id,
+				instance_id:
+					item.instance_id != null && item.instance_id !== ""
+						? String(item.instance_id)
+						: "",
+			},
+		}));
+
+		pointSource.setData({ type: "FeatureCollection", features });
+	}
+
+	function clearObjectSeenImageMarkers() {
+		const empty = { type: "FeatureCollection", features: [] };
+		map?.getSource("object-seen-images")?.setData(empty);
+	}
+
+	function fitMapToObjectSeenSequence(items, objectCoords) {
+		if (!map) return;
+		const coords = (items || [])
+			.map((item) => {
+				const lon = Number(item.image?.lon);
+				const lat = Number(item.image?.lat);
+				return Number.isFinite(lon) && Number.isFinite(lat) ? [lon, lat] : null;
+			})
+			.filter(Boolean);
+		if (Array.isArray(objectCoords) && objectCoords.length >= 2) {
+			coords.push([objectCoords[0], objectCoords[1]]);
+		}
+		if (!coords.length) return;
+		const bounds = coords.reduce(
+			(acc, coord) => acc.extend(coord),
+			new maplibregl.LngLatBounds(coords[0], coords[0]),
+		);
+		map.fitBounds(bounds, { padding: { top: 90, bottom: 90, left: 340, right: 90 }, maxZoom: 19, duration: 650 });
+	}
+
 	function getRelatedImageIdForAiObject(properties) {
 		try {
 			const seenIn = typeof properties.seen_in === "string" ? JSON.parse(properties.seen_in) : properties.seen_in;
 			const first = Array.isArray(seenIn) ? seenIn[0] : null;
-			const imageName = first?.image || first?.image_path;
+			const imageName =
+				typeof first === "string" ? first : first?.image || first?.image_path || first?.img_stem;
 			if (!imageName || !map?.getSource("local-images")) return null;
 			const features = map.getSource("local-images")._data?.features || [];
 			const seenKey = toComparableImageKey(imageName);
@@ -1448,7 +1645,13 @@ export function startLegacyMapillaryApp() {
 					: `http://localhost:3000${thumbUrl}`;
 				imageEl.classList.add("visible");
 				emptyEl?.classList.add("hidden");
-				imageEl.onload = () => renderSegmentationOverlay(imageId, data);
+				imageEl.onload = () => {
+					if (viewerSegmentationSession?.providerImageId === imageId) {
+						viewerSegmentationSession.onImageReady?.();
+						return;
+					}
+					clearViewerSegmentationOverlay();
+				};
 			} else {
 				imageEl.removeAttribute("src");
 				imageEl.classList.remove("visible");
@@ -1467,94 +1670,12 @@ export function startLegacyMapillaryApp() {
 		}
 	}
 
-	async function renderSegmentationOverlay(imageId, imageData) {
-		const canvas = document.getElementById("segmentationCanvas");
+	function clearViewerSegmentationOverlay() {
+		disableViewerSegmentationHover();
 		const legend = document.getElementById("segmentationLegend");
-		const imageEl = document.getElementById("localViewerImage");
-		if (!canvas || !legend || !imageEl) return;
-		const clear = () => {
-			const ctx = canvas.getContext("2d");
-			ctx?.clearRect(0, 0, canvas.width, canvas.height);
-			legend.hidden = true;
-			legend.innerHTML = "";
-		};
-		if (imageData?.provider !== "ai_upload" || !imageData?.segmentation_path) {
-			clear();
-			return;
-		}
-		try {
-			const [matrixRes, segmentsRes] = await Promise.all([
-				fetch(`${LOCAL_API}/ai-images/${imageId}/instance-matrix`),
-				fetch(`${LOCAL_API}/ai-images/${imageId}/segments`),
-			]);
-			if (!matrixRes.ok) throw new Error("Không tải được segmentation matrix");
-			const matrixJson = await matrixRes.json();
-			const segmentsJson = await segmentsRes.json().catch(() => ({ data: [] }));
-			const matrix = matrixJson.instance_matrix;
-			if (!Array.isArray(matrix) || !matrix.length || !Array.isArray(matrix[0])) {
-				clear();
-				return;
-			}
-			const height = matrix.length;
-			const width = matrix[0].length;
-			canvas.width = imageEl.clientWidth;
-			canvas.height = imageEl.clientHeight;
-			const offscreen = document.createElement("canvas");
-			offscreen.width = width;
-			offscreen.height = height;
-			const offCtx = offscreen.getContext("2d");
-			const imageDataBuffer = offCtx.createImageData(width, height);
-			const segmentByInstance = new Map();
-			(segmentsJson.data || []).forEach((row) => {
-				const raw = row.raw_json || {};
-				if (raw.instance_id != null) segmentByInstance.set(Number(raw.instance_id), raw);
-			});
-			for (let y = 0; y < height; y++) {
-				const row = matrix[y];
-				for (let x = 0; x < width; x++) {
-					const id = Number(row[x]);
-					if (!id) continue;
-					const seg = segmentByInstance.get(id);
-					const rgb = Array.isArray(seg?.rgb) ? seg.rgb : [124, 58, 237];
-					const idx = (y * width + x) * 4;
-					imageDataBuffer.data[idx] = rgb[0];
-					imageDataBuffer.data[idx + 1] = rgb[1];
-					imageDataBuffer.data[idx + 2] = rgb[2];
-					imageDataBuffer.data[idx + 3] = 88;
-				}
-			}
-			offCtx.putImageData(imageDataBuffer, 0, 0);
-			const ctx = canvas.getContext("2d");
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			const imageNaturalWidth = imageEl.naturalWidth || width;
-			const imageNaturalHeight = imageEl.naturalHeight || height;
-			const imageRatio = imageNaturalWidth / imageNaturalHeight;
-			const canvasRatio = canvas.width / canvas.height;
-			let drawWidth = canvas.width;
-			let drawHeight = canvas.height;
-			let drawX = 0;
-			let drawY = 0;
-			if (imageRatio > canvasRatio) {
-				drawHeight = canvas.width / imageRatio;
-				drawY = (canvas.height - drawHeight) / 2;
-			} else {
-				drawWidth = canvas.height * imageRatio;
-				drawX = (canvas.width - drawWidth) / 2;
-			}
-			ctx.drawImage(offscreen, drawX, drawY, drawWidth, drawHeight);
-			const topSegments = (segmentsJson.data || []).slice(0, 6);
-			legend.innerHTML = topSegments
-				.map((row) => {
-					const raw = row.raw_json || {};
-					const rgb = Array.isArray(raw.rgb) ? raw.rgb.join(",") : "124,58,237";
-					return `<span><i style="background:rgb(${rgb})"></i>${row.label}</span>`;
-				})
-				.join("");
-			legend.hidden = topSegments.length === 0;
-		} catch (error) {
-			console.warn("Segmentation overlay failed:", error);
-			clear();
-		}
+		if (!legend) return;
+		legend.hidden = true;
+		legend.innerHTML = "";
 	}
 
 	function syncLocalMapSelection(imageData) {
@@ -1867,6 +1988,7 @@ export function startLegacyMapillaryApp() {
 	}
 
 	function closeViewerCompletely() {
+		disableViewerSegmentationHover();
 		stopAutoPlay();
 		viewerClosed = true;
 		viewerMinimized = false;
@@ -2096,6 +2218,7 @@ export function startLegacyMapillaryApp() {
 						`Frame ${index + 1}`,
 					imageUrl:
 						item.image_url ||
+						item.image_path ||
 						item.thumb_1024_url ||
 						item.thumb_256_url ||
 						item.url ||
@@ -2119,23 +2242,37 @@ export function startLegacyMapillaryApp() {
 		return [(id * 37) % 256, (id * 67) % 256, (id * 97) % 256];
 	}
 
-	function getUploadImageFit(img, canvas) {
-		const naturalW = img.naturalWidth || canvas.width;
-		const naturalH = img.naturalHeight || canvas.height;
-		const scale = Math.max(canvas.width / naturalW, canvas.height / naturalH);
+	function getImageContainFit(naturalW, naturalH, canvasW, canvasH) {
+		const scale = Math.min(canvasW / naturalW, canvasH / naturalH);
 		const drawW = naturalW * scale;
 		const drawH = naturalH * scale;
 		return {
 			naturalW,
 			naturalH,
 			scale,
-			offsetX: (canvas.width - drawW) / 2,
-			offsetY: (canvas.height - drawH) / 2,
+			drawW,
+			drawH,
+			offsetX: (canvasW - drawW) / 2,
+			offsetY: (canvasH - drawH) / 2,
 		};
 	}
 
-	function uploadCanvasToMatrix(x, y, img, canvas, matrixW, matrixH) {
-		const fit = getUploadImageFit(img, canvas);
+	function getImageCoverFit(naturalW, naturalH, canvasW, canvasH) {
+		const scale = Math.max(canvasW / naturalW, canvasH / naturalH);
+		const drawW = naturalW * scale;
+		const drawH = naturalH * scale;
+		return {
+			naturalW,
+			naturalH,
+			scale,
+			drawW,
+			drawH,
+			offsetX: (canvasW - drawW) / 2,
+			offsetY: (canvasH - drawH) / 2,
+		};
+	}
+
+	function canvasPointToMatrix(x, y, fit, matrixW, matrixH) {
 		const imageX = (x - fit.offsetX) / fit.scale;
 		const imageY = (y - fit.offsetY) / fit.scale;
 		if (imageX < 0 || imageY < 0 || imageX >= fit.naturalW || imageY >= fit.naturalH) {
@@ -2147,70 +2284,124 @@ export function startLegacyMapillaryApp() {
 		};
 	}
 
-	function createUploadInstanceOverlay(instanceId, meta, img, canvas, matrix, matrixW, matrixH) {
+	const SEGMENTATION_MASK_ALPHA = 0.55;
+	let viewerSegmentationSession = null;
+	let objectImageModalSession = null;
+
+	function formatSegmentationTooltip(meta, instanceId) {
+		const name = meta.sign_name || meta.class_name || `class_${meta.class_id ?? instanceId}`;
+		const score = meta.score != null ? Number(meta.score).toFixed(3) : "n/a";
+		return `<strong>${name}</strong><span>instance #${instanceId} · score ${score}</span>`;
+	}
+
+	async function loadInstanceSegmentationState(providerImageId) {
+		const [matrixRes, segmentsRes] = await Promise.all([
+			fetch(`${LOCAL_API}/ai-images/${encodeURIComponent(providerImageId)}/instance-matrix`),
+			fetch(`${LOCAL_API}/ai-images/${encodeURIComponent(providerImageId)}/segments`),
+		]);
+		if (!matrixRes.ok) throw new Error("Không tải được segmentation matrix");
+		const matrixJson = await matrixRes.json();
+		const segmentsJson = await segmentsRes.json().catch(() => ({ data: [] }));
+		const matrix = matrixJson.instance_matrix || matrixJson.mask_matrix;
+		if (!Array.isArray(matrix) || !matrix.length || !Array.isArray(matrix[0])) {
+			throw new Error("Segmentation matrix không hợp lệ");
+		}
+		const instances = new Map();
+		const registerInstance = (raw, label) => {
+			if (raw?.instance_id == null) return;
+			instances.set(Number(raw.instance_id), {
+				...raw,
+				class_name: raw.class_name || label || raw.label,
+				score: raw.score ?? raw.confidence,
+			});
+		};
+		(segmentsJson.data || []).forEach((row) => registerInstance(row.raw_json || {}, row.label));
+		(matrixJson.instances || []).forEach((raw) => registerInstance(raw));
+		return {
+			matrix,
+			matrixH: matrix.length,
+			matrixW: matrix[0].length,
+			instances,
+		};
+	}
+
+	function createInstanceOverlayCanvas(
+		instanceId,
+		meta,
+		fit,
+		canvas,
+		matrix,
+		matrixW,
+		matrixH,
+		alpha,
+		fillRgb = null,
+	) {
 		const overlay = document.createElement("canvas");
 		overlay.width = canvas.width;
 		overlay.height = canvas.height;
 		const octx = overlay.getContext("2d");
 		const imageData = octx.createImageData(canvas.width, canvas.height);
 		const buf = imageData.data;
-		const [r, g, b] = rgbForSegmentationInstance(meta);
+		const [r, g, b] = fillRgb || rgbForSegmentationInstance(meta);
+		const opacity = Math.round(alpha * 255);
+		const targetId = Number(instanceId);
 
 		for (let y = 0; y < canvas.height; y++) {
 			for (let x = 0; x < canvas.width; x++) {
-				const point = uploadCanvasToMatrix(x, y, img, canvas, matrixW, matrixH);
-				if (!point || Number(matrix[point.my]?.[point.mx]) !== instanceId) continue;
+				const point = canvasPointToMatrix(x, y, fit, matrixW, matrixH);
+				if (!point || Number(matrix[point.my]?.[point.mx]) !== targetId) continue;
 				const idx = (y * canvas.width + x) * 4;
 				buf[idx] = r;
 				buf[idx + 1] = g;
 				buf[idx + 2] = b;
-				buf[idx + 3] = 150;
+				buf[idx + 3] = opacity;
 			}
 		}
 		octx.putImageData(imageData, 0, 0);
 		return overlay;
 	}
 
-	function positionUploadSegmentationTooltip(thumb, tooltip, clientX, clientY) {
-		const rect = thumb.getBoundingClientRect();
-		let left = clientX - rect.left + 12;
-		let top = clientY - rect.top + 12;
+	function positionViewerSegmentationTooltip(tooltip, clientX, clientY) {
+		const viewer = document.getElementById("viewer");
+		if (!viewer || !tooltip) return;
+		const rect = viewer.getBoundingClientRect();
+		let left = clientX - rect.left + 14;
+		let top = clientY - rect.top + 14;
 		tooltip.style.left = `${left}px`;
 		tooltip.style.top = `${top}px`;
 		requestAnimationFrame(() => {
-			if (left + tooltip.offsetWidth > rect.width - 4) {
-				left = Math.max(4, left - tooltip.offsetWidth - 24);
+			if (left + tooltip.offsetWidth > rect.width - 8) {
+				left = Math.max(8, left - tooltip.offsetWidth - 28);
 			}
-			if (top + tooltip.offsetHeight > rect.height - 4) {
-				top = Math.max(4, top - tooltip.offsetHeight - 24);
+			if (top + tooltip.offsetHeight > rect.height - 8) {
+				top = Math.max(8, top - tooltip.offsetHeight - 28);
 			}
 			tooltip.style.left = `${left}px`;
 			tooltip.style.top = `${top}px`;
 		});
 	}
 
-	async function attachUploadSegmentationHover(card, item) {
-		if (!item.providerImageId) return;
-		const thumb = card.querySelector(".upload-result-thumb");
-		const img = thumb?.querySelector("img");
-		if (!thumb || !img) return;
+	function disableViewerSegmentationHover() {
+		viewerSegmentationSession?.disable();
+		viewerSegmentationSession = null;
+	}
 
-		const canvas = document.createElement("canvas");
-		canvas.className = "upload-segmentation-canvas";
-		const tooltip = document.createElement("div");
-		tooltip.className = "upload-segmentation-tooltip";
-		tooltip.hidden = true;
-		thumb.append(canvas, tooltip);
+	async function enableViewerSegmentationHover(providerImageId) {
+		disableViewerSegmentationHover();
+		const viewerEl = document.getElementById("viewer");
+		const canvas = document.getElementById("segmentationCanvas");
+		const imageEl = document.getElementById("localViewerImage");
+		const tooltip = document.getElementById("viewerSegmentationTooltip");
+		if (!viewerEl || !canvas || !imageEl || !tooltip) return;
 
 		let state = null;
 		let loading = null;
+		let overlayCache = new Map();
 		let hoverRaf = 0;
-		const overlayCache = new Map();
 
 		const resizeCanvas = () => {
-			const rect = thumb.getBoundingClientRect();
-			const width = Math.max(1, Math.round(rect.width));
-			const height = Math.max(1, Math.round(rect.height));
+			const width = Math.max(1, imageEl.clientWidth);
+			const height = Math.max(1, imageEl.clientHeight);
 			if (canvas.width !== width || canvas.height !== height) {
 				canvas.width = width;
 				canvas.height = height;
@@ -2218,61 +2409,30 @@ export function startLegacyMapillaryApp() {
 			}
 		};
 
-		const loadState = async () => {
-			if (state) return state;
-			if (loading) return loading;
-			loading = (async () => {
-				const [matrixRes, segmentsRes] = await Promise.all([
-					fetch(`${LOCAL_API}/ai-images/${item.providerImageId}/instance-matrix`),
-					fetch(`${LOCAL_API}/ai-images/${item.providerImageId}/segments`),
-				]);
-				if (!matrixRes.ok) throw new Error("Không tải được segmentation matrix");
-				const matrixJson = await matrixRes.json();
-				const segmentsJson = await segmentsRes.json().catch(() => ({ data: [] }));
-				const matrix = matrixJson.instance_matrix || matrixJson.mask_matrix;
-				if (!Array.isArray(matrix) || !matrix.length || !Array.isArray(matrix[0])) {
-					throw new Error("Segmentation matrix không hợp lệ");
-				}
-				const instances = new Map();
-				(segmentsJson.data || []).forEach((row) => {
-					const raw = row.raw_json || {};
-					if (raw.instance_id == null) return;
-					instances.set(Number(raw.instance_id), {
-						...raw,
-						class_name: raw.class_name || row.label,
-						score: raw.score ?? raw.confidence ?? row.confidence,
-					});
-				});
-				state = {
-					matrix,
-					matrixH: matrix.length,
-					matrixW: matrix[0].length,
-					instances,
-				};
-				return state;
-			})().catch((error) => {
-				console.warn("Upload segmentation hover failed:", error);
-				return null;
-			});
-			return loading;
-		};
-
 		const clearHover = () => {
 			const ctx = canvas.getContext("2d");
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx?.clearRect(0, 0, canvas.width, canvas.height);
 			tooltip.hidden = true;
 		};
 
-		const drawHover = async (event) => {
-			const loaded = await loadState();
-			if (!loaded) return;
+		const drawHover = async (clientX, clientY) => {
+			const resolved = state || (await (loading = loading || loadInstanceSegmentationState(providerImageId)));
+			if (!resolved) return;
+			state = resolved;
+			if (!imageEl.complete || !imageEl.naturalWidth) return;
 			resizeCanvas();
 			const rect = canvas.getBoundingClientRect();
-			const x = Math.floor((event.clientX - rect.left) * (canvas.width / rect.width));
-			const y = Math.floor((event.clientY - rect.top) * (canvas.height / rect.height));
-			const point = uploadCanvasToMatrix(x, y, img, canvas, loaded.matrixW, loaded.matrixH);
-			const instanceId = point ? Number(loaded.matrix[point.my]?.[point.mx]) : 0;
-			const meta = instanceId ? loaded.instances.get(instanceId) : null;
+			const x = Math.floor((clientX - rect.left) * (canvas.width / rect.width));
+			const y = Math.floor((clientY - rect.top) * (canvas.height / rect.height));
+			const fit = getImageContainFit(
+				imageEl.naturalWidth,
+				imageEl.naturalHeight,
+				canvas.width,
+				canvas.height,
+			);
+			const point = canvasPointToMatrix(x, y, fit, resolved.matrixW, resolved.matrixH);
+			const instanceId = point ? Number(resolved.matrix[point.my]?.[point.mx]) : 0;
+			const meta = instanceId ? resolved.instances.get(instanceId) : null;
 			const ctx = canvas.getContext("2d");
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			if (!instanceId || !meta) {
@@ -2283,29 +2443,300 @@ export function startLegacyMapillaryApp() {
 			if (!overlayCache.has(key)) {
 				overlayCache.set(
 					key,
-					createUploadInstanceOverlay(instanceId, meta, img, canvas, loaded.matrix, loaded.matrixW, loaded.matrixH),
+					createInstanceOverlayCanvas(
+						instanceId,
+						meta,
+						fit,
+						canvas,
+						resolved.matrix,
+						resolved.matrixW,
+						resolved.matrixH,
+						SEGMENTATION_MASK_ALPHA,
+					),
 				);
 			}
 			ctx.drawImage(overlayCache.get(key), 0, 0);
-			const name = meta.sign_name || meta.class_name || `class_${meta.class_id}`;
-			const score = meta.score != null ? Number(meta.score).toFixed(3) : "n/a";
-			tooltip.innerHTML = `<strong>${name}</strong><span>instance #${instanceId} - score ${score}</span>`;
+			tooltip.innerHTML = formatSegmentationTooltip(meta, instanceId);
 			tooltip.hidden = false;
-			positionUploadSegmentationTooltip(thumb, tooltip, event.clientX, event.clientY);
+			positionViewerSegmentationTooltip(tooltip, clientX, clientY);
 		};
 
-		thumb.addEventListener("mousemove", (event) => {
+		const onMove = (event) => {
 			if (hoverRaf) return;
 			hoverRaf = requestAnimationFrame(() => {
 				hoverRaf = 0;
-				drawHover(event);
+				drawHover(event.clientX, event.clientY);
 			});
-		});
-		thumb.addEventListener("mouseleave", clearHover);
-		img.addEventListener("load", () => {
+		};
+		const onLeave = () => clearHover();
+
+		canvas.classList.add("segmentation-interactive");
+		viewerEl.addEventListener("mousemove", onMove);
+		viewerEl.addEventListener("mouseleave", onLeave);
+
+		const onImageReady = () => {
 			resizeCanvas();
 			clearHover();
+		};
+
+		viewerSegmentationSession = {
+			providerImageId,
+			onImageReady,
+			disable: () => {
+				viewerEl.removeEventListener("mousemove", onMove);
+				viewerEl.removeEventListener("mouseleave", onLeave);
+				canvas.classList.remove("segmentation-interactive");
+				clearHover();
+			},
+		};
+
+		onImageReady();
+	}
+
+	function positionObjectImageModalTooltip(tooltip, stage, clientX, clientY) {
+		if (!tooltip || !stage) return;
+		const rect = stage.getBoundingClientRect();
+		let left = clientX - rect.left + 14;
+		let top = clientY - rect.top + 14;
+		tooltip.style.left = `${left}px`;
+		tooltip.style.top = `${top}px`;
+		requestAnimationFrame(() => {
+			if (left + tooltip.offsetWidth > rect.width - 8) {
+				left = Math.max(8, left - tooltip.offsetWidth - 28);
+			}
+			if (top + tooltip.offsetHeight > rect.height - 8) {
+				top = Math.max(8, top - tooltip.offsetHeight - 28);
+			}
+			tooltip.style.left = `${left}px`;
+			tooltip.style.top = `${top}px`;
 		});
+	}
+
+	function closeObjectImageModal() {
+		objectImageModalSession?.close();
+		objectImageModalSession = null;
+	}
+
+	async function openObjectImageModal(providerImageId, cardEl, focusInstanceId = null) {
+		if (!providerImageId) return;
+		closeObjectImageModal();
+
+		document
+			.querySelectorAll(".detection-card.selected")
+			.forEach((el) => el.classList.remove("selected"));
+		cardEl?.classList.add("selected");
+
+		const modal = document.getElementById("objectImageModal");
+		const stage = document.getElementById("objectImageModalStage");
+		const canvas = document.getElementById("objectImageModalCanvas");
+		const tooltip = document.getElementById("objectImageModalTooltip");
+		if (!modal || !stage || !canvas || !tooltip) return;
+
+		const resolvedFocusInstanceId =
+			focusInstanceId ?? cardEl?.dataset?.instanceId ?? null;
+
+		const img = new Image();
+		img.decoding = "async";
+		img.src = `${LOCAL_API}/ai-images/${encodeURIComponent(providerImageId)}/image`;
+
+		let state = null;
+		let loading = null;
+		let overlayCache = new Map();
+		let hoverRaf = 0;
+		let blinkRaf = 0;
+		let closed = false;
+
+		const resizeCanvas = () => {
+			const width = Math.max(1, Math.round(stage.clientWidth));
+			const height = Math.max(1, Math.round(stage.clientHeight));
+			if (canvas.width !== width || canvas.height !== height) {
+				canvas.width = width;
+				canvas.height = height;
+				overlayCache.clear();
+			}
+		};
+
+		const getFit = () =>
+			getImageContainFit(img.naturalWidth, img.naturalHeight, canvas.width, canvas.height);
+
+		const drawBase = () => {
+			const ctx = canvas.getContext("2d");
+			const fit = getFit();
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.drawImage(img, fit.offsetX, fit.offsetY, fit.drawW, fit.drawH);
+			return fit;
+		};
+
+		const getCachedInstanceOverlay = (instanceId, meta, fit, resolved, variant = "color") => {
+			const key = `${instanceId}:${canvas.width}x${canvas.height}:${variant}`;
+			if (!overlayCache.has(key)) {
+				const fillRgb = variant === "white" ? [255, 255, 255] : null;
+				overlayCache.set(
+					key,
+					createInstanceOverlayCanvas(
+						instanceId,
+						meta,
+						fit,
+						canvas,
+						resolved.matrix,
+						resolved.matrixW,
+						resolved.matrixH,
+						SEGMENTATION_MASK_ALPHA,
+						fillRgb,
+					),
+				);
+			}
+			return overlayCache.get(key);
+		};
+
+		const drawFocusedInstanceOverlay = (instanceId, variant, resolved) => {
+			const targetId = Number(instanceId);
+			const meta = resolved.instances.get(targetId);
+			if (!meta) return;
+			const fit = drawBase();
+			const ctx = canvas.getContext("2d");
+			ctx.drawImage(getCachedInstanceOverlay(targetId, meta, fit, resolved, variant), 0, 0);
+		};
+
+		const stopFocusBlink = () => {
+			if (!blinkRaf) return;
+			cancelAnimationFrame(blinkRaf);
+			blinkRaf = 0;
+		};
+
+		const startFocusInstanceBlink = async (instanceId) => {
+			const targetId = Number(instanceId);
+			if (!Number.isFinite(targetId) || targetId <= 0) return;
+			const resolved =
+				state || (await (loading = loading || loadInstanceSegmentationState(providerImageId)));
+			if (!resolved || closed || !resolved.instances.has(targetId)) return;
+			state = resolved;
+			stopFocusBlink();
+			const startedAt = performance.now();
+
+			const tick = (now) => {
+				if (closed) return;
+				const elapsed = now - startedAt;
+				const isWhitePhase = Math.floor(elapsed / 520) % 2 === 0;
+				drawFocusedInstanceOverlay(targetId, isWhitePhase ? "white" : "color", resolved);
+				blinkRaf = requestAnimationFrame(tick);
+			};
+
+			blinkRaf = requestAnimationFrame(tick);
+		};
+
+		const drawHover = async (clientX, clientY) => {
+			if (closed || !img.complete || !img.naturalWidth) return;
+			const resolved =
+				state || (await (loading = loading || loadInstanceSegmentationState(providerImageId)));
+			if (!resolved || closed) return;
+			state = resolved;
+			resizeCanvas();
+			const fit = drawBase();
+			const rect = canvas.getBoundingClientRect();
+			const x = Math.floor((clientX - rect.left) * (canvas.width / rect.width));
+			const y = Math.floor((clientY - rect.top) * (canvas.height / rect.height));
+			const point = canvasPointToMatrix(x, y, fit, resolved.matrixW, resolved.matrixH);
+			const instanceId = point ? Number(resolved.matrix[point.my]?.[point.mx]) : 0;
+			const meta = instanceId ? resolved.instances.get(instanceId) : null;
+			const ctx = canvas.getContext("2d");
+			if (!instanceId || !meta) {
+				tooltip.hidden = true;
+				if (resolvedFocusInstanceId != null && resolvedFocusInstanceId !== "") {
+					startFocusInstanceBlink(resolvedFocusInstanceId);
+				} else {
+					drawBase();
+				}
+				return;
+			}
+			ctx.drawImage(getCachedInstanceOverlay(instanceId, meta, fit, resolved), 0, 0);
+			tooltip.innerHTML = formatSegmentationTooltip(meta, instanceId);
+			tooltip.hidden = false;
+			positionObjectImageModalTooltip(tooltip, stage, clientX, clientY);
+		};
+
+		const onMove = (event) => {
+			stopFocusBlink();
+			if (hoverRaf) return;
+			hoverRaf = requestAnimationFrame(() => {
+				hoverRaf = 0;
+				drawHover(event.clientX, event.clientY);
+			});
+		};
+		const onLeave = () => {
+			tooltip.hidden = true;
+			if (resolvedFocusInstanceId != null && resolvedFocusInstanceId !== "") {
+				startFocusInstanceBlink(resolvedFocusInstanceId);
+				return;
+			}
+			stopFocusBlink();
+			drawBase();
+		};
+		const onResize = () => {
+			resizeCanvas();
+			tooltip.hidden = true;
+			if (resolvedFocusInstanceId != null && resolvedFocusInstanceId !== "") {
+				startFocusInstanceBlink(resolvedFocusInstanceId);
+				return;
+			}
+			stopFocusBlink();
+			drawBase();
+		};
+		const onKeyDown = (event) => {
+			if (event.key === "Escape") closeObjectImageModal();
+		};
+
+		const close = () => {
+			if (closed) return;
+			closed = true;
+			stopFocusBlink();
+			canvas.removeEventListener("mousemove", onMove);
+			canvas.removeEventListener("mouseleave", onLeave);
+			window.removeEventListener("resize", onResize);
+			document.removeEventListener("keydown", onKeyDown);
+			document.body.classList.remove("object-image-modal-open");
+			modal.hidden = true;
+			tooltip.hidden = true;
+			const ctx = canvas.getContext("2d");
+			ctx?.clearRect(0, 0, canvas.width, canvas.height);
+			if (objectImageModalSession?.close === close) {
+				objectImageModalSession = null;
+			}
+		};
+
+		objectImageModalSession = { close };
+		modal.hidden = false;
+		document.body.classList.add("object-image-modal-open");
+
+		canvas.addEventListener("mousemove", onMove);
+		canvas.addEventListener("mouseleave", onLeave);
+		window.addEventListener("resize", onResize);
+		document.addEventListener("keydown", onKeyDown);
+
+		try {
+			await new Promise((resolve, reject) => {
+				img.onload = () => resolve();
+				img.onerror = () => reject(new Error("Không tải được ảnh"));
+			});
+			if (closed) return;
+			resizeCanvas();
+			drawBase();
+			if (resolvedFocusInstanceId != null && resolvedFocusInstanceId !== "") {
+				await startFocusInstanceBlink(resolvedFocusInstanceId);
+			}
+		} catch (error) {
+			close();
+			console.error(error);
+		}
+	}
+
+	function initObjectImageModal() {
+		document
+			.getElementById("objectImageModalClose")
+			?.addEventListener("click", closeObjectImageModal);
+		document
+			.getElementById("objectImageModalBackdrop")
+			?.addEventListener("click", closeObjectImageModal);
 	}
 
 	async function syncAiUploadToLocalDatabase(aiPayload) {
@@ -2387,7 +2818,6 @@ export function startLegacyMapillaryApp() {
 			});
 
 			grid.appendChild(card);
-			attachUploadSegmentationHover(card, item);
 		});
 	}
 
@@ -3767,15 +4197,18 @@ export function startLegacyMapillaryApp() {
 	document
 		.getElementById("detectionClose")
 		.addEventListener("click", closeDetectionPanel);
+	initObjectImageModal();
 	detNextBtn.addEventListener("click", () => {
 		detPage++;
 		renderDetectionPage();
 	});
 
 	function closeDetectionPanel() {
+		closeObjectImageModal();
 		detPanel.classList.remove("open");
 		allDetections = [];
 		detPage = 0;
+		clearObjectSeenImageMarkers();
 	}
 
 	async function openDetectionPanel(mapFeatureId, label, iconUrl, coords) {
@@ -3817,6 +4250,201 @@ export function startLegacyMapillaryApp() {
 		}
 	}
 
+	async function openAiObjectDetectionPanel(properties, objectCoords = null) {
+		const pointId = properties?.id;
+		if (!pointId) return;
+		const label = properties.sign_value
+			? SIGN_TYPES_MAP[properties.sign_value]?.label || properties.sign_value
+			: POINT_TYPES_MAP[properties.icon_value]?.label || properties.label || pointId;
+		const iconUrl = properties.sign_value
+			? getSignIconUrl(properties.sign_value)
+			: getPointIconUrl(properties.icon_value || properties.label);
+		const seenInPreview = buildObjectSeenItemsFromSeenIn(parseSeenInEntries(properties));
+
+		detTitle.textContent = label;
+		detIcon.style.display = "";
+		detIcon.src = iconUrl;
+		detIcon.onerror = () => {
+			detIcon.style.display = "none";
+		};
+		detList.innerHTML =
+			'<div style="padding:32px;text-align:center;color:#9ca3af;">Loading AI object images...</div>';
+		detPageInfo.textContent = "";
+		detNextBtn.style.display = "none";
+		detPanel.classList.add("open");
+
+		if (seenInPreview.length) {
+			updateObjectSeenImageMarkers(seenInPreview);
+			fitMapToObjectSeenSequence(seenInPreview, objectCoords);
+		} else {
+			clearObjectSeenImageMarkers();
+		}
+
+		try {
+			const res = await fetch(`${LOCAL_API}/ai-object-points/${encodeURIComponent(pointId)}/images`);
+			const json = await res.json();
+			if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+			const items = json.data || [];
+			if (!items.length) {
+				clearObjectSeenImageMarkers();
+				detList.innerHTML =
+					'<div style="padding:32px;text-align:center;color:#9ca3af;">No AI upload images found for this object.</div>';
+				return;
+			}
+			detTitle.textContent = `${label} · ${items.length} ảnh trên sequence`;
+			allDetections = items.map((item) => ({
+				type: "ai-object-image",
+				image: item.image,
+				instance_id: item.instance_id,
+				thumb_url: item.thumb_url,
+			}));
+			detPage = 0;
+			updateObjectSeenImageMarkers(items);
+			fitMapToObjectSeenSequence(items, objectCoords);
+			renderDetectionPage();
+		} catch (err) {
+			console.warn("AI object image fetch failed:", err);
+			detList.innerHTML =
+				'<div style="padding:32px;text-align:center;color:#e05643;">Failed to load AI object images.</div>';
+		}
+	}
+
+	function openObjectImageModalFromMap(providerImageId, instanceId = null) {
+		if (!providerImageId) return;
+		const card = document.querySelector(
+			`.detection-card[data-image-id="${CSS.escape(providerImageId)}"]`,
+		);
+		openObjectImageModal(
+			providerImageId,
+			card || null,
+			instanceId ?? card?.dataset?.instanceId ?? null,
+		);
+	}
+
+	function resolveBboxImageDimensions(matrix, imageWidth, imageHeight, imageSize, naturalW, naturalH) {
+		if (naturalW > 0 && naturalH > 0) {
+			return { sourceW: naturalW, sourceH: naturalH };
+		}
+		const matrixW = matrix?.[0]?.length || 1;
+		const matrixH = matrix?.length || 1;
+		const matrixAspect = matrixW / matrixH;
+		const candidates = [];
+		if (Array.isArray(imageSize) && imageSize.length >= 2) {
+			candidates.push([imageSize[0], imageSize[1]], [imageSize[1], imageSize[0]]);
+		}
+		if (imageWidth > 0 && imageHeight > 0) {
+			candidates.push([imageWidth, imageHeight], [imageHeight, imageWidth]);
+		}
+		if (!candidates.length) {
+			return { sourceW: matrixW, sourceH: matrixH };
+		}
+		let best = candidates[0];
+		let bestDiff = Infinity;
+		for (const [w, h] of candidates) {
+			const diff = Math.abs(w / h - matrixAspect);
+			if (diff < bestDiff) {
+				bestDiff = diff;
+				best = [w, h];
+			}
+		}
+		return { sourceW: best[0], sourceH: best[1] };
+	}
+
+	function bboxStyleForCover(bbox, sourceW, sourceH, container) {
+		if (!bbox || !sourceW || !sourceH || !container) return "";
+		const rect = container.getBoundingClientRect();
+		const containerW = rect.width || container.clientWidth || 1;
+		const containerH = rect.height || container.clientHeight || 1;
+		const scale = Math.max(containerW / sourceW, containerH / sourceH);
+		const drawW = sourceW * scale;
+		const drawH = sourceH * scale;
+		const offsetX = (containerW - drawW) / 2;
+		const offsetY = (containerH - drawH) / 2;
+		const left = ((bbox.x * scale + offsetX) / containerW) * 100;
+		const top = ((bbox.y * scale + offsetY) / containerH) * 100;
+		const width = (bbox.w * scale / containerW) * 100;
+		const height = (bbox.h * scale / containerH) * 100;
+		return `left:${left}%;top:${top}%;width:${width}%;height:${height}%`;
+	}
+
+	function computeInstanceBbox(matrix, instanceId, imageWidth, imageHeight) {
+		const target = Number(instanceId);
+		if (!target || !Array.isArray(matrix) || !matrix.length) return null;
+		const matrixW = matrix[0]?.length || 1;
+		const matrixH = matrix.length;
+		let minX = Infinity;
+		let minY = Infinity;
+		let maxX = -1;
+		let maxY = -1;
+		for (let y = 0; y < matrixH; y++) {
+			const row = matrix[y];
+			if (!Array.isArray(row)) continue;
+			for (let x = 0; x < row.length; x++) {
+				if (Number(row[x]) !== target) continue;
+				if (x < minX) minX = x;
+				if (y < minY) minY = y;
+				if (x > maxX) maxX = x;
+				if (y > maxY) maxY = y;
+			}
+		}
+		if (maxX < minX || maxY < minY) return null;
+		const sourceW = Number(imageWidth) || matrixW;
+		const sourceH = Number(imageHeight) || matrixH;
+		const scaleX = sourceW / matrixW;
+		const scaleY = sourceH / matrixH;
+		return {
+			x: minX * scaleX,
+			y: minY * scaleY,
+			w: (maxX - minX + 1) * scaleX,
+			h: (maxY - minY + 1) * scaleY,
+			sourceW,
+			sourceH,
+		};
+	}
+
+	async function attachAiObjectBbox(card, imageId, instanceId, imageWidth, imageHeight) {
+		if (!card || !imageId || instanceId == null) return;
+		const imgBox = card.querySelector(".detection-card-img");
+		if (!imgBox) return;
+		try {
+			const res = await fetch(`${LOCAL_API}/ai-images/${encodeURIComponent(imageId)}/instance-matrix`);
+			const json = await res.json();
+			if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+			const matrix = json.instance_matrix || json.mask_matrix;
+			if (!Array.isArray(matrix) || !matrix.length) return;
+			let box = imgBox.querySelector(".detection-bbox");
+			if (!box) {
+				box = document.createElement("div");
+				box.className = "detection-bbox";
+				imgBox.appendChild(box);
+			}
+			const img = imgBox.querySelector("img");
+			const paintBbox = () => {
+				const dims = resolveBboxImageDimensions(
+					matrix,
+					imageWidth,
+					imageHeight,
+					json.image_size,
+					img?.naturalWidth,
+					img?.naturalHeight,
+				);
+				const bbox = computeInstanceBbox(matrix, instanceId, dims.sourceW, dims.sourceH);
+				if (!bbox) return;
+				box.setAttribute(
+					"style",
+					bboxStyleForCover(bbox, dims.sourceW, dims.sourceH, imgBox),
+				);
+			};
+			paintBbox();
+			if (img) {
+				if (img.complete) paintBbox();
+				else img.addEventListener("load", paintBbox, { once: true });
+			}
+		} catch (err) {
+			console.warn("AI object bbox failed:", err);
+		}
+	}
+
 	function renderDetectionPage() {
 		const start = detPage * DET_PER_PAGE;
 		const pageItems = allDetections.slice(start, start + DET_PER_PAGE);
@@ -3827,29 +4455,42 @@ export function startLegacyMapillaryApp() {
 
 		pageItems.forEach((det, i) => {
 			const num = start + i + 1;
-			const thumbUrl = det._thumb?.thumb_1024_url
-				? det._thumb.thumb_1024_url.startsWith("/")
-					? `http://localhost:3000${det._thumb.thumb_1024_url}`
-					: det._thumb.thumb_1024_url
+			const isAiObjectImage = det.type === "ai-object-image";
+			const thumbSource = isAiObjectImage ? det.thumb_url : det._thumb?.thumb_1024_url;
+			const thumbUrl = thumbSource
+				? thumbSource.startsWith("/")
+					? `http://localhost:3000${thumbSource}`
+					: thumbSource
 				: "";
-			const imgW = det._thumb?.width || 1;
-			const imgH = det._thumb?.height || 1;
+			const imgW = (isAiObjectImage ? det.image?.width : det._thumb?.width) || 1;
+			const imgH = (isAiObjectImage ? det.image?.height : det._thumb?.height) || 1;
 
 			const card = document.createElement("div");
 			card.className = "detection-card";
+			if (isAiObjectImage && det.image?.provider_image_id) {
+				card.dataset.imageId = det.image.provider_image_id;
+			}
+			if (isAiObjectImage && det.instance_id != null) {
+				card.dataset.instanceId = String(det.instance_id);
+			}
 
 			// Decode bounding box from base64 MVT geometry
 			let bboxHtml = "";
-			if (det.geometry) {
+			if (!isAiObjectImage && det.geometry) {
 				const bbox = decodeBboxSimple(det.geometry, imgW, imgH);
 				if (bbox) {
 					bboxHtml = `<div class="detection-bbox" style="left:${bbox.x}%;top:${bbox.y}%;width:${bbox.w}%;height:${bbox.h}%"></div>`;
 				}
 			}
+			const instanceHtml =
+				isAiObjectImage && det.instance_id != null
+					? `<span class="det-instance">instance #${det.instance_id}</span>`
+					: "";
 
 			card.innerHTML = `
           <div class="detection-card-header">
             <span class="det-num">${num}</span>
+            ${instanceHtml}
           </div>
           <div class="detection-card-img">
             ${thumbUrl ? `<img src="${thumbUrl}" alt="Detection ${num}" loading="lazy">` : '<div style="padding:40px;text-align:center;color:#9ca3af;">No image</div>'}
@@ -3857,12 +4498,26 @@ export function startLegacyMapillaryApp() {
           </div>
         `;
 
-			// Click card → navigate viewer to that image
-			card.addEventListener("click", () => {
-				navigateViewer(String(det.image.id));
+			card.addEventListener("click", async () => {
+				const imageId = isAiObjectImage ? det.image?.provider_image_id : det.image?.id;
+				if (!imageId) return;
+				if (isAiObjectImage) {
+					await openObjectImageModal(imageId, card, det.instance_id);
+					return;
+				}
+				navigateViewer(String(imageId));
 			});
 
 			detList.appendChild(card);
+			if (isAiObjectImage) {
+				attachAiObjectBbox(
+					card,
+					det.image?.provider_image_id,
+					det.instance_id,
+					det.image?.width,
+					det.image?.height,
+				);
+			}
 		});
 
 		detPageInfo.textContent = `${Math.min(start + DET_PER_PAGE, total)} of ${total}`;

@@ -1,0 +1,7053 @@
+
+{
+    "images": {
+      "filename": "GS010051_from45s_0pct_mly.mp4",
+      "seq_uuid": "63285916-c935-4174-8e62-2941f46c8ff5",
+      "count": 7,
+      "data": [
+        {
+          "MAPAltitude": 3.576,
+          "MAPCaptureTime": "2025_08_22_02_32_52_875",
+          "MAPCompassHeading": {
+            "MagneticHeading": 228.67,
+            "TrueHeading": 228.67
+          },
+          "MAPDeviceMake": "GoPro",
+          "MAPDeviceModel": "GoPro Max",
+          "MAPFilename": "GS010051_from45s_0pct_mly_0_000001.jpg",
+          "MAPLatitude": 16.0765723,
+          "MAPLongitude": 108.2072761,
+          "MAPOrientation": 1,
+          "MAPSequenceUUID": "0",
+          "filename": "/__modal/volumes/vo-TwuQgWaEd276itsQkDC0C1/database/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000001.jpg",
+          "filesize": 987984,
+          "filetype": "image",
+          "md5sum": null,
+          "image_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000001.jpg",
+          "image_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000001.jpg"
+        },
+        {
+          "MAPAltitude": 3.595,
+          "MAPCaptureTime": "2025_08_22_02_32_52_916",
+          "MAPCompassHeading": {
+            "MagneticHeading": 227.229,
+            "TrueHeading": 227.229
+          },
+          "MAPDeviceMake": "GoPro",
+          "MAPDeviceModel": "GoPro Max",
+          "MAPFilename": "GS010051_from45s_0pct_mly_0_000002.jpg",
+          "MAPLatitude": 16.0765531,
+          "MAPLongitude": 108.2072536,
+          "MAPOrientation": 1,
+          "MAPSequenceUUID": "0",
+          "filename": "/__modal/volumes/vo-TwuQgWaEd276itsQkDC0C1/database/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000002.jpg",
+          "filesize": 976610,
+          "filetype": "image",
+          "md5sum": null,
+          "image_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000002.jpg",
+          "image_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000002.jpg"
+        },
+        {
+          "MAPAltitude": 3.591,
+          "MAPCaptureTime": "2025_08_22_02_32_52_958",
+          "MAPCompassHeading": {
+            "MagneticHeading": 230.593,
+            "TrueHeading": 230.593
+          },
+          "MAPDeviceMake": "GoPro",
+          "MAPDeviceModel": "GoPro Max",
+          "MAPFilename": "GS010051_from45s_0pct_mly_0_000003.jpg",
+          "MAPLatitude": 16.0765353,
+          "MAPLongitude": 108.207232,
+          "MAPOrientation": 1,
+          "MAPSequenceUUID": "0",
+          "filename": "/__modal/volumes/vo-TwuQgWaEd276itsQkDC0C1/database/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000003.jpg",
+          "filesize": 938422,
+          "filetype": "image",
+          "md5sum": null,
+          "image_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000003.jpg",
+          "image_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000003.jpg"
+        },
+        {
+          "MAPAltitude": 3.605,
+          "MAPCaptureTime": "2025_08_22_02_32_53_865",
+          "MAPCompassHeading": {
+            "MagneticHeading": 227.679,
+            "TrueHeading": 227.679
+          },
+          "MAPDeviceMake": "GoPro",
+          "MAPDeviceModel": "GoPro Max",
+          "MAPFilename": "GS010051_from45s_0pct_mly_0_000004.jpg",
+          "MAPLatitude": 16.0765162,
+          "MAPLongitude": 108.207209,
+          "MAPOrientation": 1,
+          "MAPSequenceUUID": "0",
+          "filename": "/__modal/volumes/vo-TwuQgWaEd276itsQkDC0C1/database/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000004.jpg",
+          "filesize": 916456,
+          "filetype": "image",
+          "md5sum": null,
+          "image_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000004.jpg",
+          "image_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000004.jpg"
+        },
+        {
+          "MAPAltitude": 3.657,
+          "MAPCaptureTime": "2025_08_22_02_32_53_910",
+          "MAPCompassHeading": {
+            "MagneticHeading": 228.769,
+            "TrueHeading": 228.769
+          },
+          "MAPDeviceMake": "GoPro",
+          "MAPDeviceModel": "GoPro Max",
+          "MAPFilename": "GS010051_from45s_0pct_mly_0_000005.jpg",
+          "MAPLatitude": 16.0764972,
+          "MAPLongitude": 108.2071853,
+          "MAPOrientation": 1,
+          "MAPSequenceUUID": "0",
+          "filename": "/__modal/volumes/vo-TwuQgWaEd276itsQkDC0C1/database/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000005.jpg",
+          "filesize": 855266,
+          "filetype": "image",
+          "md5sum": null,
+          "image_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000005.jpg",
+          "image_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000005.jpg"
+        },
+        {
+          "MAPAltitude": 3.63,
+          "MAPCaptureTime": "2025_08_22_02_32_53_955",
+          "MAPCompassHeading": {
+            "MagneticHeading": 229.506,
+            "TrueHeading": 229.506
+          },
+          "MAPDeviceMake": "GoPro",
+          "MAPDeviceModel": "GoPro Max",
+          "MAPFilename": "GS010051_from45s_0pct_mly_0_000006.jpg",
+          "MAPLatitude": 16.0764783,
+          "MAPLongitude": 108.207162,
+          "MAPOrientation": 1,
+          "MAPSequenceUUID": "0",
+          "filename": "/__modal/volumes/vo-TwuQgWaEd276itsQkDC0C1/database/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000006.jpg",
+          "filesize": 826418,
+          "filetype": "image",
+          "md5sum": null,
+          "image_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000006.jpg",
+          "image_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000006.jpg"
+        },
+        {
+          "MAPAltitude": 3.595,
+          "MAPCaptureTime": "2025_08_22_02_32_54_855",
+          "MAPCompassHeading": {
+            "MagneticHeading": 228.633,
+            "TrueHeading": 228.633
+          },
+          "MAPDeviceMake": "GoPro",
+          "MAPDeviceModel": "GoPro Max",
+          "MAPFilename": "GS010051_from45s_0pct_mly_0_000007.jpg",
+          "MAPLatitude": 16.0764572,
+          "MAPLongitude": 108.2071364,
+          "MAPOrientation": 1,
+          "MAPSequenceUUID": "0",
+          "filename": "/__modal/volumes/vo-TwuQgWaEd276itsQkDC0C1/database/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000007.jpg",
+          "filesize": 844479,
+          "filetype": "image",
+          "md5sum": null,
+          "image_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000007.jpg",
+          "image_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000007.jpg"
+        }
+      ],
+      "meta_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/mapillary_image_description.json",
+      "meta_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/mapillary_image_description.json",
+      "frames_prefix": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/"
+    },
+    "segmentation": [
+      {
+        "image_path": "GS010051_from45s_0pct_mly_0_000001.jpg",
+        "image_size": [
+          1344,
+          4096
+        ],
+        "num_instances": 84,
+        "instances": [
+          {
+            "instance_id": 1,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9995705485343933,
+            "area": 100648,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 2,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9990683197975159,
+            "area": 4751,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 3,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9986030459403992,
+            "area": 570,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 4,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9977484345436096,
+            "area": 22647,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 5,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9959142804145813,
+            "area": 4887,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 6,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.993328332901001,
+            "area": 3955,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 7,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9928416013717651,
+            "area": 3289,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 8,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9907744526863098,
+            "area": 4748,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 9,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.990268349647522,
+            "area": 2206,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 10,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9877274036407471,
+            "area": 4760,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 11,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.983950138092041,
+            "area": 3084,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 12,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9812721610069275,
+            "area": 399,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 13,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9804551005363464,
+            "area": 2058,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 14,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9796566367149353,
+            "area": 12085,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 15,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9794030785560608,
+            "area": 1956,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 16,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9785295724868774,
+            "area": 5263,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 17,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.9740993976593018,
+            "area": 201,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 18,
+            "class_id": 33,
+            "class_name": "human--rider--motorcyclist",
+            "score": 0.9638754725456238,
+            "area": 206,
+            "rgb": [
+              255,
+              0,
+              100
+            ]
+          },
+          {
+            "instance_id": 19,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.957624077796936,
+            "area": 443,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 20,
+            "class_id": 55,
+            "class_name": "object--vehicle--bicycle",
+            "score": 0.9564769268035889,
+            "area": 653,
+            "rgb": [
+              119,
+              11,
+              32
+            ]
+          },
+          {
+            "instance_id": 21,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9393606185913086,
+            "area": 1093,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 22,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9370490312576294,
+            "area": 179,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 23,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9338077306747437,
+            "area": 184,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 24,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.9260753393173218,
+            "area": 4855,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 25,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9147912263870239,
+            "area": 109,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 26,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.9122490286827087,
+            "area": 460,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 27,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.9029260873794556,
+            "area": 34,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 28,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.898211658000946,
+            "area": 645,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 29,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8760876655578613,
+            "area": 62,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 30,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8727465867996216,
+            "area": 88,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 31,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8724048733711243,
+            "area": 4837,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 32,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.8700560331344604,
+            "area": 582,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 33,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8659802675247192,
+            "area": 638,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 34,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8610654473304749,
+            "area": 41,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 35,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.859646201133728,
+            "area": 195,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 36,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8575974106788635,
+            "area": 217,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 37,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8481895923614502,
+            "area": 1077,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 38,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8405551910400391,
+            "area": 99,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 39,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8384682536125183,
+            "area": 26,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 40,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8322251439094543,
+            "area": 90,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 41,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7939123511314392,
+            "area": 108,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 42,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.790713369846344,
+            "area": 165,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 43,
+            "class_id": 32,
+            "class_name": "human--rider--bicyclist",
+            "score": 0.778929591178894,
+            "area": 819,
+            "rgb": [
+              255,
+              0,
+              0
+            ]
+          },
+          {
+            "instance_id": 44,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7665267586708069,
+            "area": 47,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 45,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 0.7563895583152771,
+            "area": 529,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 46,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.7554448246955872,
+            "area": 31,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 47,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7373867034912109,
+            "area": 61,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 48,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.7127481698989868,
+            "area": 199,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 49,
+            "class_id": 32,
+            "class_name": "human--rider--bicyclist",
+            "score": 0.7061189413070679,
+            "area": 637,
+            "rgb": [
+              255,
+              0,
+              0
+            ]
+          },
+          {
+            "instance_id": 50,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.7050164937973022,
+            "area": 676,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 51,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.686034083366394,
+            "area": 38,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 52,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.6762256026268005,
+            "area": 55,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 53,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.658949613571167,
+            "area": 300,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 54,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.6479454636573792,
+            "area": 569,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 55,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.6396824717521667,
+            "area": 988,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 56,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.6335884928703308,
+            "area": 234,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 57,
+            "class_id": 55,
+            "class_name": "object--vehicle--bicycle",
+            "score": 0.6304329037666321,
+            "area": 938,
+            "rgb": [
+              119,
+              11,
+              32
+            ]
+          },
+          {
+            "instance_id": 58,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6299577355384827,
+            "area": 118,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 59,
+            "class_id": 33,
+            "class_name": "human--rider--motorcyclist",
+            "score": 0.6290762424468994,
+            "area": 194,
+            "rgb": [
+              255,
+              0,
+              100
+            ]
+          },
+          {
+            "instance_id": 60,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6024366617202759,
+            "area": 176,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 61,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5970689058303833,
+            "area": 55,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 62,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.594219446182251,
+            "area": 76,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 63,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5574864745140076,
+            "area": 97,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 64,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5418469309806824,
+            "area": 98,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 65,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.5245627760887146,
+            "area": 66,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 66,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.5208424925804138,
+            "area": 222,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 67,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5194591283798218,
+            "area": 85,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 68,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5165202021598816,
+            "area": 502,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 69,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.5111543536186218,
+            "area": 52,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 70,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5028904676437378,
+            "area": 44,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 71,
+            "class_id": 0,
+            "class_name": "construction--barrier--curb",
+            "score": 1.0,
+            "area": 58542,
+            "rgb": [
+              196,
+              196,
+              196
+            ]
+          },
+          {
+            "instance_id": 72,
+            "class_id": 1,
+            "class_name": "construction--barrier--fence",
+            "score": 1.0,
+            "area": 52997,
+            "rgb": [
+              190,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 73,
+            "class_id": 4,
+            "class_name": "construction--barrier--wall",
+            "score": 1.0,
+            "area": 9547,
+            "rgb": [
+              102,
+              102,
+              156
+            ]
+          },
+          {
+            "instance_id": 74,
+            "class_id": 7,
+            "class_name": "construction--flat--parking",
+            "score": 1.0,
+            "area": 40820,
+            "rgb": [
+              250,
+              170,
+              160
+            ]
+          },
+          {
+            "instance_id": 75,
+            "class_id": 10,
+            "class_name": "construction--flat--road",
+            "score": 1.0,
+            "area": 554896,
+            "rgb": [
+              128,
+              64,
+              128
+            ]
+          },
+          {
+            "instance_id": 76,
+            "class_id": 12,
+            "class_name": "construction--flat--sidewalk",
+            "score": 1.0,
+            "area": 31065,
+            "rgb": [
+              244,
+              35,
+              232
+            ]
+          },
+          {
+            "instance_id": 77,
+            "class_id": 14,
+            "class_name": "construction--structure--building",
+            "score": 1.0,
+            "area": 222468,
+            "rgb": [
+              70,
+              70,
+              70
+            ]
+          },
+          {
+            "instance_id": 78,
+            "class_id": 16,
+            "class_name": "marking--general",
+            "score": 1.0,
+            "area": 14585,
+            "rgb": [
+              255,
+              255,
+              255
+            ]
+          },
+          {
+            "instance_id": 79,
+            "class_id": 19,
+            "class_name": "nature--sky",
+            "score": 1.0,
+            "area": 421401,
+            "rgb": [
+              70,
+              130,
+              180
+            ]
+          },
+          {
+            "instance_id": 80,
+            "class_id": 21,
+            "class_name": "nature--terrain",
+            "score": 1.0,
+            "area": 115550,
+            "rgb": [
+              152,
+              251,
+              152
+            ]
+          },
+          {
+            "instance_id": 81,
+            "class_id": 22,
+            "class_name": "nature--vegetation",
+            "score": 1.0,
+            "area": 666340,
+            "rgb": [
+              107,
+              142,
+              35
+            ]
+          },
+          {
+            "instance_id": 82,
+            "class_id": 27,
+            "class_name": "void--ego-vehicle",
+            "score": 1.0,
+            "area": 29740,
+            "rgb": [
+              120,
+              10,
+              10
+            ]
+          },
+          {
+            "instance_id": 83,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 1.0,
+            "area": 9265,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 84,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 1.0,
+            "area": 10909,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          }
+        ],
+        "segmentation_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000001.json",
+        "segmentation_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000001.json"
+      },
+      {
+        "image_path": "GS010051_from45s_0pct_mly_0_000002.jpg",
+        "image_size": [
+          1344,
+          4096
+        ],
+        "num_instances": 75,
+        "instances": [
+          {
+            "instance_id": 1,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9995591044425964,
+            "area": 4090,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 2,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9992740750312805,
+            "area": 20867,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 3,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9990231990814209,
+            "area": 853,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 4,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9973214268684387,
+            "area": 4076,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 5,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.996588945388794,
+            "area": 5704,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 6,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9962202906608582,
+            "area": 5048,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 7,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9961889386177063,
+            "area": 50497,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 8,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.9953885078430176,
+            "area": 240,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 9,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9947527647018433,
+            "area": 2173,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 10,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9913729429244995,
+            "area": 406,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 11,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9891903400421143,
+            "area": 783,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 12,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9880831837654114,
+            "area": 10032,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 13,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.974173367023468,
+            "area": 2809,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 14,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9739959239959717,
+            "area": 3022,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 15,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9738746881484985,
+            "area": 15162,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 16,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9738202095031738,
+            "area": 1003,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 17,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9691007733345032,
+            "area": 5696,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 18,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9648092985153198,
+            "area": 2878,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 19,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.964372992515564,
+            "area": 4288,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 20,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.9479396343231201,
+            "area": 854,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 21,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9345889687538147,
+            "area": 103,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 22,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9280520677566528,
+            "area": 359,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 23,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.9279177188873291,
+            "area": 901,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 24,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.923748254776001,
+            "area": 542,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 25,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9153222441673279,
+            "area": 486,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 26,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9120210409164429,
+            "area": 93,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 27,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8902222514152527,
+            "area": 254,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 28,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8846356272697449,
+            "area": 1334,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 29,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8825318217277527,
+            "area": 30,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 30,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.848871111869812,
+            "area": 76,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 31,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8436646461486816,
+            "area": 586,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 32,
+            "class_id": 33,
+            "class_name": "human--rider--motorcyclist",
+            "score": 0.8405506610870361,
+            "area": 571,
+            "rgb": [
+              255,
+              0,
+              100
+            ]
+          },
+          {
+            "instance_id": 33,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8228075504302979,
+            "area": 22,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 34,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.808082103729248,
+            "area": 61,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 35,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8075909614562988,
+            "area": 201,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 36,
+            "class_id": 33,
+            "class_name": "human--rider--motorcyclist",
+            "score": 0.8036655783653259,
+            "area": 328,
+            "rgb": [
+              255,
+              0,
+              100
+            ]
+          },
+          {
+            "instance_id": 37,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7986797094345093,
+            "area": 215,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 38,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.767527163028717,
+            "area": 46,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 39,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.7575727701187134,
+            "area": 6106,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 40,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.7430262565612793,
+            "area": 41,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 41,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7172688841819763,
+            "area": 2644,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 42,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.6976871490478516,
+            "area": 96,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 43,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6915846467018127,
+            "area": 109,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 44,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 0.6783538460731506,
+            "area": 899,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 45,
+            "class_id": 36,
+            "class_name": "object--banner",
+            "score": 0.6738125085830688,
+            "area": 125,
+            "rgb": [
+              255,
+              255,
+              128
+            ]
+          },
+          {
+            "instance_id": 46,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6680800318717957,
+            "area": 162,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 47,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.6580211520195007,
+            "area": 1390,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 48,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.6428797841072083,
+            "area": 2648,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 49,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.6363604664802551,
+            "area": 127,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 50,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.6247714161872864,
+            "area": 30,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 51,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5994576811790466,
+            "area": 75,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 52,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.5912402868270874,
+            "area": 362,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 53,
+            "class_id": 33,
+            "class_name": "human--rider--motorcyclist",
+            "score": 0.588307797908783,
+            "area": 109,
+            "rgb": [
+              255,
+              0,
+              100
+            ]
+          },
+          {
+            "instance_id": 54,
+            "class_id": 33,
+            "class_name": "human--rider--motorcyclist",
+            "score": 0.5796710848808289,
+            "area": 498,
+            "rgb": [
+              255,
+              0,
+              100
+            ]
+          },
+          {
+            "instance_id": 55,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5589749813079834,
+            "area": 32,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 56,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.552060604095459,
+            "area": 329,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 57,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5449370741844177,
+            "area": 151,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 58,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.5387762188911438,
+            "area": 12789,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 59,
+            "class_id": 50,
+            "class_name": "object--support--utility-pole",
+            "score": 0.5044558644294739,
+            "area": 2146,
+            "rgb": [
+              0,
+              0,
+              80
+            ]
+          },
+          {
+            "instance_id": 60,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5017746090888977,
+            "area": 100,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 61,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5013068318367004,
+            "area": 232,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 62,
+            "class_id": 0,
+            "class_name": "construction--barrier--curb",
+            "score": 1.0,
+            "area": 63057,
+            "rgb": [
+              196,
+              196,
+              196
+            ]
+          },
+          {
+            "instance_id": 63,
+            "class_id": 1,
+            "class_name": "construction--barrier--fence",
+            "score": 1.0,
+            "area": 54306,
+            "rgb": [
+              190,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 64,
+            "class_id": 7,
+            "class_name": "construction--flat--parking",
+            "score": 1.0,
+            "area": 11275,
+            "rgb": [
+              250,
+              170,
+              160
+            ]
+          },
+          {
+            "instance_id": 65,
+            "class_id": 10,
+            "class_name": "construction--flat--road",
+            "score": 1.0,
+            "area": 600738,
+            "rgb": [
+              128,
+              64,
+              128
+            ]
+          },
+          {
+            "instance_id": 66,
+            "class_id": 12,
+            "class_name": "construction--flat--sidewalk",
+            "score": 1.0,
+            "area": 42731,
+            "rgb": [
+              244,
+              35,
+              232
+            ]
+          },
+          {
+            "instance_id": 67,
+            "class_id": 14,
+            "class_name": "construction--structure--building",
+            "score": 1.0,
+            "area": 217790,
+            "rgb": [
+              70,
+              70,
+              70
+            ]
+          },
+          {
+            "instance_id": 68,
+            "class_id": 16,
+            "class_name": "marking--general",
+            "score": 1.0,
+            "area": 22961,
+            "rgb": [
+              255,
+              255,
+              255
+            ]
+          },
+          {
+            "instance_id": 69,
+            "class_id": 19,
+            "class_name": "nature--sky",
+            "score": 1.0,
+            "area": 375950,
+            "rgb": [
+              70,
+              130,
+              180
+            ]
+          },
+          {
+            "instance_id": 70,
+            "class_id": 21,
+            "class_name": "nature--terrain",
+            "score": 1.0,
+            "area": 137135,
+            "rgb": [
+              152,
+              251,
+              152
+            ]
+          },
+          {
+            "instance_id": 71,
+            "class_id": 22,
+            "class_name": "nature--vegetation",
+            "score": 1.0,
+            "area": 690336,
+            "rgb": [
+              107,
+              142,
+              35
+            ]
+          },
+          {
+            "instance_id": 72,
+            "class_id": 27,
+            "class_name": "void--ego-vehicle",
+            "score": 1.0,
+            "area": 29704,
+            "rgb": [
+              120,
+              10,
+              10
+            ]
+          },
+          {
+            "instance_id": 73,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 1.0,
+            "area": 4224,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 74,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 1.0,
+            "area": 5148,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 75,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 1.0,
+            "area": 8136,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          }
+        ],
+        "segmentation_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000002.json",
+        "segmentation_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000002.json"
+      },
+      {
+        "image_path": "GS010051_from45s_0pct_mly_0_000003.jpg",
+        "image_size": [
+          1344,
+          4096
+        ],
+        "num_instances": 80,
+        "instances": [
+          {
+            "instance_id": 1,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9994813799858093,
+            "area": 94728,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 2,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9990967512130737,
+            "area": 4501,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 3,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9989577531814575,
+            "area": 1525,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 4,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9984081387519836,
+            "area": 10054,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 5,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.997434675693512,
+            "area": 3657,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 6,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9950594902038574,
+            "area": 27766,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 7,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9947447776794434,
+            "area": 447,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 8,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.994621753692627,
+            "area": 4595,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 9,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9895067811012268,
+            "area": 162,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 10,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9891056418418884,
+            "area": 3623,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 11,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9885100722312927,
+            "area": 3655,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 12,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9840458631515503,
+            "area": 217,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 13,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9796364307403564,
+            "area": 16633,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 14,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9716335535049438,
+            "area": 1649,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 15,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9707984328269958,
+            "area": 663,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 16,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9684985876083374,
+            "area": 1578,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 17,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9669860601425171,
+            "area": 1930,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 18,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9542941451072693,
+            "area": 411,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 19,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9504578709602356,
+            "area": 2479,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 20,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9500613808631897,
+            "area": 607,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 21,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9447886347770691,
+            "area": 207,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 22,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.9330518245697021,
+            "area": 343,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 23,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.915304958820343,
+            "area": 359,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 24,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.9108180403709412,
+            "area": 1234,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 25,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.88755863904953,
+            "area": 3185,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 26,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8692851662635803,
+            "area": 289,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 27,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8692193031311035,
+            "area": 87,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 28,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8617547750473022,
+            "area": 92,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 29,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.8616460561752319,
+            "area": 7094,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 30,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8583221435546875,
+            "area": 627,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 31,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8552111387252808,
+            "area": 86,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 32,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8445298671722412,
+            "area": 25,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 33,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8418876528739929,
+            "area": 48,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 34,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8402842283248901,
+            "area": 132,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 35,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8252561092376709,
+            "area": 30,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 36,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.821248471736908,
+            "area": 85,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 37,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.7903522849082947,
+            "area": 89,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 38,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.7704002857208252,
+            "area": 148,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 39,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.7431061267852783,
+            "area": 358,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 40,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 0.7285977602005005,
+            "area": 713,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 41,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.7031919360160828,
+            "area": 3739,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 42,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6947284936904907,
+            "area": 8543,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 43,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.6884320378303528,
+            "area": 27,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 44,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.6868248581886292,
+            "area": 433,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 45,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6729530692100525,
+            "area": 1940,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 46,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6688210964202881,
+            "area": 156,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 47,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6651715636253357,
+            "area": 1817,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 48,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.6495621800422668,
+            "area": 47,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 49,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.6454744338989258,
+            "area": 37,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 50,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6359583139419556,
+            "area": 556,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 51,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.6343962550163269,
+            "area": 1490,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 52,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.6339125037193298,
+            "area": 36649,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 53,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6209949851036072,
+            "area": 110,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 54,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.611937403678894,
+            "area": 273,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 55,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.6071023344993591,
+            "area": 1974,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 56,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.5893372893333435,
+            "area": 83,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 57,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5875312685966492,
+            "area": 10,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 58,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5736145377159119,
+            "area": 55,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 59,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.5689038634300232,
+            "area": 121,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 60,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.5674800276756287,
+            "area": 481,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 61,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5620354413986206,
+            "area": 95,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 62,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.5556068420410156,
+            "area": 421,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 63,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5453891754150391,
+            "area": 63,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 64,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5432754158973694,
+            "area": 167,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 65,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.5283814668655396,
+            "area": 292,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 66,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5106155872344971,
+            "area": 146,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 67,
+            "class_id": 0,
+            "class_name": "construction--barrier--curb",
+            "score": 1.0,
+            "area": 51997,
+            "rgb": [
+              196,
+              196,
+              196
+            ]
+          },
+          {
+            "instance_id": 68,
+            "class_id": 1,
+            "class_name": "construction--barrier--fence",
+            "score": 1.0,
+            "area": 46942,
+            "rgb": [
+              190,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 69,
+            "class_id": 7,
+            "class_name": "construction--flat--parking",
+            "score": 1.0,
+            "area": 26442,
+            "rgb": [
+              250,
+              170,
+              160
+            ]
+          },
+          {
+            "instance_id": 70,
+            "class_id": 10,
+            "class_name": "construction--flat--road",
+            "score": 1.0,
+            "area": 475045,
+            "rgb": [
+              128,
+              64,
+              128
+            ]
+          },
+          {
+            "instance_id": 71,
+            "class_id": 12,
+            "class_name": "construction--flat--sidewalk",
+            "score": 1.0,
+            "area": 76151,
+            "rgb": [
+              244,
+              35,
+              232
+            ]
+          },
+          {
+            "instance_id": 72,
+            "class_id": 14,
+            "class_name": "construction--structure--building",
+            "score": 1.0,
+            "area": 200691,
+            "rgb": [
+              70,
+              70,
+              70
+            ]
+          },
+          {
+            "instance_id": 73,
+            "class_id": 16,
+            "class_name": "marking--general",
+            "score": 1.0,
+            "area": 41156,
+            "rgb": [
+              255,
+              255,
+              255
+            ]
+          },
+          {
+            "instance_id": 74,
+            "class_id": 19,
+            "class_name": "nature--sky",
+            "score": 1.0,
+            "area": 359071,
+            "rgb": [
+              70,
+              130,
+              180
+            ]
+          },
+          {
+            "instance_id": 75,
+            "class_id": 21,
+            "class_name": "nature--terrain",
+            "score": 1.0,
+            "area": 124248,
+            "rgb": [
+              152,
+              251,
+              152
+            ]
+          },
+          {
+            "instance_id": 76,
+            "class_id": 22,
+            "class_name": "nature--vegetation",
+            "score": 1.0,
+            "area": 729107,
+            "rgb": [
+              107,
+              142,
+              35
+            ]
+          },
+          {
+            "instance_id": 77,
+            "class_id": 27,
+            "class_name": "void--ego-vehicle",
+            "score": 1.0,
+            "area": 29390,
+            "rgb": [
+              120,
+              10,
+              10
+            ]
+          },
+          {
+            "instance_id": 78,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 1.0,
+            "area": 4812,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 79,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 1.0,
+            "area": 5093,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 80,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 1.0,
+            "area": 8719,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          }
+        ],
+        "segmentation_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000003.json",
+        "segmentation_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000003.json"
+      },
+      {
+        "image_path": "GS010051_from45s_0pct_mly_0_000004.jpg",
+        "image_size": [
+          1344,
+          4096
+        ],
+        "num_instances": 80,
+        "instances": [
+          {
+            "instance_id": 1,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9996634721755981,
+            "area": 128446,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 2,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.999549925327301,
+            "area": 4150,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 3,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9988001585006714,
+            "area": 67992,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 4,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9985297918319702,
+            "area": 19111,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 5,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9979411959648132,
+            "area": 1370,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 6,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9977335929870605,
+            "area": 3291,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 7,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9971904158592224,
+            "area": 506,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 8,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.992452085018158,
+            "area": 176,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 9,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9882076382637024,
+            "area": 3518,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 10,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9878069758415222,
+            "area": 770,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 11,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.987652063369751,
+            "area": 2072,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 12,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9828450679779053,
+            "area": 247,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 13,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9826164245605469,
+            "area": 2132,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 14,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.9820961952209473,
+            "area": 484,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 15,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9757744669914246,
+            "area": 1440,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 16,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9715414047241211,
+            "area": 1964,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 17,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9689145088195801,
+            "area": 30999,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 18,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9679867625236511,
+            "area": 620,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 19,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9657799005508423,
+            "area": 5135,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 20,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9648853540420532,
+            "area": 508,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 21,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.9620561003684998,
+            "area": 140769,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 22,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9576478004455566,
+            "area": 5903,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 23,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9508898854255676,
+            "area": 293,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 24,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9471308588981628,
+            "area": 337,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 25,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9431571960449219,
+            "area": 116,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 26,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9418307542800903,
+            "area": 725,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 27,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9252235889434814,
+            "area": 1207,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 28,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9230077266693115,
+            "area": 985,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 29,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9196828007698059,
+            "area": 5132,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 30,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.900679886341095,
+            "area": 262,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 31,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8986698985099792,
+            "area": 112,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 32,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8864051699638367,
+            "area": 93,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 33,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8847713470458984,
+            "area": 34,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 34,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8693165183067322,
+            "area": 36,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 35,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8556516766548157,
+            "area": 483,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 36,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8406456708908081,
+            "area": 127,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 37,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.8318082094192505,
+            "area": 2936,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 38,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8260429501533508,
+            "area": 231,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 39,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8077696561813354,
+            "area": 152,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 40,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.7995496392250061,
+            "area": 148,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 41,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.7990566492080688,
+            "area": 5782,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 42,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.7850855588912964,
+            "area": 1132,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 43,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.7661905884742737,
+            "area": 456,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 44,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 0.7636415958404541,
+            "area": 317,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 45,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.7585698962211609,
+            "area": 1056,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 46,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.73175048828125,
+            "area": 344,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 47,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.7163679599761963,
+            "area": 27,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 48,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.7095519304275513,
+            "area": 32,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 49,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.676048755645752,
+            "area": 331,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 50,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.6730896830558777,
+            "area": 1099,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 51,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6498133540153503,
+            "area": 179,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 52,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.6466435790061951,
+            "area": 112,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 53,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6335884928703308,
+            "area": 142,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 54,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.6051478385925293,
+            "area": 1987,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 55,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.6036171317100525,
+            "area": 161,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 56,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5939662456512451,
+            "area": 625,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 57,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.5775849223136902,
+            "area": 932,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 58,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.5735042691230774,
+            "area": 437,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 59,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.5719826817512512,
+            "area": 110,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 60,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.5557123422622681,
+            "area": 227,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 61,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.549949049949646,
+            "area": 137,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 62,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.5444604754447937,
+            "area": 3244,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 63,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.5396853685379028,
+            "area": 347,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 64,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.535141110420227,
+            "area": 757,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 65,
+            "class_id": 50,
+            "class_name": "object--support--utility-pole",
+            "score": 0.5186246037483215,
+            "area": 2806,
+            "rgb": [
+              0,
+              0,
+              80
+            ]
+          },
+          {
+            "instance_id": 66,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5116890668869019,
+            "area": 32,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 67,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5056639909744263,
+            "area": 28,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 68,
+            "class_id": 0,
+            "class_name": "construction--barrier--curb",
+            "score": 1.0,
+            "area": 42513,
+            "rgb": [
+              196,
+              196,
+              196
+            ]
+          },
+          {
+            "instance_id": 69,
+            "class_id": 1,
+            "class_name": "construction--barrier--fence",
+            "score": 1.0,
+            "area": 44596,
+            "rgb": [
+              190,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 70,
+            "class_id": 7,
+            "class_name": "construction--flat--parking",
+            "score": 1.0,
+            "area": 10620,
+            "rgb": [
+              250,
+              170,
+              160
+            ]
+          },
+          {
+            "instance_id": 71,
+            "class_id": 10,
+            "class_name": "construction--flat--road",
+            "score": 1.0,
+            "area": 423796,
+            "rgb": [
+              128,
+              64,
+              128
+            ]
+          },
+          {
+            "instance_id": 72,
+            "class_id": 12,
+            "class_name": "construction--flat--sidewalk",
+            "score": 1.0,
+            "area": 27731,
+            "rgb": [
+              244,
+              35,
+              232
+            ]
+          },
+          {
+            "instance_id": 73,
+            "class_id": 14,
+            "class_name": "construction--structure--building",
+            "score": 1.0,
+            "area": 199788,
+            "rgb": [
+              70,
+              70,
+              70
+            ]
+          },
+          {
+            "instance_id": 74,
+            "class_id": 16,
+            "class_name": "marking--general",
+            "score": 1.0,
+            "area": 27848,
+            "rgb": [
+              255,
+              255,
+              255
+            ]
+          },
+          {
+            "instance_id": 75,
+            "class_id": 19,
+            "class_name": "nature--sky",
+            "score": 1.0,
+            "area": 404965,
+            "rgb": [
+              70,
+              130,
+              180
+            ]
+          },
+          {
+            "instance_id": 76,
+            "class_id": 21,
+            "class_name": "nature--terrain",
+            "score": 1.0,
+            "area": 96383,
+            "rgb": [
+              152,
+              251,
+              152
+            ]
+          },
+          {
+            "instance_id": 77,
+            "class_id": 22,
+            "class_name": "nature--vegetation",
+            "score": 1.0,
+            "area": 653555,
+            "rgb": [
+              107,
+              142,
+              35
+            ]
+          },
+          {
+            "instance_id": 78,
+            "class_id": 27,
+            "class_name": "void--ego-vehicle",
+            "score": 1.0,
+            "area": 25808,
+            "rgb": [
+              120,
+              10,
+              10
+            ]
+          },
+          {
+            "instance_id": 79,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 1.0,
+            "area": 8495,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 80,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 1.0,
+            "area": 12202,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          }
+        ],
+        "segmentation_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000004.json",
+        "segmentation_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000004.json"
+      },
+      {
+        "image_path": "GS010051_from45s_0pct_mly_0_000005.jpg",
+        "image_size": [
+          1344,
+          4096
+        ],
+        "num_instances": 79,
+        "instances": [
+          {
+            "instance_id": 1,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.999874472618103,
+            "area": 117446,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 2,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9994444251060486,
+            "area": 45348,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 3,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9988287091255188,
+            "area": 2937,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 4,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.998784601688385,
+            "area": 439,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 5,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9983394145965576,
+            "area": 957,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 6,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.9976094961166382,
+            "area": 616,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 7,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9973052740097046,
+            "area": 26015,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 8,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9969134330749512,
+            "area": 22100,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 9,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9958452582359314,
+            "area": 3187,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 10,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9950308799743652,
+            "area": 525,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 11,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9872380495071411,
+            "area": 2748,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 12,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9848083257675171,
+            "area": 182,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 13,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9828434586524963,
+            "area": 245,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 14,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9797961711883545,
+            "area": 2532,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 15,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9791173934936523,
+            "area": 2054,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 16,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9738044738769531,
+            "area": 9238,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 17,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9660454988479614,
+            "area": 528,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 18,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9657911658287048,
+            "area": 178,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 19,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9639254212379456,
+            "area": 309,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 20,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9587369561195374,
+            "area": 3174,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 21,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.9584032893180847,
+            "area": 315,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 22,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9574463963508606,
+            "area": 130,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 23,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9535548686981201,
+            "area": 1309,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 24,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9525617361068726,
+            "area": 952,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 25,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9481862783432007,
+            "area": 1948,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 26,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.946716845035553,
+            "area": 38,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 27,
+            "class_id": 36,
+            "class_name": "object--banner",
+            "score": 0.9421143531799316,
+            "area": 3232,
+            "rgb": [
+              255,
+              255,
+              128
+            ]
+          },
+          {
+            "instance_id": 28,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.9130110740661621,
+            "area": 4801,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 29,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9129509925842285,
+            "area": 74,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 30,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.903756856918335,
+            "area": 868,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 31,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8960853219032288,
+            "area": 398,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 32,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8926298022270203,
+            "area": 33,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 33,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.8907354474067688,
+            "area": 7778,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 34,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8882968425750732,
+            "area": 39,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 35,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8878925442695618,
+            "area": 212,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 36,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8808287382125854,
+            "area": 229,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 37,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 0.8795441389083862,
+            "area": 696,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 38,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 0.8697001338005066,
+            "area": 567,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 39,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8535696864128113,
+            "area": 90,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 40,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8367947340011597,
+            "area": 103,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 41,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8266406655311584,
+            "area": 129,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 42,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.8254680037498474,
+            "area": 82,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 43,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8119137287139893,
+            "area": 225,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 44,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8094474077224731,
+            "area": 5025,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 45,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8078891634941101,
+            "area": 41,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 46,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7824894189834595,
+            "area": 1492,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 47,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.7667074203491211,
+            "area": 1358,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 48,
+            "class_id": 36,
+            "class_name": "object--banner",
+            "score": 0.7661401033401489,
+            "area": 209,
+            "rgb": [
+              255,
+              255,
+              128
+            ]
+          },
+          {
+            "instance_id": 49,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7647344470024109,
+            "area": 108,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 50,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7432757019996643,
+            "area": 109,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 51,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.7273260951042175,
+            "area": 471,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 52,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7214323878288269,
+            "area": 199,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 53,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6576263308525085,
+            "area": 93,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 54,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6424958109855652,
+            "area": 110,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 55,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.641383945941925,
+            "area": 3884,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 56,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6394771933555603,
+            "area": 97,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 57,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.6170228123664856,
+            "area": 212,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 58,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.6146288514137268,
+            "area": 513,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 59,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.6096205711364746,
+            "area": 112,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 60,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5746984481811523,
+            "area": 149,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 61,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.5604135394096375,
+            "area": 422,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 62,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5562198758125305,
+            "area": 630,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 63,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5379229187965393,
+            "area": 45,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 64,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 0.5358428359031677,
+            "area": 670,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 65,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.5143077373504639,
+            "area": 776,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 66,
+            "class_id": 0,
+            "class_name": "construction--barrier--curb",
+            "score": 1.0,
+            "area": 44525,
+            "rgb": [
+              196,
+              196,
+              196
+            ]
+          },
+          {
+            "instance_id": 67,
+            "class_id": 1,
+            "class_name": "construction--barrier--fence",
+            "score": 1.0,
+            "area": 32357,
+            "rgb": [
+              190,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 68,
+            "class_id": 7,
+            "class_name": "construction--flat--parking",
+            "score": 1.0,
+            "area": 9697,
+            "rgb": [
+              250,
+              170,
+              160
+            ]
+          },
+          {
+            "instance_id": 69,
+            "class_id": 10,
+            "class_name": "construction--flat--road",
+            "score": 1.0,
+            "area": 516006,
+            "rgb": [
+              128,
+              64,
+              128
+            ]
+          },
+          {
+            "instance_id": 70,
+            "class_id": 12,
+            "class_name": "construction--flat--sidewalk",
+            "score": 1.0,
+            "area": 28407,
+            "rgb": [
+              244,
+              35,
+              232
+            ]
+          },
+          {
+            "instance_id": 71,
+            "class_id": 14,
+            "class_name": "construction--structure--building",
+            "score": 1.0,
+            "area": 210833,
+            "rgb": [
+              70,
+              70,
+              70
+            ]
+          },
+          {
+            "instance_id": 72,
+            "class_id": 16,
+            "class_name": "marking--general",
+            "score": 1.0,
+            "area": 41312,
+            "rgb": [
+              255,
+              255,
+              255
+            ]
+          },
+          {
+            "instance_id": 73,
+            "class_id": 19,
+            "class_name": "nature--sky",
+            "score": 1.0,
+            "area": 460348,
+            "rgb": [
+              70,
+              130,
+              180
+            ]
+          },
+          {
+            "instance_id": 74,
+            "class_id": 21,
+            "class_name": "nature--terrain",
+            "score": 1.0,
+            "area": 80695,
+            "rgb": [
+              152,
+              251,
+              152
+            ]
+          },
+          {
+            "instance_id": 75,
+            "class_id": 22,
+            "class_name": "nature--vegetation",
+            "score": 1.0,
+            "area": 583547,
+            "rgb": [
+              107,
+              142,
+              35
+            ]
+          },
+          {
+            "instance_id": 76,
+            "class_id": 27,
+            "class_name": "void--ego-vehicle",
+            "score": 1.0,
+            "area": 27518,
+            "rgb": [
+              120,
+              10,
+              10
+            ]
+          },
+          {
+            "instance_id": 77,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 1.0,
+            "area": 99630,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 78,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 1.0,
+            "area": 4718,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 79,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 1.0,
+            "area": 19228,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          }
+        ],
+        "segmentation_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000005.json",
+        "segmentation_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000005.json"
+      },
+      {
+        "image_path": "GS010051_from45s_0pct_mly_0_000006.jpg",
+        "image_size": [
+          1344,
+          4096
+        ],
+        "num_instances": 75,
+        "instances": [
+          {
+            "instance_id": 1,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9998383522033691,
+            "area": 95204,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 2,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9984294772148132,
+            "area": 2842,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 3,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9976879358291626,
+            "area": 5121,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 4,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9974600672721863,
+            "area": 655,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 5,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9972261786460876,
+            "area": 10535,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 6,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9955688118934631,
+            "area": 12583,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 7,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.9930589199066162,
+            "area": 1046,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 8,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9926446676254272,
+            "area": 452,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 9,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9922069907188416,
+            "area": 245,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 10,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.991564154624939,
+            "area": 1212,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 11,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9854275584220886,
+            "area": 11739,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 12,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9838539361953735,
+            "area": 927,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 13,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9814479947090149,
+            "area": 3821,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 14,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9785094857215881,
+            "area": 1877,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 15,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.9752267599105835,
+            "area": 11067,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 16,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9748604893684387,
+            "area": 3869,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 17,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9695687294006348,
+            "area": 1594,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 18,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9665648937225342,
+            "area": 257,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 19,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9623970985412598,
+            "area": 191,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 20,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9579055905342102,
+            "area": 469,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 21,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.9471761584281921,
+            "area": 40,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 22,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9447157382965088,
+            "area": 940,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 23,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9379069805145264,
+            "area": 1435,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 24,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9335072040557861,
+            "area": 7393,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 25,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9195212721824646,
+            "area": 284,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 26,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9097878336906433,
+            "area": 105,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 27,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8863508701324463,
+            "area": 123,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 28,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8838393688201904,
+            "area": 35,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 29,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8809121251106262,
+            "area": 362,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 30,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.8705957531929016,
+            "area": 128,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 31,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.86845463514328,
+            "area": 495,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 32,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 0.8598831295967102,
+            "area": 941,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 33,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8408023118972778,
+            "area": 1091,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 34,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8403940796852112,
+            "area": 34,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 35,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.8339404463768005,
+            "area": 195,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 36,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.8227158784866333,
+            "area": 77,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 37,
+            "class_id": 33,
+            "class_name": "human--rider--motorcyclist",
+            "score": 0.8077771067619324,
+            "area": 97,
+            "rgb": [
+              255,
+              0,
+              100
+            ]
+          },
+          {
+            "instance_id": 38,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.7878922820091248,
+            "area": 525,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 39,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.7872077226638794,
+            "area": 1474,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 40,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.7808153629302979,
+            "area": 37,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 41,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.7778913974761963,
+            "area": 306,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 42,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7758546471595764,
+            "area": 201,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 43,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7436017990112305,
+            "area": 480,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 44,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.735319972038269,
+            "area": 123,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 45,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.7266058325767517,
+            "area": 721,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 46,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.7159442901611328,
+            "area": 159,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 47,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7147166728973389,
+            "area": 95,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 48,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.6859822273254395,
+            "area": 213,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 49,
+            "class_id": 36,
+            "class_name": "object--banner",
+            "score": 0.6700433492660522,
+            "area": 257,
+            "rgb": [
+              255,
+              255,
+              128
+            ]
+          },
+          {
+            "instance_id": 50,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.6630796194076538,
+            "area": 239,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 51,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.6619922518730164,
+            "area": 418,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 52,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.6557779312133789,
+            "area": 34,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 53,
+            "class_id": 36,
+            "class_name": "object--banner",
+            "score": 0.6308203935623169,
+            "area": 3447,
+            "rgb": [
+              255,
+              255,
+              128
+            ]
+          },
+          {
+            "instance_id": 54,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.6284266114234924,
+            "area": 1442,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 55,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.6064518690109253,
+            "area": 71,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 56,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5866138339042664,
+            "area": 2214,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 57,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.5820466876029968,
+            "area": 33,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 58,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5797819495201111,
+            "area": 186,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 59,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5702915191650391,
+            "area": 112,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 60,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.5688111782073975,
+            "area": 324,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 61,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5464600920677185,
+            "area": 37,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 62,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5330072641372681,
+            "area": 166,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 63,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5039584040641785,
+            "area": 193,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 64,
+            "class_id": 0,
+            "class_name": "construction--barrier--curb",
+            "score": 1.0,
+            "area": 47982,
+            "rgb": [
+              196,
+              196,
+              196
+            ]
+          },
+          {
+            "instance_id": 65,
+            "class_id": 1,
+            "class_name": "construction--barrier--fence",
+            "score": 1.0,
+            "area": 28733,
+            "rgb": [
+              190,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 66,
+            "class_id": 10,
+            "class_name": "construction--flat--road",
+            "score": 1.0,
+            "area": 683228,
+            "rgb": [
+              128,
+              64,
+              128
+            ]
+          },
+          {
+            "instance_id": 67,
+            "class_id": 12,
+            "class_name": "construction--flat--sidewalk",
+            "score": 1.0,
+            "area": 52593,
+            "rgb": [
+              244,
+              35,
+              232
+            ]
+          },
+          {
+            "instance_id": 68,
+            "class_id": 14,
+            "class_name": "construction--structure--building",
+            "score": 1.0,
+            "area": 222011,
+            "rgb": [
+              70,
+              70,
+              70
+            ]
+          },
+          {
+            "instance_id": 69,
+            "class_id": 16,
+            "class_name": "marking--general",
+            "score": 1.0,
+            "area": 27124,
+            "rgb": [
+              255,
+              255,
+              255
+            ]
+          },
+          {
+            "instance_id": 70,
+            "class_id": 19,
+            "class_name": "nature--sky",
+            "score": 1.0,
+            "area": 559980,
+            "rgb": [
+              70,
+              130,
+              180
+            ]
+          },
+          {
+            "instance_id": 71,
+            "class_id": 21,
+            "class_name": "nature--terrain",
+            "score": 1.0,
+            "area": 57290,
+            "rgb": [
+              152,
+              251,
+              152
+            ]
+          },
+          {
+            "instance_id": 72,
+            "class_id": 22,
+            "class_name": "nature--vegetation",
+            "score": 1.0,
+            "area": 478849,
+            "rgb": [
+              107,
+              142,
+              35
+            ]
+          },
+          {
+            "instance_id": 73,
+            "class_id": 27,
+            "class_name": "void--ego-vehicle",
+            "score": 1.0,
+            "area": 29624,
+            "rgb": [
+              120,
+              10,
+              10
+            ]
+          },
+          {
+            "instance_id": 74,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 1.0,
+            "area": 40693,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 75,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 1.0,
+            "area": 12000,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          }
+        ],
+        "segmentation_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000006.json",
+        "segmentation_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000006.json"
+      },
+      {
+        "image_path": "GS010051_from45s_0pct_mly_0_000007.jpg",
+        "image_size": [
+          1344,
+          4096
+        ],
+        "num_instances": 85,
+        "instances": [
+          {
+            "instance_id": 1,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9980461597442627,
+            "area": 10049,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 2,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.996523916721344,
+            "area": 3890,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 3,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9957711100578308,
+            "area": 727,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 4,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9955841898918152,
+            "area": 4302,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 5,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9944546818733215,
+            "area": 330,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 6,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9942229390144348,
+            "area": 916,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 7,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9929799437522888,
+            "area": 1286,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 8,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9908486604690552,
+            "area": 270,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 9,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9905637502670288,
+            "area": 4773,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 10,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9877343773841858,
+            "area": 5158,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 11,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9847326874732971,
+            "area": 1997,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 12,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9833723902702332,
+            "area": 2062,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 13,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9833077192306519,
+            "area": 1463,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 14,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.9823338985443115,
+            "area": 814,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 15,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9810784459114075,
+            "area": 380,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 16,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.9722093343734741,
+            "area": 43,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 17,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9717821478843689,
+            "area": 2194,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 18,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9705872535705566,
+            "area": 2120,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 19,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.9696491360664368,
+            "area": 2821,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 20,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9672905802726746,
+            "area": 12763,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 21,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9492470026016235,
+            "area": 265,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 22,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9433310031890869,
+            "area": 169,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 23,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.9271161556243896,
+            "area": 2026,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 24,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.9247158765792847,
+            "area": 43,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 25,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9246779680252075,
+            "area": 230,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 26,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9193340539932251,
+            "area": 486,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 27,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.9176768660545349,
+            "area": 133,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 28,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.9142254590988159,
+            "area": 127,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 29,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8877010345458984,
+            "area": 281,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 30,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8871271014213562,
+            "area": 4870,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 31,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8865624070167542,
+            "area": 49,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 32,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.8853715658187866,
+            "area": 2220,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 33,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8761178851127625,
+            "area": 300,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 34,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.8637829422950745,
+            "area": 654,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 35,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.8636950850486755,
+            "area": 524,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 36,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8434471487998962,
+            "area": 135,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 37,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.8384367823600769,
+            "area": 92,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 38,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.8359614610671997,
+            "area": 145,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 39,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.8352976441383362,
+            "area": 1087,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 40,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.8340518474578857,
+            "area": 281,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 41,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8316839337348938,
+            "area": 28,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 42,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 0.8257997632026672,
+            "area": 619,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 43,
+            "class_id": 47,
+            "class_name": "object--street-light",
+            "score": 0.8071959018707275,
+            "area": 26,
+            "rgb": [
+              210,
+              170,
+              100
+            ]
+          },
+          {
+            "instance_id": 44,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7974594235420227,
+            "area": 202,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 45,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.7832453846931458,
+            "area": 1112,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 46,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.7753244638442993,
+            "area": 254,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 47,
+            "class_id": 52,
+            "class_name": "object--traffic-sign--back",
+            "score": 0.774199366569519,
+            "area": 76,
+            "rgb": [
+              192,
+              192,
+              192
+            ]
+          },
+          {
+            "instance_id": 48,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.7603483200073242,
+            "area": 154,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 49,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.7447940111160278,
+            "area": 700,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 50,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.7313953638076782,
+            "area": 393,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 51,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.7101208567619324,
+            "area": 219,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 52,
+            "class_id": 31,
+            "class_name": "human--person",
+            "score": 0.7044955492019653,
+            "area": 233,
+            "rgb": [
+              220,
+              20,
+              60
+            ]
+          },
+          {
+            "instance_id": 53,
+            "class_id": 60,
+            "class_name": "object--vehicle--motorcycle",
+            "score": 0.6943346261978149,
+            "area": 93,
+            "rgb": [
+              0,
+              0,
+              230
+            ]
+          },
+          {
+            "instance_id": 54,
+            "class_id": 37,
+            "class_name": "object--bench",
+            "score": 0.6768015623092651,
+            "area": 902,
+            "rgb": [
+              250,
+              0,
+              30
+            ]
+          },
+          {
+            "instance_id": 55,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6638838648796082,
+            "area": 100,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 56,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.642532229423523,
+            "area": 104,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 57,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6408452391624451,
+            "area": 164,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 58,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6377902626991272,
+            "area": 301,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 59,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.6292805671691895,
+            "area": 2936,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 60,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6260144114494324,
+            "area": 89,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 61,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.6130136251449585,
+            "area": 97,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 62,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.6070802211761475,
+            "area": 3024,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 63,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.6065130233764648,
+            "area": 95,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 64,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.5785698294639587,
+            "area": 88,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 65,
+            "class_id": 35,
+            "class_name": "marking--crosswalk-zebra",
+            "score": 0.5698171257972717,
+            "area": 6523,
+            "rgb": [
+              200,
+              128,
+              128
+            ]
+          },
+          {
+            "instance_id": 66,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5657736659049988,
+            "area": 160,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 67,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.5638657808303833,
+            "area": 63,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 68,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.5590206980705261,
+            "area": 55,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 69,
+            "class_id": 61,
+            "class_name": "object--vehicle--other-vehicle",
+            "score": 0.5588719844818115,
+            "area": 987,
+            "rgb": [
+              128,
+              64,
+              64
+            ]
+          },
+          {
+            "instance_id": 70,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5535604953765869,
+            "area": 556,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 71,
+            "class_id": 53,
+            "class_name": "object--traffic-sign--front",
+            "score": 0.5489024519920349,
+            "area": 112,
+            "rgb": [
+              220,
+              220,
+              0
+            ],
+            "sign_name": "Right Turn Only"
+          },
+          {
+            "instance_id": 72,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5390064716339111,
+            "area": 917,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 73,
+            "class_id": 39,
+            "class_name": "object--billboard",
+            "score": 0.5087899565696716,
+            "area": 431,
+            "rgb": [
+              220,
+              220,
+              220
+            ]
+          },
+          {
+            "instance_id": 74,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 0.5014574527740479,
+            "area": 352,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          },
+          {
+            "instance_id": 75,
+            "class_id": 48,
+            "class_name": "object--support--pole",
+            "score": 0.5014037489891052,
+            "area": 121,
+            "rgb": [
+              153,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 76,
+            "class_id": 0,
+            "class_name": "construction--barrier--curb",
+            "score": 1.0,
+            "area": 54228,
+            "rgb": [
+              196,
+              196,
+              196
+            ]
+          },
+          {
+            "instance_id": 77,
+            "class_id": 1,
+            "class_name": "construction--barrier--fence",
+            "score": 1.0,
+            "area": 26735,
+            "rgb": [
+              190,
+              153,
+              153
+            ]
+          },
+          {
+            "instance_id": 78,
+            "class_id": 10,
+            "class_name": "construction--flat--road",
+            "score": 1.0,
+            "area": 851269,
+            "rgb": [
+              128,
+              64,
+              128
+            ]
+          },
+          {
+            "instance_id": 79,
+            "class_id": 12,
+            "class_name": "construction--flat--sidewalk",
+            "score": 1.0,
+            "area": 49968,
+            "rgb": [
+              244,
+              35,
+              232
+            ]
+          },
+          {
+            "instance_id": 80,
+            "class_id": 14,
+            "class_name": "construction--structure--building",
+            "score": 1.0,
+            "area": 219958,
+            "rgb": [
+              70,
+              70,
+              70
+            ]
+          },
+          {
+            "instance_id": 81,
+            "class_id": 19,
+            "class_name": "nature--sky",
+            "score": 1.0,
+            "area": 617252,
+            "rgb": [
+              70,
+              130,
+              180
+            ]
+          },
+          {
+            "instance_id": 82,
+            "class_id": 21,
+            "class_name": "nature--terrain",
+            "score": 1.0,
+            "area": 47470,
+            "rgb": [
+              152,
+              251,
+              152
+            ]
+          },
+          {
+            "instance_id": 83,
+            "class_id": 22,
+            "class_name": "nature--vegetation",
+            "score": 1.0,
+            "area": 420521,
+            "rgb": [
+              107,
+              142,
+              35
+            ]
+          },
+          {
+            "instance_id": 84,
+            "class_id": 27,
+            "class_name": "void--ego-vehicle",
+            "score": 1.0,
+            "area": 29630,
+            "rgb": [
+              120,
+              10,
+              10
+            ]
+          },
+          {
+            "instance_id": 85,
+            "class_id": 58,
+            "class_name": "object--vehicle--car",
+            "score": 1.0,
+            "area": 18275,
+            "rgb": [
+              0,
+              0,
+              142
+            ]
+          }
+        ],
+        "segmentation_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000007.json",
+        "segmentation_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000007.json"
+      }
+    ],
+    "triangulation": {
+      "count": 8,
+      "triangulation_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/triangulation/obj_gps.json",
+      "triangulation_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/triangulation/obj_gps.json"
+    },
+    "storage": {
+      "bucket": "pbl7",
+      "prefix": "jobs/63285916-c935-4174-8e62-2941f46c8ff5",
+      "meta_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/mapillary_image_description.json",
+      "meta_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/mapillary_image_description.json",
+      "frames_prefix": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/",
+      "frame_keys": {
+        "GS010051_from45s_0pct_mly_0_000001": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000001.jpg",
+        "GS010051_from45s_0pct_mly_0_000002": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000002.jpg",
+        "GS010051_from45s_0pct_mly_0_000003": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000003.jpg",
+        "GS010051_from45s_0pct_mly_0_000004": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000004.jpg",
+        "GS010051_from45s_0pct_mly_0_000005": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000005.jpg",
+        "GS010051_from45s_0pct_mly_0_000006": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000006.jpg",
+        "GS010051_from45s_0pct_mly_0_000007": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/frames/GS010051_from45s_0pct_mly.mp4/GS010051_from45s_0pct_mly_0_000007.jpg"
+      },
+      "seg_json_prefix": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/",
+      "seg_json_keys": {
+        "GS010051_from45s_0pct_mly_0_000001": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000001.json",
+        "GS010051_from45s_0pct_mly_0_000002": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000002.json",
+        "GS010051_from45s_0pct_mly_0_000003": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000003.json",
+        "GS010051_from45s_0pct_mly_0_000004": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000004.json",
+        "GS010051_from45s_0pct_mly_0_000005": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000005.json",
+        "GS010051_from45s_0pct_mly_0_000006": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000006.json",
+        "GS010051_from45s_0pct_mly_0_000007": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/json_dir/GS010051_from45s_0pct_mly_0_000007.json"
+      },
+      "seg_viz_prefix": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/seg/visualize/",
+      "triangulation_key": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/triangulation/obj_gps.json",
+      "triangulation_url": "https://pub-72b2754ca0944b08a86121c4afefff1e.r2.dev/jobs/63285916-c935-4174-8e62-2941f46c8ff5/triangulation/obj_gps.json",
+      "triangulation_vis_prefix": "jobs/63285916-c935-4174-8e62-2941f46c8ff5/triangulation/vis/",
+      "seg_viz_keys": {
+        
+      },
+      "triangulation_vis_keys": {
+        
+      }
+    }
+  }

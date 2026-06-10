@@ -116,8 +116,8 @@ test('normalizes real AI payload shape by matching images.data frames to segment
       captured_at: '2025-08-22T02:32:52.875Z',
       sequence_key: 'de309a3d-54ad-43d5-b9e6-4ae768a54b04',
       segmentation_path: 'D:\\PBL7\\Segmentation\\api\\output\\de309a3d-54ad-43d5-b9e6-4ae768a54b04\\json_dir\\GS010051_from45s_0pct_mly_0_000001.json',
-      width: 1344,
-      height: 4096,
+      width: 4096,
+      height: 1344,
       segmentations: [
         {
           label: 'object--vehicle--car',
@@ -145,6 +145,72 @@ test('normalizes real AI payload shape by matching images.data frames to segment
         },
       ],
       segmentation_summary: 'object--vehicle--car 2, object--traffic-sign--front 1',
+    },
+  ]);
+});
+
+test('normalizes public URL AI payload fields', () => {
+  const payload = {
+    images: {
+      filename: 'GS010051_from45s_0pct_mly.mp4',
+      seq_uuid: '63285916-c935-4174-8e62-2941f46c8ff5',
+      data: [
+        {
+          MAPCaptureTime: '2025_08_22_02_32_52_875',
+          MAPCompassHeading: { MagneticHeading: 228.67, TrueHeading: 228.67 },
+          MAPFilename: 'GS010051_from45s_0pct_mly_0_000001.jpg',
+          MAPLatitude: 16.0765723,
+          MAPLongitude: 108.2072761,
+          filename: '/__modal/volumes/database/job/frames/GS010051_from45s_0pct_mly_0_000001.jpg',
+          image_url: 'https://example.test/jobs/job/frames/GS010051_from45s_0pct_mly_0_000001.jpg',
+        },
+      ],
+    },
+    segmentation: [
+      {
+        image_path: 'GS010051_from45s_0pct_mly_0_000001.jpg',
+        segmentation_url: 'https://example.test/jobs/job/seg/json_dir/GS010051_from45s_0pct_mly_0_000001.json',
+        image_size: [1344, 4096],
+        instances: [
+          {
+            instance_id: 3,
+            class_id: 53,
+            class_name: 'object--traffic-sign--front',
+            score: 0.9986,
+            area: 570,
+            rgb: [220, 220, 0],
+            sign_name: 'Right Turn Only',
+          },
+        ],
+      },
+    ],
+  };
+
+  assert.deepEqual(normalizeAiUploadFrames(payload), [
+    {
+      provider_image_id: 'ai-gs010051-from45s-0pct-mly-0-000001-jpg',
+      image_path: 'https://example.test/jobs/job/frames/GS010051_from45s_0pct_mly_0_000001.jpg',
+      lat: 16.0765723,
+      lon: 108.2072761,
+      compass_angle: 228.67,
+      captured_at: '2025-08-22T02:32:52.875Z',
+      sequence_key: '63285916-c935-4174-8e62-2941f46c8ff5',
+      segmentation_path: 'https://example.test/jobs/job/seg/json_dir/GS010051_from45s_0pct_mly_0_000001.json',
+      width: 4096,
+      height: 1344,
+      segmentations: [
+        {
+          label: 'object--traffic-sign--front',
+          class_name: 'object--traffic-sign--front',
+          class_id: 53,
+          confidence: 0.9986,
+          area: 570,
+          instance_id: 3,
+          rgb: [220, 220, 0],
+          sign_name: 'Right Turn Only',
+        },
+      ],
+      segmentation_summary: 'object--traffic-sign--front 1',
     },
   ]);
 });
@@ -178,7 +244,53 @@ test('normalizes triangulation object points from real AI payload shape', () => 
       confidence: 0.994,
       residual_m: 0.424,
       num_obs: 4,
-      seen_in: [{ image_path: 'GS010051_from45s_0pct_mly_0_000001.jpg' }],
+      seen_in: [{ image: 'GS010051_from45s_0pct_mly_0_000001', instance_id: null }],
+    },
+  ]);
+});
+
+test('normalizes string seen_in entries using observations', () => {
+  const payload = {
+    triangulation: [
+      {
+        track_id: 5,
+        class_id: 53,
+        class_name: 'object--traffic-sign--front',
+        latitude: 16.07649767,
+        longitude: 108.20712081,
+        num_obs: 3,
+        avg_score: 0.9986,
+        seen_in: [
+          'GS010051_from45s_0pct_mly_0_000002',
+          'GS010051_from45s_0pct_mly_0_000003',
+          'GS010051_from45s_0pct_mly_0_000004',
+        ],
+        observations: [
+          { img_stem: 'GS010051_from45s_0pct_mly_0_000002', instance_id: 8 },
+          { img_stem: 'GS010051_from45s_0pct_mly_0_000003', instance_id: 16 },
+          { img_stem: 'GS010051_from45s_0pct_mly_0_000004', instance_id: 5 },
+        ],
+      },
+    ],
+  };
+
+  assert.deepEqual(normalizeAiTriangulationPoints(payload), [
+    {
+      point_id: 'ai-object-5',
+      track_id: 5,
+      class_id: 53,
+      label: 'object--traffic-sign--front',
+      sign_name: null,
+      lat: 16.07649767,
+      lon: 108.20712081,
+      confidence: 0.9986,
+      residual_m: null,
+      num_obs: 3,
+      seen_in: [
+        { image: 'GS010051_from45s_0pct_mly_0_000002', instance_id: 8 },
+        { image: 'GS010051_from45s_0pct_mly_0_000003', instance_id: 16 },
+        { image: 'GS010051_from45s_0pct_mly_0_000004', instance_id: 5 },
+      ],
     },
   ]);
 });

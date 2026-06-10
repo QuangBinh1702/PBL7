@@ -28,6 +28,65 @@ function getSegmentationKey(value) {
   return path.basename(String(value || '').replace(/\\/g, '/'));
 }
 
+function imageStem(value) {
+  return path.basename(String(value || '').replace(/\\/g, '/')).replace(/\.[^.]+$/, '');
+}
+
+function resolveImageDimensions(rawSize) {
+  if (!Array.isArray(rawSize) || rawSize.length < 2) {
+    return { width: null, height: null };
+  }
+  const a = Number(rawSize[0]);
+  const b = Number(rawSize[1]);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) {
+    return { width: null, height: null };
+  }
+  const ratio = Math.max(a, b) / Math.min(a, b);
+  if (ratio >= 2) {
+    return a >= b ? { width: a, height: b } : { width: b, height: a };
+  }
+  return { width: a, height: b };
+}
+
+function normalizeSeenIn(item) {
+  const observations = Array.isArray(item.observations) ? item.observations : [];
+  const obsByStem = new Map();
+  for (const obs of observations) {
+    const stem = imageStem(firstDefined(obs.img_stem, obs.image, obs.image_path));
+    if (stem) obsByStem.set(stem, obs);
+  }
+
+  const raw = Array.isArray(item.seen_in) ? item.seen_in : [];
+  const normalized = raw
+    .map((seen) => {
+      if (typeof seen === 'string') {
+        const image = imageStem(seen);
+        const obs = obsByStem.get(image);
+        return { image, instance_id: obs?.instance_id ?? null };
+      }
+      if (!seen || typeof seen !== 'object') return null;
+      const image = imageStem(firstDefined(seen.image, seen.image_path, seen.img_stem));
+      if (!image) return null;
+      const obs = obsByStem.get(image);
+      return {
+        image,
+        instance_id: firstDefined(seen.instance_id, obs?.instance_id) ?? null,
+      };
+    })
+    .filter(Boolean);
+
+  if (!normalized.length && observations.length) {
+    return observations
+      .map((obs) => ({
+        image: imageStem(firstDefined(obs.img_stem, obs.image, obs.image_path)),
+        instance_id: obs.instance_id ?? null,
+      }))
+      .filter((entry) => entry.image);
+  }
+
+  return normalized;
+}
+
 function getRealAiFrames(payload) {
   const frames = payload?.images?.data;
   if (!Array.isArray(frames)) return null;
@@ -40,17 +99,18 @@ function getRealAiFrames(payload) {
 
   return frames.map((frame) => {
     const segmentation = segmentationByImage.get(getSegmentationKey(frame.MAPFilename || frame.filename));
+    const { width, height } = resolveImageDimensions(segmentation?.image_size);
     return {
-      path: frame.filename,
+      path: firstDefined(frame.image_url, frame.imageUrl, frame.filename),
       provider_image_id: `ai-${slugFromPath(frame.MAPFilename || frame.filename)}`,
       lat: frame.MAPLatitude,
       lon: frame.MAPLongitude,
       compass_angle: firstDefined(frame.MAPCompassHeading?.TrueHeading, frame.MAPCompassHeading?.MagneticHeading),
       captured_at: parseMapCaptureTime(frame.MAPCaptureTime),
       sequence_key: firstDefined(sequenceKey, frame.MAPSequenceUUID),
-      segmentation_path: segmentation?.segmentation_path || null,
-      width: Array.isArray(segmentation?.image_size) ? segmentation.image_size[0] : frame.width,
-      height: Array.isArray(segmentation?.image_size) ? segmentation.image_size[1] : frame.height,
+      segmentation_path: firstDefined(segmentation?.segmentation_url, segmentation?.segmentationUrl, segmentation?.segmentation_path) || null,
+      width: width ?? frame.width,
+      height: height ?? frame.height,
       segmentations: Array.isArray(segmentation?.instances) ? segmentation.instances : [],
     };
   });
@@ -133,7 +193,7 @@ function normalizeAiUploadFrames(payload) {
       }
       if (!item || typeof item !== 'object') return null;
 
-      const imagePath = firstDefined(item.path, item.image_path, item.imagePath, item.file_path, item.filePath, item.url);
+      const imagePath = firstDefined(item.image_url, item.imageUrl, item.path, item.image_path, item.imagePath, item.file_path, item.filePath, item.url);
       const lat = parseNumber(firstDefined(item.lat, item.latitude));
       const lon = parseNumber(firstDefined(item.lon, item.lng, item.longitude));
       if (!imagePath || lat === null || lon === null) return null;
@@ -153,14 +213,23 @@ function normalizeAiUploadFrames(payload) {
         segmentation_summary: buildSegmentationSummary(segmentations),
       };
       if (sequenceKey) normalized.sequence_key = String(sequenceKey);
-      if (item.segmentation_path) normalized.segmentation_path = String(item.segmentation_path);
+      const segmentationPath = firstDefined(item.segmentation_url, item.segmentationUrl, item.segmentation_path);
+      if (segmentationPath) normalized.segmentation_path = String(segmentationPath);
       return normalized;
     })
     .filter(Boolean);
 }
 
 function normalizeAiTriangulationPoints(payload) {
-  const raw = Array.isArray(payload?.triangulation) ? payload.triangulation : [];
+  const raw = Array.isArray(payload?.triangulation)
+    ? payload.triangulation
+    : Array.isArray(payload?.triangulation?.data)
+      ? payload.triangulation.data
+      : Array.isArray(payload?.triangulation?.objects)
+        ? payload.triangulation.objects
+        : Array.isArray(payload?.objects)
+          ? payload.objects
+          : [];
   const signNamesByObservation = new Map();
   for (const frame of Array.isArray(payload?.segmentation) ? payload.segmentation : []) {
     const imageStem = path.basename(String(frame?.image_path || '').replace(/\\/g, '/')).replace(/\.[^.]+$/, '');
@@ -177,11 +246,10 @@ function normalizeAiTriangulationPoints(payload) {
       const trackId = firstDefined(item.track_id, item.id);
       const label = firstDefined(item.class_name, item.label, item.name);
       if (lat === null || lon === null || trackId === undefined || !label) return null;
+      const seenIn = normalizeSeenIn(item);
       const signName = firstDefined(
         item.sign_name,
-        ...(Array.isArray(item.seen_in)
-          ? item.seen_in.map((seen) => signNamesByObservation.get(`${seen.image}:${seen.instance_id}`))
-          : []),
+        ...seenIn.map((seen) => signNamesByObservation.get(`${seen.image}:${seen.instance_id}`)),
         ...(Array.isArray(item.observations)
           ? item.observations.map((obs) => signNamesByObservation.get(`${obs.img_stem}:${obs.instance_id}`))
           : [])
@@ -197,7 +265,7 @@ function normalizeAiTriangulationPoints(payload) {
         confidence: parseNumber(firstDefined(item.avg_score, item.score, item.confidence)),
         residual_m: parseNumber(item.residual_m),
         num_obs: parseNumber(item.num_obs),
-        seen_in: Array.isArray(item.seen_in) ? item.seen_in : [],
+        seen_in: seenIn,
       };
     })
     .filter(Boolean);
@@ -206,4 +274,7 @@ function normalizeAiTriangulationPoints(payload) {
 module.exports = {
   normalizeAiUploadFrames,
   normalizeAiTriangulationPoints,
+  normalizeSeenIn,
+  imageStem,
+  resolveImageDimensions,
 };

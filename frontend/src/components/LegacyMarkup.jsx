@@ -91,6 +91,7 @@ export function LegacyMarkup() {
     <div id="viewer">
       <img id="localViewerImage" class="local-viewer-image" src="" alt="Selected street view image">
       <canvas id="segmentationCanvas" class="segmentation-canvas" aria-hidden="true"></canvas>
+      <div id="viewerSegmentationTooltip" class="viewer-segmentation-tooltip" hidden></div>
       <div id="segmentationLegend" class="segmentation-legend" hidden></div>
       <div id="localViewerEmpty" class="local-viewer-empty">Chọn một điểm ảnh trên bản đồ để xem ảnh.</div>
       <div class="loading-overlay" id="viewerLoading">
@@ -214,6 +215,19 @@ export function LegacyMarkup() {
     <div class="detection-footer">
       <span class="detection-page-info" id="detectionPageInfo"></span>
       <button class="detection-nav-btn" id="detectionNextBtn" style="display:none">Next 3</button>
+    </div>
+  </div>
+
+  <!-- OBJECT IMAGE MODAL -->
+  <div class="object-image-modal" id="objectImageModal" hidden>
+    <div class="object-image-modal-backdrop" id="objectImageModalBackdrop"></div>
+    <div class="object-image-modal-dialog" role="dialog" aria-modal="true" aria-label="Xem ảnh object">
+      <button class="object-image-modal-close" id="objectImageModalClose" type="button" title="Đóng" aria-label="Đóng ảnh">✕</button>
+      <div class="object-image-modal-stage" id="objectImageModalStage">
+        <canvas id="objectImageModalCanvas" class="object-image-modal-canvas"></canvas>
+        <div id="objectImageModalTooltip" class="object-image-modal-tooltip" hidden></div>
+      </div>
+      <p class="object-image-modal-hint">Di chuột lên ảnh để xem segmentation · Nhấn Esc hoặc ✕ để đóng</p>
     </div>
   </div>
 

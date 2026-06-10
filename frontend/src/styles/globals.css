@@ -718,9 +718,41 @@ body.upload-mode .filter-panels {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  mix-blend-mode: screen;
-  opacity: 0.82;
   z-index: 2;
+}
+
+.segmentation-canvas.segmentation-interactive {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.viewer-segmentation-tooltip {
+  position: absolute;
+  z-index: 7;
+  max-width: min(280px, calc(100% - 24px));
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(16, 16, 18, 0.92);
+  color: #fff7e8;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+  pointer-events: none;
+  text-align: left;
+}
+
+.viewer-segmentation-tooltip[hidden] {
+  display: none;
+}
+
+.viewer-segmentation-tooltip strong,
+.viewer-segmentation-tooltip span {
+  display: block;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.viewer-segmentation-tooltip span {
+  margin-top: 4px;
+  color: rgba(255, 243, 219, 0.68);
 }
 
 .segmentation-legend {
@@ -2199,11 +2231,23 @@ body.upload-mode .filter-panels {
   color: #1a1b1e;
 }
 
+.detection-card-header .det-instance {
+  margin-left: auto;
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #4b5563;
+}
+
 .detection-card-img {
   position: relative;
   width: 100%;
   aspect-ratio: 16/9;
   background: #f3f4f6;
+  cursor: pointer;
 }
 
 .detection-card-img img {
@@ -2215,24 +2259,154 @@ body.upload-mode .filter-panels {
 
 .detection-bbox {
   position: absolute;
-  border: 3px solid #ff0000;
-  background: rgba(255, 0, 0, 0.12);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.7),
-    0 0 8px rgba(255, 0, 0, 0.4);
+  border: 1.5px solid #ff2d2d;
+  background: transparent;
+  box-shadow: none;
   pointer-events: none;
-  border-radius: 2px;
-  animation: bbox-blink 1.5s ease-in-out infinite;
+  border-radius: 1px;
+  z-index: 2;
+  animation: detection-bbox-blink 1.1s ease-in-out infinite;
 }
 
-@keyframes bbox-blink {
+@keyframes detection-bbox-blink {
   0%,
   100% {
     opacity: 1;
+    border-color: #ff2d2d;
   }
   50% {
-    opacity: 0;
+    opacity: 0.3;
+    border-color: rgba(255, 45, 45, 0.45);
   }
+}
+
+.detection-card.selected {
+  outline: 2px solid rgba(124, 58, 237, 0.9);
+  outline-offset: -2px;
+  background: rgba(124, 58, 237, 0.06);
+}
+
+.object-image-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.object-image-modal[hidden] {
+  display: none;
+}
+
+.object-image-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 10, 14, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.object-image-modal-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(96vw, 1280px);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(18, 20, 24, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+}
+
+.object-image-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.object-image-modal-close:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.object-image-modal-stage {
+  position: relative;
+  width: 100%;
+  height: min(78vh, 720px);
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.03) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.03) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.03) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.03) 75%),
+    #0f1115;
+  background-size: 18px 18px;
+  background-position:
+    0 0,
+    0 9px,
+    9px -9px,
+    -9px 0;
+}
+
+.object-image-modal-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.object-image-modal-tooltip {
+  position: absolute;
+  z-index: 2;
+  max-width: min(280px, calc(100% - 24px));
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(16, 16, 18, 0.92);
+  color: #fff7e8;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+  pointer-events: none;
+  text-align: left;
+}
+
+.object-image-modal-tooltip[hidden] {
+  display: none;
+}
+
+.object-image-modal-tooltip strong,
+.object-image-modal-tooltip span {
+  display: block;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.object-image-modal-tooltip span {
+  margin-top: 4px;
+  color: rgba(255, 243, 219, 0.68);
+}
+
+.object-image-modal-hint {
+  margin: 0;
+  padding: 0 4px 2px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+body.object-image-modal-open {
+  overflow: hidden;
 }
 
 .detection-footer {

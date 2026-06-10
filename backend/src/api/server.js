@@ -3,7 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const pool = require('../config/db');
-const { normalizeAiUploadFrames, normalizeAiTriangulationPoints } = require('../ai-upload/normalize');
+const {
+  normalizeAiUploadFrames,
+  normalizeAiTriangulationPoints,
+  imageStem,
+  resolveImageDimensions,
+} = require('../ai-upload/normalize');
 require('dotenv').config({ path: __dirname + '/../../.env' });
 
 const app = express();
@@ -298,6 +303,93 @@ async function upsertAiUploadFrames(payload, db = pool) {
   return saved;
 }
 
+function isHttpUrl(value) {
+  return /^https?:\/\//i.test(String(value || ''));
+}
+
+function parseSeenInEntry(seen) {
+  if (typeof seen === 'string') {
+    const image = imageStem(seen);
+    return image ? { image, instance_id: null } : null;
+  }
+  if (!seen || typeof seen !== 'object') return null;
+  const image = imageStem(seen.image || seen.image_path || seen.img_stem || '');
+  if (!image) return null;
+  return {
+    image,
+    instance_id: seen.instance_id ?? null,
+  };
+}
+
+function registerImageLookupKey(imagesByKey, image) {
+  const providerKey = String(image.provider_image_id || '')
+    .replace(/^ai-/, '')
+    .replace(/-(jpg|png|jpeg)$/i, '')
+    .toLowerCase();
+  imagesByKey.set(providerKey, image);
+  imagesByKey.set(providerKey.replace(/-/g, '_'), image);
+  imagesByKey.set(String(image.provider_image_id || '').toLowerCase(), image);
+}
+
+async function resolveInstanceIdForSeen(db, providerImageId, point, parsedSeen) {
+  if (parsedSeen.instance_id != null) return parsedSeen.instance_id;
+  const result = await db.query(
+    `SELECT raw_json
+     FROM image_segmentations
+     WHERE provider_image_id = $1 AND label = $2
+     ORDER BY confidence DESC NULLS LAST`,
+    [providerImageId, point.label]
+  );
+  for (const row of result.rows) {
+    const raw = row.raw_json || {};
+    if (point.sign_name && raw.sign_name && raw.sign_name !== point.sign_name) continue;
+    if (raw.instance_id != null) return raw.instance_id;
+  }
+  return null;
+}
+
+async function fetchJsonUrl(url, label) {
+  const response = await fetch(url, {
+    headers: { 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(30000),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(`${label} fetch failed with ${response.status}`);
+  }
+  return payload;
+}
+
+async function resolveAiUploadPayload(payload) {
+  let resolved = payload || {};
+  if (isHttpUrl(resolved.result_url)) {
+    resolved = await fetchJsonUrl(resolved.result_url, 'AI upload result');
+  }
+
+  const triangulationUrl =
+    resolved?.triangulation?.triangulation_url ||
+    resolved?.triangulation_url ||
+    resolved?.storage?.triangulation_url;
+  const hasTriangulationRows =
+    Array.isArray(resolved?.triangulation) ||
+    Array.isArray(resolved?.triangulation?.data) ||
+    Array.isArray(resolved?.triangulation?.objects) ||
+    Array.isArray(resolved?.objects);
+
+  if (!hasTriangulationRows && isHttpUrl(triangulationUrl)) {
+    const triangulationPayload = await fetchJsonUrl(triangulationUrl, 'AI triangulation');
+    resolved = {
+      ...resolved,
+      triangulation: Array.isArray(triangulationPayload)
+        ? triangulationPayload
+        : triangulationPayload?.triangulation || triangulationPayload?.data || triangulationPayload?.objects || [],
+      triangulation_url: triangulationUrl,
+    };
+  }
+
+  return resolved;
+}
+
 async function upsertAiObjectPoints(payload, db = pool) {
   const points = normalizeAiTriangulationPoints(payload);
   const saved = [];
@@ -547,12 +639,13 @@ async function ensureImageAnalysis(providerImageId, deps = {}) {
 // ====== POST /api/v1/ai-uploads ======
 app.post('/api/v1/ai-uploads', async (req, res) => {
   try {
-    const data = await upsertAiUploadFrames(req.body || {});
-    const object_points = await upsertAiObjectPoints(req.body || {});
+    const aiPayload = await resolveAiUploadPayload(req.body || {});
+    const data = await upsertAiUploadFrames(aiPayload);
+    const object_points = await upsertAiObjectPoints(aiPayload);
     res.json({ data, object_points, count: data.length, object_point_count: object_points.length });
   } catch (err) {
     console.error('Error in POST /api/v1/ai-uploads:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: err.message || 'Internal server error' });
   }
 });
 
@@ -586,6 +679,68 @@ app.get('/api/v1/ai-object-points', async (req, res) => {
   }
 });
 
+// ====== GET /api/v1/ai-object-points/:pointId/images ======
+app.get('/api/v1/ai-object-points/:pointId/images', async (req, res) => {
+  try {
+    const pointResult = await pool.query(
+      `SELECT point_id, label, sign_name, seen_in
+       FROM ai_object_points
+       WHERE point_id = $1`,
+      [req.params.pointId]
+    );
+    if (pointResult.rowCount === 0) {
+      return res.status(404).json({ error: 'AI object point not found' });
+    }
+
+    const point = pointResult.rows[0];
+    const seenIn = Array.isArray(point.seen_in) ? point.seen_in : [];
+    const parsedSeenIn = seenIn.map(parseSeenInEntry).filter(Boolean);
+    if (parsedSeenIn.length === 0) {
+      return res.json({ data: [], count: 0, point });
+    }
+
+    const imageKeys = parsedSeenIn.map((seen) => seen.image.toLowerCase());
+
+    const imagesResult = await pool.query(
+      `SELECT provider_image_id, image_path, lat, lon, captured_at, compass_angle, width, height
+       FROM images
+       WHERE provider = 'ai_upload'
+         AND (
+           lower(provider_image_id) = ANY($1)
+           OR lower(regexp_replace(provider_image_id, '^ai-', '')) = ANY($1)
+           OR lower(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-jpg$', '')) = ANY($1)
+           OR lower(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-png$', '')) = ANY($1)
+           OR lower(replace(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-jpg$', ''), '-', '_')) = ANY($1)
+           OR lower(replace(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-png$', ''), '-', '_')) = ANY($1)
+         )`,
+      [imageKeys]
+    );
+
+    const imagesByKey = new Map();
+    for (const image of imagesResult.rows) {
+      registerImageLookupKey(imagesByKey, image);
+    }
+
+    const data = [];
+    for (const seen of parsedSeenIn) {
+      const key = seen.image.toLowerCase();
+      const image = imagesByKey.get(key) || imagesByKey.get(`ai-${key}`);
+      if (!image) continue;
+      const instanceId = await resolveInstanceIdForSeen(pool, image.provider_image_id, point, seen);
+      data.push({
+        image,
+        instance_id: instanceId,
+        thumb_url: getThumbUrl(image.provider_image_id, 'downloaded'),
+      });
+    }
+
+    res.json({ data, count: data.length, point });
+  } catch (err) {
+    console.error('Error in /api/v1/ai-object-points/:pointId/images:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ====== GET /api/v1/ai-images/:providerImageId/segments ======
 app.get('/api/v1/ai-images/:providerImageId/segments', async (req, res) => {
   try {
@@ -615,12 +770,21 @@ app.get('/api/v1/ai-images/:providerImageId/instance-matrix', async (req, res) =
       return res.status(404).json({ error: 'AI segmentation not found' });
     }
 
-    const matrixUrl = new URL(AI_FETCH_IMAGE_URL.replace(/\/fetch\/image$/, '/fetch/instance-matrix'));
-    matrixUrl.searchParams.set('path', segmentationPath);
+    const matrixUrl = isHttpUrl(segmentationPath)
+      ? segmentationPath
+      : (() => {
+          const url = new URL(AI_FETCH_IMAGE_URL.replace(/\/fetch\/image$/, '/fetch/instance-matrix'));
+          url.searchParams.set('path', segmentationPath);
+          return url;
+        })();
     const upstream = await fetch(matrixUrl, { signal: AbortSignal.timeout(30000) });
     const payload = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
       return res.status(upstream.status).json(payload?.detail ? { error: payload.detail } : { error: 'AI instance matrix fetch failed' });
+    }
+    const dims = resolveImageDimensions(payload?.image_size);
+    if (dims.width && dims.height) {
+      payload.image_size = [dims.width, dims.height];
     }
     res.json(payload);
   } catch (err) {
@@ -641,8 +805,13 @@ app.get('/api/v1/ai-images/:providerImageId/image', async (req, res) => {
       return res.status(404).json({ error: 'AI image not found' });
     }
 
-    const imageUrl = new URL(AI_FETCH_IMAGE_URL);
-    imageUrl.searchParams.set('path', imagePath);
+    const imageUrl = isHttpUrl(imagePath)
+      ? imagePath
+      : (() => {
+          const url = new URL(AI_FETCH_IMAGE_URL);
+          url.searchParams.set('path', imagePath);
+          return url;
+        })();
     const upstream = await fetch(imageUrl, { signal: AbortSignal.timeout(30000) });
     if (!upstream.ok) {
       return res.status(upstream.status).json({ error: 'AI image fetch failed' });
