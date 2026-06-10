@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS ai_object_points (
   track_id        TEXT,
   class_id        INT,
   label           TEXT NOT NULL,
+  sign_name       TEXT,
   geom            GEOMETRY(Point, 4326) NOT NULL,
   lat             DOUBLE PRECISION NOT NULL,
   lon             DOUBLE PRECISION NOT NULL,
@@ -132,5 +133,11 @@ CREATE TABLE IF NOT EXISTS ai_object_points (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+DO $$
+BEGIN
+  ALTER TABLE ai_object_points ADD COLUMN IF NOT EXISTS sign_name TEXT;
+END $$;
+
 CREATE INDEX IF NOT EXISTS ai_object_points_geom_gist ON ai_object_points USING GIST (geom);
 CREATE INDEX IF NOT EXISTS ai_object_points_label_idx ON ai_object_points (label);
+CREATE INDEX IF NOT EXISTS ai_object_points_sign_name_idx ON ai_object_points (sign_name);

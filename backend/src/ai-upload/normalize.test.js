@@ -31,8 +31,8 @@ test('normalizes AI upload response with Windows paths, coordinates, and segment
       width: null,
       height: null,
       segmentations: [
-        { label: 'road', confidence: 0.94 },
-        { label: 'traffic_sign', confidence: 0.876 },
+        { label: 'road', class_name: 'road', confidence: 0.94 },
+        { label: 'traffic_sign', class_name: 'traffic_sign', confidence: 0.876 },
       ],
       segmentation_summary: 'road 94%, traffic_sign 88%',
     },
@@ -70,7 +70,7 @@ test('normalizes nested AI response shapes and skips frames without valid coordi
       captured_at: null,
       width: 1920,
       height: 1080,
-      segmentations: [{ label: 'person', confidence: 0.5 }],
+      segmentations: [{ label: 'person', class_name: 'person', confidence: 0.5 }],
       segmentation_summary: 'person 50%',
     },
   ]);
@@ -119,9 +119,30 @@ test('normalizes real AI payload shape by matching images.data frames to segment
       width: 1344,
       height: 4096,
       segmentations: [
-        { label: 'object--vehicle--car', confidence: 0.999, area: 134264, instance_id: 1, rgb: [0, 0, 142] },
-        { label: 'object--vehicle--car', confidence: 0.998, area: 6325, instance_id: 2, rgb: [0, 0, 142] },
-        { label: 'object--traffic-sign--front', confidence: 0.997, area: 713, instance_id: 3, rgb: [220, 220, 0] },
+        {
+          label: 'object--vehicle--car',
+          class_name: 'object--vehicle--car',
+          confidence: 0.999,
+          area: 134264,
+          instance_id: 1,
+          rgb: [0, 0, 142],
+        },
+        {
+          label: 'object--vehicle--car',
+          class_name: 'object--vehicle--car',
+          confidence: 0.998,
+          area: 6325,
+          instance_id: 2,
+          rgb: [0, 0, 142],
+        },
+        {
+          label: 'object--traffic-sign--front',
+          class_name: 'object--traffic-sign--front',
+          confidence: 0.997,
+          area: 713,
+          instance_id: 3,
+          rgb: [220, 220, 0],
+        },
       ],
       segmentation_summary: 'object--vehicle--car 2, object--traffic-sign--front 1',
     },
@@ -151,12 +172,69 @@ test('normalizes triangulation object points from real AI payload shape', () => 
       track_id: 9,
       class_id: 52,
       label: 'object--traffic-sign--back',
+      sign_name: null,
       lat: 16.07643717,
       lon: 108.20715043,
       confidence: 0.994,
       residual_m: 0.424,
       num_obs: 4,
       seen_in: [{ image_path: 'GS010051_from45s_0pct_mly_0_000001.jpg' }],
+    },
+  ]);
+});
+
+test('keeps traffic-sign class label and stores sign_name separately', () => {
+  const payload = {
+    segmentation: [
+      {
+        image_path: 'GS010051_from45s_0pct_mly_0_000001.jpg',
+        instances: [
+          {
+            instance_id: 20,
+            class_name: 'object--traffic-sign--front',
+            sign_name: 'Right Turn Only',
+          },
+        ],
+      },
+    ],
+    triangulation: [
+      {
+        track_id: 2,
+        class_id: 53,
+        class_name: 'object--traffic-sign--front',
+        latitude: 16.07625676,
+        longitude: 108.20682356,
+        residual_m: 0.948,
+        num_obs: 6,
+        avg_score: 0.9115,
+        seen_in: [
+          {
+            image: 'GS010051_from45s_0pct_mly_0_000001',
+            instance_id: 20,
+          },
+        ],
+      },
+    ],
+  };
+
+  assert.deepEqual(normalizeAiTriangulationPoints(payload), [
+    {
+      point_id: 'ai-object-2',
+      track_id: 2,
+      class_id: 53,
+      label: 'object--traffic-sign--front',
+      sign_name: 'Right Turn Only',
+      lat: 16.07625676,
+      lon: 108.20682356,
+      confidence: 0.9115,
+      residual_m: 0.948,
+      num_obs: 6,
+      seen_in: [
+        {
+          image: 'GS010051_from45s_0pct_mly_0_000001',
+          instance_id: 20,
+        },
+      ],
     },
   ]);
 });

@@ -528,6 +528,44 @@ body.upload-mode .filter-panels {
   object-fit: cover;
 }
 
+.upload-segmentation-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.upload-segmentation-tooltip {
+  position: absolute;
+  z-index: 3;
+  max-width: min(240px, calc(100% - 8px));
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: rgba(16, 16, 18, 0.92);
+  color: #fff7e8;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+  pointer-events: none;
+  text-align: left;
+}
+
+.upload-segmentation-tooltip[hidden] {
+  display: none;
+}
+
+.upload-segmentation-tooltip strong,
+.upload-segmentation-tooltip span {
+  display: block;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.upload-segmentation-tooltip span {
+  margin-top: 3px;
+  color: rgba(255, 243, 219, 0.68);
+}
+
 .upload-result-placeholder {
   position: absolute;
   inset: 0;

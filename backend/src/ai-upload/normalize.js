@@ -87,13 +87,17 @@ function normalizeSegmentations(item) {
       if (!label) return null;
       const normalized = {
         label: String(label),
+        class_name: String(label),
         confidence: parseNumber(firstDefined(segment.confidence, segment.score, segment.conf)),
       };
+      const classId = parseNumber(segment.class_id);
       const area = parseNumber(segment.area);
       const instanceId = parseNumber(segment.instance_id);
+      if (classId !== null) normalized.class_id = classId;
       if (area !== null) normalized.area = area;
       if (instanceId !== null) normalized.instance_id = instanceId;
       if (Array.isArray(segment.rgb)) normalized.rgb = segment.rgb;
+      if (segment.sign_name) normalized.sign_name = String(segment.sign_name);
       return normalized;
     })
     .filter(Boolean);
@@ -157,6 +161,15 @@ function normalizeAiUploadFrames(payload) {
 
 function normalizeAiTriangulationPoints(payload) {
   const raw = Array.isArray(payload?.triangulation) ? payload.triangulation : [];
+  const signNamesByObservation = new Map();
+  for (const frame of Array.isArray(payload?.segmentation) ? payload.segmentation : []) {
+    const imageStem = path.basename(String(frame?.image_path || '').replace(/\\/g, '/')).replace(/\.[^.]+$/, '');
+    for (const instance of Array.isArray(frame?.instances) ? frame.instances : []) {
+      if (!instance?.sign_name || instance?.instance_id === undefined) continue;
+      signNamesByObservation.set(`${imageStem}:${instance.instance_id}`, String(instance.sign_name));
+    }
+  }
+
   return raw
     .map((item) => {
       const lat = parseNumber(firstDefined(item.latitude, item.lat));
@@ -164,11 +177,21 @@ function normalizeAiTriangulationPoints(payload) {
       const trackId = firstDefined(item.track_id, item.id);
       const label = firstDefined(item.class_name, item.label, item.name);
       if (lat === null || lon === null || trackId === undefined || !label) return null;
+      const signName = firstDefined(
+        item.sign_name,
+        ...(Array.isArray(item.seen_in)
+          ? item.seen_in.map((seen) => signNamesByObservation.get(`${seen.image}:${seen.instance_id}`))
+          : []),
+        ...(Array.isArray(item.observations)
+          ? item.observations.map((obs) => signNamesByObservation.get(`${obs.img_stem}:${obs.instance_id}`))
+          : [])
+      );
       return {
         point_id: `ai-object-${trackId}`,
         track_id: trackId,
         class_id: parseNumber(item.class_id),
         label: String(label),
+        sign_name: label === 'object--traffic-sign--front' && signName ? String(signName) : null,
         lat,
         lon,
         confidence: parseNumber(firstDefined(item.avg_score, item.score, item.confidence)),

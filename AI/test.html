@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panoptic JSON Viewer</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 16px; }
+    .row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+    input { padding: 8px; min-width: 320px; }
+    button { padding: 8px 12px; cursor: pointer; }
+    #wrap { position: relative; display: inline-block; border: 1px solid #ccc; cursor: crosshair; }
+    canvas { display: block; max-width: 100%; height: auto; }
+    #tooltip {
+      position: absolute;
+      pointer-events: none;
+      display: none;
+      z-index: 10;
+      max-width: 320px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      background: rgba(20, 20, 24, 0.92);
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.35;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+    #info { margin-top: 12px; padding: 10px; background: #f6f6f6; border: 1px solid #ddd; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h3>Panoptic Viewer (hover để highlight)</h3>
+
+  <div class="row">
+    <input id="imgPath" placeholder="Đường dẫn ảnh" />
+    <input id="jsonPath" placeholder="Đường dẫn JSON" />
+    <button id="btnLoad">Load</button>
+  </div>
+  <p id="loadHint" style="margin:0 0 12px;color:#555;font-size:13px;"></p>
+  <div class="row">
+    <label>Ảnh local: <input id="imgFile" type="file" accept="image/*" /></label>
+    <label>JSON local: <input id="jsonFile" type="file" accept=".json,application/json" /></label>
+  </div>
+
+  <div class="row">
+    <label>Độ đậm mask: <input type="range" id="alpha" min="0.2" max="0.9" step="0.05" value="0.55" /></label>
+  </div>
+
+  <div id="wrap">
+    <canvas id="cv"></canvas>
+    <div id="tooltip"></div>
+  </div>
+
+  <div id="info">Di chuột lên ảnh để highlight object và xem tên class.</div>
+
+  <script>
+    const DEFAULT_IMG = "D:\\PBL7-Seg\\images\\max-360mode_0_000004.jpg";
+    const DEFAULT_JSON = "D:\\PBL7-Seg\\output\\json\\max-360mode_0_000004.json";
+
+    const cv = document.getElementById("cv");
+    const ctx = cv.getContext("2d");
+    const wrap = document.getElementById("wrap");
+    const tooltip = document.getElementById("tooltip");
+    const info = document.getElementById("info");
+    const loadHint = document.getElementById("loadHint");
+    const alpha = document.getElementById("alpha");
+    const imgPathInput = document.getElementById("imgPath");
+    const jsonPathInput = document.getElementById("jsonPath");
+
+    imgPathInput.value = DEFAULT_IMG;
+    jsonPathInput.value = DEFAULT_JSON;
+
+    let img = new Image();
+    let dataJson = null;
+    let instanceMatrix = null;
+    let matrixW = 0;
+    let matrixH = 0;
+    let instancesMap = null;
+    const overlayCache = new Map();
+    let hoverRaf = 0;
+    let lastHover = null;
+
+    function setInstanceMatrix(matrix) {
+      instanceMatrix = matrix;
+      matrixH = matrix ? matrix.length : 0;
+      matrixW = matrix && matrix[0] ? matrix[0].length : 0;
+      overlayCache.clear();
+    }
+
+    function buildInstancesMap(json) {
+      const map = {};
+      (json.instances || []).forEach((it) => {
+        map[String(it.instance_id)] = it;
+      });
+      return map;
+    }
+
+    function canvasToMatrix(x, y) {
+      if (!instanceMatrix || !img.width) return { mx: 0, my: 0 };
+      const mx = Math.min(matrixW - 1, Math.max(0, Math.floor((x * matrixW) / img.width)));
+      const my = Math.min(matrixH - 1, Math.max(0, Math.floor((y * matrixH) / img.height)));
+      return { mx, my };
+    }
+
+    function lookupAtMatrix(mx, my) {
+      const instanceId = instanceMatrix[my]?.[mx];
+      if (!instanceId) {
+        return { instanceId: 0, classId: 255, meta: null };
+      }
+      const meta = instancesMap?.[String(instanceId)] ?? null;
+      return {
+        instanceId,
+        classId: meta != null ? meta.class_id : 255,
+        meta,
+      };
+    }
+
+    function sizeHint() {
+      if (!img.width || !matrixW) return "";
+      if (img.width === matrixW && img.height === matrixH) {
+        return `matrix ${matrixW}×${matrixH} (khớp ảnh)`;
+      }
+      return `ảnh ${img.width}×${img.height}, matrix ${matrixW}×${matrixH}`;
+    }
+
+    function readTextFile(file) {
+      return new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(fr.result);
+        fr.onerror = () => reject(fr.error || new Error("Không đọc được file"));
+        fr.readAsText(file, "utf-8");
+      });
+    }
+
+    function rgbForInstance(meta) {
+      const rgb = meta?.rgb;
+      if (Array.isArray(rgb) && rgb.length >= 3) {
+        return [rgb[0] | 0, rgb[1] | 0, rgb[2] | 0];
+      }
+      const id = meta?.class_id ?? 0;
+      return [(id * 37) % 256, (id * 67) % 256, (id * 97) % 256];
+    }
+
+    function canvasCoords(ev) {
+      const rect = cv.getBoundingClientRect();
+      const x = Math.floor((ev.clientX - rect.left) * (cv.width / rect.width));
+      const y = Math.floor((ev.clientY - rect.top) * (cv.height / rect.height));
+      return { x, y, clientX: ev.clientX, clientY: ev.clientY };
+    }
+
+    function getInstanceOverlay(instanceId, meta) {
+      const key = String(instanceId);
+      if (overlayCache.has(key)) return overlayCache.get(key);
+
+      const [r, g, b] = rgbForInstance(meta);
+      const overlay = document.createElement("canvas");
+      overlay.width = cv.width;
+      overlay.height = cv.height;
+      const octx = overlay.getContext("2d");
+      const imageData = octx.createImageData(cv.width, cv.height);
+      const buf = imageData.data;
+
+      for (let y = 0; y < cv.height; y++) {
+        for (let x = 0; x < cv.width; x++) {
+          const { mx, my } = canvasToMatrix(x, y);
+          if (instanceMatrix[my][mx] !== instanceId) continue;
+          const i = (y * cv.width + x) * 4;
+          buf[i] = r;
+          buf[i + 1] = g;
+          buf[i + 2] = b;
+          buf[i + 3] = 255;
+        }
+      }
+      octx.putImageData(imageData, 0, 0);
+      overlayCache.set(key, overlay);
+      return overlay;
+    }
+
+    function drawBase() {
+      if (!img.width) return;
+      cv.width = img.width;
+      cv.height = img.height;
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(img, 0, 0);
+    }
+
+    function hideTooltip() {
+      tooltip.style.display = "none";
+    }
+
+    function showTooltip(clientX, clientY, meta) {
+      const name = meta.class_name || `class_${meta.class_id}`;
+      const score = meta.score != null ? meta.score.toFixed(3) : "n/a";
+      tooltip.innerHTML =
+        `<strong>${name}</strong><br>` +
+        `instance #${meta.instance_id} · score ${score}`;
+      tooltip.style.display = "block";
+      const rect = wrap.getBoundingClientRect();
+      let left = clientX - rect.left + 14;
+      let top = clientY - rect.top + 14;
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+      requestAnimationFrame(() => {
+        const tw = tooltip.offsetWidth;
+        const th = tooltip.offsetHeight;
+        if (left + tw > rect.width - 4) left = Math.max(4, left - tw - 28);
+        if (top + th > rect.height - 4) top = Math.max(4, top - th - 28);
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+      });
+    }
+
+    function drawHover(x, y, clientX, clientY) {
+      drawBase();
+      if (!instanceMatrix) {
+        hideTooltip();
+        return;
+      }
+
+      const { mx, my } = canvasToMatrix(x, y);
+      const { instanceId, classId, meta } = lookupAtMatrix(mx, my);
+
+      if (!instanceId || !meta) {
+        hideTooltip();
+        return;
+      }
+
+      const overlay = getInstanceOverlay(instanceId, meta);
+      ctx.globalAlpha = Number(alpha.value);
+      ctx.drawImage(overlay, 0, 0);
+      ctx.globalAlpha = 1;
+
+      showTooltip(clientX, clientY, meta);
+
+      info.textContent = [
+        sizeHint(),
+        "",
+        `class: ${meta.class_name}`,
+        `instance_id: ${instanceId}`,
+        `class_id: ${classId}`,
+        `rgb: [${(meta.rgb || []).join(", ")}]`,
+        `score: ${meta.score}`,
+        `area: ${meta.area}`,
+        `canvas (${x}, ${y}) → matrix (${mx}, ${my})`,
+      ].join("\n");
+    }
+
+    function scheduleHover(ev) {
+      lastHover = canvasCoords(ev);
+      if (hoverRaf) return;
+      hoverRaf = requestAnimationFrame(() => {
+        hoverRaf = 0;
+        if (!lastHover) return;
+        drawHover(lastHover.x, lastHover.y, lastHover.clientX, lastHover.clientY);
+      });
+    }
+
+    /** Đường D:\PBL7-Seg\... → URL tương đối so với test.html (hoạt động với http.server). */
+    function resolveLoadUrl(path) {
+      const p = path.trim();
+      if (!p) return p;
+      if (/^https?:\/\//i.test(p) || /^data:/i.test(p)) return p;
+
+      const base = document.baseURI || window.location.href;
+      const norm = p.replace(/\\/g, "/");
+
+      const mImg = norm.match(/\/images\/(.+)$/i);
+      if (mImg) return new URL(mImg[1], base).href;
+
+      const mOut = norm.match(/\/output\/(.+)$/i);
+      if (mOut) return new URL("../output/" + mOut[1], base).href;
+
+      if (/^[a-zA-Z]:\//.test(norm)) {
+        return "file:///" + norm;
+      }
+      if (p.startsWith("/")) {
+        return new URL(p, window.location.origin + "/").href;
+      }
+      return new URL(p, base).href;
+    }
+
+    function isFileProtocol() {
+      return window.location.protocol === "file:";
+    }
+
+    function updateLoadHint(msg) {
+      loadHint.textContent = msg;
+    }
+
+    function applyJsonData() {
+      setInstanceMatrix(dataJson.instance_matrix || dataJson.mask_matrix || null);
+      instancesMap = buildInstancesMap(dataJson);
+    }
+
+    function onLoadedOk(source) {
+      drawBase();
+      updateLoadHint("OK (" + source + "). " + sizeHint());
+      info.textContent = "Loaded. " + sizeHint() + "\nDi chuột lên ảnh để highlight.";
+    }
+
+    function loadImageFromUrl(url) {
+      return new Promise((resolve, reject) => {
+        img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Không load ảnh: " + url));
+        img.src = url;
+      });
+    }
+
+    function loadImageFromFile(file) {
+      return new Promise((resolve, reject) => {
+        img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Không load ảnh local"));
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    async function loadJsonFromUrl(url) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) return res.json();
+      } catch (_) {
+        /* fetch thường fail trên file:// */
+      }
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onload = () => {
+          if (xhr.status === 0 || xhr.status === 200) {
+            try {
+              resolve(JSON.parse(xhr.responseText));
+            } catch (e) {
+              reject(e);
+            }
+          } else {
+            reject(new Error("JSON HTTP " + xhr.status));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Không đọc JSON"));
+        xhr.send();
+      });
+    }
+
+    async function loadFromLocalFiles(imgFile, jsonFile) {
+      const text = await readTextFile(jsonFile);
+      dataJson = JSON.parse(text);
+      applyJsonData();
+      await loadImageFromFile(imgFile);
+      onLoadedOk("file local");
+    }
+
+    async function loadViaPaths() {
+      const imgPath = resolveLoadUrl(imgPathInput.value);
+      const jsonPath = resolveLoadUrl(jsonPathInput.value);
+      if (!imgPath || !jsonPath) {
+        throw new Error("Nhập đường dẫn ảnh và JSON");
+      }
+      updateLoadHint("Đang load… " + imgPath + " | " + jsonPath);
+
+      if (isFileProtocol()) {
+        await loadImageFromUrl(imgPath);
+        try {
+          dataJson = await loadJsonFromUrl(jsonPath);
+          applyJsonData();
+          onLoadedOk("file://");
+          return;
+        } catch (_) {
+          updateLoadHint(
+            "Ảnh đã load. Trình duyệt chặn đọc JSON qua file:// — chọn file ở ô «JSON local» (cùng path mặc định bên dưới)."
+          );
+          info.textContent =
+            "Ảnh OK.\nChọn JSON local: " + jsonPathInput.value +
+            "\nHoặc: cd PBL7-Seg → python -m http.server 8080 → mở http://localhost:8080/images/test.html";
+          return;
+        }
+      }
+
+      dataJson = await loadJsonFromUrl(jsonPath);
+      applyJsonData();
+      await loadImageFromUrl(imgPath);
+      onLoadedOk("http");
+    }
+
+    async function loadAll() {
+      try {
+        overlayCache.clear();
+        const imgFile = document.getElementById("imgFile").files[0];
+        const jsonFile = document.getElementById("jsonFile").files[0];
+
+        if (imgFile && jsonFile) {
+          await loadFromLocalFiles(imgFile, jsonFile);
+          return;
+        }
+        if (jsonFile && !imgFile) {
+          const text = await readTextFile(jsonFile);
+          dataJson = JSON.parse(text);
+          applyJsonData();
+          if (!img.width) {
+            await loadImageFromUrl(resolveLoadUrl(imgPathInput.value));
+          }
+          onLoadedOk("JSON local + ảnh từ path");
+          return;
+        }
+        if (imgFile && !jsonFile) {
+          await loadImageFromFile(imgFile);
+          updateLoadHint("Ảnh OK — chọn thêm JSON local.");
+          return;
+        }
+
+        await loadViaPaths();
+      } catch (e) {
+        console.error(e);
+        updateLoadHint("Lỗi: " + e.message);
+        info.textContent =
+          "Không load được.\n\n" +
+          "1) Chọn «Ảnh local» + «JSON local» (chắc chắn nhất khi mở file HTML trực tiếp)\n" +
+          "2) Hoặc: cd D:\\PBL7-Seg → python -m http.server 8080\n" +
+          "   → http://localhost:8080/images/test.html";
+      }
+    }
+
+    cv.addEventListener("mousemove", scheduleHover);
+    cv.addEventListener("mouseleave", () => {
+      lastHover = null;
+      hideTooltip();
+      drawBase();
+      if (instanceMatrix) {
+        info.textContent = sizeHint() + "\nDi chuột lên ảnh để highlight.";
+      }
+    });
+
+    document.getElementById("btnLoad").addEventListener("click", loadAll);
+    document.getElementById("jsonFile").addEventListener("change", () => {
+      if (document.getElementById("jsonFile").files[0]) loadAll();
+    });
+    document.getElementById("imgFile").addEventListener("change", () => {
+      if (document.getElementById("imgFile").files[0]) loadAll();
+    });
+    alpha.addEventListener("input", () => {
+      if (lastHover) {
+        drawHover(lastHover.x, lastHover.y, lastHover.clientX, lastHover.clientY);
+      }
+    });
+
+    if (isFileProtocol()) {
+      updateLoadHint(
+        "Đang mở file:// — sau khi load ảnh, hãy chọn «JSON local» nếu JSON lỗi. Hoặc dùng http.server (xem hướng dẫn bên dưới khi lỗi)."
+      );
+    }
+    loadAll();
+  </script>
+</body>
+</html>

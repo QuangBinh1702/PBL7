@@ -738,13 +738,16 @@ export function startLegacyMapillaryApp() {
 				}
 
 				// Check image dots for hover preview + ring (both Coverage AND Local DB)
-				const objectHit = map.getLayer("ai-object-points-dots")
+				const aiPointLayers = ["ai-object-points-dots", "ai-traffic-sign-points-dots"].filter((id) =>
+					map.getLayer(id),
+				);
+				const objectHit = aiPointLayers.length
 					? map.queryRenderedFeatures(
 							[
 								[e.point.x - 8, e.point.y - 8],
 								[e.point.x + 8, e.point.y + 8],
 							],
-							{ layers: ["ai-object-points-dots"] },
+							{ layers: aiPointLayers },
 						)[0]
 					: null;
 				if (objectHit) {
@@ -952,13 +955,16 @@ export function startLegacyMapillaryApp() {
 					return;
 				}
 
-				const objectHit = map.getLayer("ai-object-points-dots")
+				const aiPointLayers = ["ai-object-points-dots", "ai-traffic-sign-points-dots"].filter((id) =>
+					map.getLayer(id),
+				);
+				const objectHit = aiPointLayers.length
 					? map.queryRenderedFeatures(
 							[
 								[e.point.x - 10, e.point.y - 10],
 								[e.point.x + 10, e.point.y + 10],
 							],
-							{ layers: ["ai-object-points-dots"] },
+							{ layers: aiPointLayers },
 						)[0]
 					: null;
 				if (objectHit) {
@@ -1213,28 +1219,52 @@ export function startLegacyMapillaryApp() {
 				type: "symbol",
 				source: "ai-object-points",
 				minzoom: 14,
+				filter: ["!", ["has", "sign_value"]],
 				layout: {
-					"icon-image": ["concat", "pt:", ["get", "label"]],
+					"icon-image": ["concat", "pt:", ["get", "icon_value"]],
 					"icon-size": ["interpolate", ["linear"], ["zoom"], 14, 0.72, 20, 1.05],
 					"icon-allow-overlap": true,
 					"icon-ignore-placement": true,
 				},
 			});
 
-			// Build sequence lines from sorted images (connect nearby consecutive points)
+			map.addLayer({
+				id: "ai-traffic-sign-points-dots",
+				type: "symbol",
+				source: "ai-object-points",
+				minzoom: 14,
+				filter: ["has", "sign_value"],
+				layout: {
+					"icon-image": ["concat", "sg:", ["get", "sign_value"]],
+					"icon-size": ["interpolate", ["linear"], ["zoom"], 14, 0.58, 20, 0.95],
+					"icon-allow-overlap": true,
+					"icon-ignore-placement": true,
+				},
+			});
+
+			function isViewableSequenceImage(img) {
+				if (!img) return false;
+				if (img.has_image === true || img.has_thumb === true || img.is_viewable === true) return true;
+				if (img.thumb_256_url || img.thumb_1024_url || img.image_path) return true;
+				if (String(img.provider_image_id || "").startsWith("ai-")) return true;
+				return img.status === "downloaded" || img.provider === "ai_upload";
+			}
+
+			// Build sequence lines from sorted images. A sequence is rendered only if at least one frame is viewable;
+			// missing middle frames stay in the LineString so playback and route continuity remain intact.
 			function buildSequenceLines(images) {
 				const lines = [];
-				// Group images by sequence_id
 				const groups = {};
 				for (const img of images) {
-					if (!img.sequence_id) continue; // skip images without sequence
+					if (!img.sequence_id) continue;
 					if (!groups[img.sequence_id]) groups[img.sequence_id] = [];
 					groups[img.sequence_id].push(img);
 				}
-				// For each sequence, sort by captured_at and build a LineString
+
 				for (const seqId of Object.keys(groups)) {
 					const seqImages = groups[seqId];
 					if (seqImages.length < 2) continue;
+					if (!seqImages.some(isViewableSequenceImage)) continue;
 					seqImages.sort(
 						(a, b) => new Date(a.captured_at) - new Date(b.captured_at),
 					);
@@ -1264,14 +1294,7 @@ export function startLegacyMapillaryApp() {
 					features: points.map((point) => ({
 						type: "Feature",
 						geometry: { type: "Point", coordinates: [point.lon, point.lat] },
-						properties: {
-							id: point.point_id,
-							label: point.label,
-							confidence: point.confidence,
-							num_obs: point.num_obs,
-							residual_m: point.residual_m,
-							seen_in: JSON.stringify(point.seen_in || []),
-						},
+						properties: buildAiObjectPointProperties(point),
 					})),
 				});
 			}
@@ -1307,12 +1330,14 @@ export function startLegacyMapillaryApp() {
 					if (signal.aborted) return;
 					const json = await res.json();
 					if (signal.aborted) return;
-					const images = json.data;
+					const images = Array.isArray(json.data) ? json.data : [];
+					const sequencedImages = images.filter((img) => img.sequence_id);
+					const visibleImages = sequencedImages.filter(isViewableSequenceImage);
 
 					// Points
 					map.getSource("local-images").setData({
 						type: "FeatureCollection",
-						features: images.map((img) => ({
+						features: visibleImages.map((img) => ({
 							type: "Feature",
 							geometry: { type: "Point", coordinates: [img.lon, img.lat] },
 							properties: {
@@ -1322,16 +1347,18 @@ export function startLegacyMapillaryApp() {
 								is_pano: img.is_pano,
 								segmentation_summary: img.segmentation_summary || "",
 								provider: img.provider || "mapillary",
+								has_image: isViewableSequenceImage(img),
+								missing_image: !isViewableSequenceImage(img),
 							},
 						})),
 					});
 
 					// Lines
-					map.getSource("local-lines").setData(buildSequenceLines(images));
+					map.getSource("local-lines").setData(buildSequenceLines(sequencedImages));
 					await loadAiObjectPoints(bbox, signal);
 
-					if (LOCAL_ONLY_MODE && !currentImageId && images.length > 0) {
-						navigateViewer(String(images[0].provider_image_id));
+					if (LOCAL_ONLY_MODE && !currentImageId && visibleImages.length > 0) {
+						navigateViewer(String(visibleImages[0].provider_image_id));
 					}
 				} catch (e) {
 					if (e.name === "AbortError") return;
@@ -1808,11 +1835,12 @@ export function startLegacyMapillaryApp() {
 				stopAutoPlay();
 				return;
 			}
-			for (let i = idx + 1; i < seq.length; i++) {
-				const result = await navigateViewer(String(seq[i].provider_image_id));
-				if (result?.hasThumb) return;
+			const next = seq[idx + 1];
+			if (!next) {
+				stopAutoPlay();
+				return;
 			}
-			stopAutoPlay();
+			await navigateViewer(String(next.provider_image_id));
 		} catch {
 			stopAutoPlay();
 		}
@@ -2076,9 +2104,208 @@ export function startLegacyMapillaryApp() {
 					providerImageId:
 						item.provider_image_id || item.image_id || item.providerImageId || null,
 					capturedAt: item.captured_at || item.timestamp || "",
+					segmentationPath: item.segmentation_path || item.segmentationPath || "",
 				};
 			})
 			.filter(Boolean);
+	}
+
+	function rgbForSegmentationInstance(meta) {
+		const rgb = meta?.rgb;
+		if (Array.isArray(rgb) && rgb.length >= 3) {
+			return [rgb[0] | 0, rgb[1] | 0, rgb[2] | 0];
+		}
+		const id = Number(meta?.class_id ?? meta?.instance_id ?? 0);
+		return [(id * 37) % 256, (id * 67) % 256, (id * 97) % 256];
+	}
+
+	function getUploadImageFit(img, canvas) {
+		const naturalW = img.naturalWidth || canvas.width;
+		const naturalH = img.naturalHeight || canvas.height;
+		const scale = Math.max(canvas.width / naturalW, canvas.height / naturalH);
+		const drawW = naturalW * scale;
+		const drawH = naturalH * scale;
+		return {
+			naturalW,
+			naturalH,
+			scale,
+			offsetX: (canvas.width - drawW) / 2,
+			offsetY: (canvas.height - drawH) / 2,
+		};
+	}
+
+	function uploadCanvasToMatrix(x, y, img, canvas, matrixW, matrixH) {
+		const fit = getUploadImageFit(img, canvas);
+		const imageX = (x - fit.offsetX) / fit.scale;
+		const imageY = (y - fit.offsetY) / fit.scale;
+		if (imageX < 0 || imageY < 0 || imageX >= fit.naturalW || imageY >= fit.naturalH) {
+			return null;
+		}
+		return {
+			mx: Math.min(matrixW - 1, Math.max(0, Math.floor((imageX * matrixW) / fit.naturalW))),
+			my: Math.min(matrixH - 1, Math.max(0, Math.floor((imageY * matrixH) / fit.naturalH))),
+		};
+	}
+
+	function createUploadInstanceOverlay(instanceId, meta, img, canvas, matrix, matrixW, matrixH) {
+		const overlay = document.createElement("canvas");
+		overlay.width = canvas.width;
+		overlay.height = canvas.height;
+		const octx = overlay.getContext("2d");
+		const imageData = octx.createImageData(canvas.width, canvas.height);
+		const buf = imageData.data;
+		const [r, g, b] = rgbForSegmentationInstance(meta);
+
+		for (let y = 0; y < canvas.height; y++) {
+			for (let x = 0; x < canvas.width; x++) {
+				const point = uploadCanvasToMatrix(x, y, img, canvas, matrixW, matrixH);
+				if (!point || Number(matrix[point.my]?.[point.mx]) !== instanceId) continue;
+				const idx = (y * canvas.width + x) * 4;
+				buf[idx] = r;
+				buf[idx + 1] = g;
+				buf[idx + 2] = b;
+				buf[idx + 3] = 150;
+			}
+		}
+		octx.putImageData(imageData, 0, 0);
+		return overlay;
+	}
+
+	function positionUploadSegmentationTooltip(thumb, tooltip, clientX, clientY) {
+		const rect = thumb.getBoundingClientRect();
+		let left = clientX - rect.left + 12;
+		let top = clientY - rect.top + 12;
+		tooltip.style.left = `${left}px`;
+		tooltip.style.top = `${top}px`;
+		requestAnimationFrame(() => {
+			if (left + tooltip.offsetWidth > rect.width - 4) {
+				left = Math.max(4, left - tooltip.offsetWidth - 24);
+			}
+			if (top + tooltip.offsetHeight > rect.height - 4) {
+				top = Math.max(4, top - tooltip.offsetHeight - 24);
+			}
+			tooltip.style.left = `${left}px`;
+			tooltip.style.top = `${top}px`;
+		});
+	}
+
+	async function attachUploadSegmentationHover(card, item) {
+		if (!item.providerImageId) return;
+		const thumb = card.querySelector(".upload-result-thumb");
+		const img = thumb?.querySelector("img");
+		if (!thumb || !img) return;
+
+		const canvas = document.createElement("canvas");
+		canvas.className = "upload-segmentation-canvas";
+		const tooltip = document.createElement("div");
+		tooltip.className = "upload-segmentation-tooltip";
+		tooltip.hidden = true;
+		thumb.append(canvas, tooltip);
+
+		let state = null;
+		let loading = null;
+		let hoverRaf = 0;
+		const overlayCache = new Map();
+
+		const resizeCanvas = () => {
+			const rect = thumb.getBoundingClientRect();
+			const width = Math.max(1, Math.round(rect.width));
+			const height = Math.max(1, Math.round(rect.height));
+			if (canvas.width !== width || canvas.height !== height) {
+				canvas.width = width;
+				canvas.height = height;
+				overlayCache.clear();
+			}
+		};
+
+		const loadState = async () => {
+			if (state) return state;
+			if (loading) return loading;
+			loading = (async () => {
+				const [matrixRes, segmentsRes] = await Promise.all([
+					fetch(`${LOCAL_API}/ai-images/${item.providerImageId}/instance-matrix`),
+					fetch(`${LOCAL_API}/ai-images/${item.providerImageId}/segments`),
+				]);
+				if (!matrixRes.ok) throw new Error("Không tải được segmentation matrix");
+				const matrixJson = await matrixRes.json();
+				const segmentsJson = await segmentsRes.json().catch(() => ({ data: [] }));
+				const matrix = matrixJson.instance_matrix || matrixJson.mask_matrix;
+				if (!Array.isArray(matrix) || !matrix.length || !Array.isArray(matrix[0])) {
+					throw new Error("Segmentation matrix không hợp lệ");
+				}
+				const instances = new Map();
+				(segmentsJson.data || []).forEach((row) => {
+					const raw = row.raw_json || {};
+					if (raw.instance_id == null) return;
+					instances.set(Number(raw.instance_id), {
+						...raw,
+						class_name: raw.class_name || row.label,
+						score: raw.score ?? raw.confidence ?? row.confidence,
+					});
+				});
+				state = {
+					matrix,
+					matrixH: matrix.length,
+					matrixW: matrix[0].length,
+					instances,
+				};
+				return state;
+			})().catch((error) => {
+				console.warn("Upload segmentation hover failed:", error);
+				return null;
+			});
+			return loading;
+		};
+
+		const clearHover = () => {
+			const ctx = canvas.getContext("2d");
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			tooltip.hidden = true;
+		};
+
+		const drawHover = async (event) => {
+			const loaded = await loadState();
+			if (!loaded) return;
+			resizeCanvas();
+			const rect = canvas.getBoundingClientRect();
+			const x = Math.floor((event.clientX - rect.left) * (canvas.width / rect.width));
+			const y = Math.floor((event.clientY - rect.top) * (canvas.height / rect.height));
+			const point = uploadCanvasToMatrix(x, y, img, canvas, loaded.matrixW, loaded.matrixH);
+			const instanceId = point ? Number(loaded.matrix[point.my]?.[point.mx]) : 0;
+			const meta = instanceId ? loaded.instances.get(instanceId) : null;
+			const ctx = canvas.getContext("2d");
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			if (!instanceId || !meta) {
+				tooltip.hidden = true;
+				return;
+			}
+			const key = `${instanceId}:${canvas.width}x${canvas.height}`;
+			if (!overlayCache.has(key)) {
+				overlayCache.set(
+					key,
+					createUploadInstanceOverlay(instanceId, meta, img, canvas, loaded.matrix, loaded.matrixW, loaded.matrixH),
+				);
+			}
+			ctx.drawImage(overlayCache.get(key), 0, 0);
+			const name = meta.sign_name || meta.class_name || `class_${meta.class_id}`;
+			const score = meta.score != null ? Number(meta.score).toFixed(3) : "n/a";
+			tooltip.innerHTML = `<strong>${name}</strong><span>instance #${instanceId} - score ${score}</span>`;
+			tooltip.hidden = false;
+			positionUploadSegmentationTooltip(thumb, tooltip, event.clientX, event.clientY);
+		};
+
+		thumb.addEventListener("mousemove", (event) => {
+			if (hoverRaf) return;
+			hoverRaf = requestAnimationFrame(() => {
+				hoverRaf = 0;
+				drawHover(event);
+			});
+		});
+		thumb.addEventListener("mouseleave", clearHover);
+		img.addEventListener("load", () => {
+			resizeCanvas();
+			clearHover();
+		});
 	}
 
 	async function syncAiUploadToLocalDatabase(aiPayload) {
@@ -2160,6 +2387,7 @@ export function startLegacyMapillaryApp() {
 			});
 
 			grid.appendChild(card);
+			attachUploadSegmentationHover(card, item);
 		});
 	}
 
@@ -2473,8 +2701,8 @@ export function startLegacyMapillaryApp() {
 								"local-compass-line",
 							]
 						: ["mly-sequences", "mly-images"],
-					features: ["mly-feature-points"],
-					signs: ["mly-traffic-signs"],
+					features: ["mly-feature-points", "ai-object-points-dots"],
+					signs: ["mly-traffic-signs", "ai-traffic-sign-points-dots"],
 					local: [
 						"local-lines-layer",
 						"local-images-dots",
@@ -2850,9 +3078,11 @@ export function startLegacyMapillaryApp() {
 	const imageLoadCache = new Map();
 
 	function getPointIconUrl(value) {
+		if (POINT_ICON_OVERRIDES[value]) return POINT_ICON_OVERRIDES[value];
 		return `${POINT_ICON_BASE}${value}.svg`;
 	}
 	function getSignIconUrl(value) {
+		if (SIGN_ICON_OVERRIDES[value]) return SIGN_ICON_OVERRIDES[value];
 		return `${SIGN_ICON_BASE}${value}.svg`;
 	}
 
@@ -2919,6 +3149,94 @@ export function startLegacyMapillaryApp() {
 		};
 	}
 
+	function createPointFallbackImage(value, size) {
+		const pr = 2;
+		const canvas = document.createElement("canvas");
+		canvas.width = size * pr;
+		canvas.height = size * pr;
+		const ctx = canvas.getContext("2d");
+		const w = canvas.width;
+		const h = canvas.height;
+		const cx = w / 2;
+		const cy = h / 2;
+		const color = AI_CLASS_COLORS[value] || "#4b5563";
+
+		ctx.lineCap = "round";
+		ctx.lineJoin = "round";
+		ctx.strokeStyle = "#111827";
+		ctx.lineWidth = 2.5 * pr;
+		ctx.fillStyle = color;
+
+		if (value === "object--traffic-light" || value.startsWith("object--traffic-light--")) {
+			const x = cx - 4 * pr;
+			const y = cy - 10 * pr;
+			ctx.fillStyle = "#1f2937";
+			ctx.fillRect(x, y, 8 * pr, 20 * pr);
+			ctx.strokeRect(x, y, 8 * pr, 20 * pr);
+			["#ef4444", "#facc15", "#22c55e"].forEach((dotColor, idx) => {
+				ctx.beginPath();
+				ctx.fillStyle = dotColor;
+				ctx.arc(cx, y + (4 + idx * 6) * pr, 2 * pr, 0, Math.PI * 2);
+				ctx.fill();
+			});
+		} else if (value === "object--traffic-sign--front" || value === "object--traffic-sign--back") {
+			ctx.beginPath();
+			ctx.moveTo(cx, cy - 11 * pr);
+			ctx.lineTo(cx + 10 * pr, cy - 1 * pr);
+			ctx.lineTo(cx, cy + 9 * pr);
+			ctx.lineTo(cx - 10 * pr, cy - 1 * pr);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.moveTo(cx, cy + 9 * pr);
+			ctx.lineTo(cx, cy + 13 * pr);
+			ctx.stroke();
+		} else if (value === "construction--flat--crosswalk-plain" || value === "marking--crosswalk-zebra") {
+			ctx.fillStyle = "#111827";
+			ctx.fillRect(cx - 11 * pr, cy - 9 * pr, 22 * pr, 18 * pr);
+			ctx.fillStyle = "#f9fafb";
+			for (let i = -8; i <= 8; i += 8) {
+				ctx.fillRect(cx + i * pr, cy - 8 * pr, 4 * pr, 16 * pr);
+			}
+		} else if (value === "marking--general") {
+			ctx.fillStyle = "#374151";
+			ctx.fillRect(cx - 11 * pr, cy - 9 * pr, 22 * pr, 18 * pr);
+			ctx.strokeStyle = "#f9fafb";
+			ctx.lineWidth = 3 * pr;
+			ctx.beginPath();
+			ctx.moveTo(cx - 8 * pr, cy);
+			ctx.lineTo(cx + 8 * pr, cy);
+			ctx.stroke();
+		} else if (value === "object--street-light" || value.startsWith("object--support--")) {
+			ctx.strokeStyle = color;
+			ctx.lineWidth = 4 * pr;
+			ctx.beginPath();
+			ctx.moveTo(cx, cy + 11 * pr);
+			ctx.lineTo(cx, cy - 9 * pr);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.arc(cx + 5 * pr, cy - 9 * pr, 4 * pr, 0, Math.PI * 2);
+			ctx.fillStyle = "#fde68a";
+			ctx.fill();
+			ctx.strokeStyle = "#111827";
+			ctx.lineWidth = 1.5 * pr;
+			ctx.stroke();
+		} else {
+			ctx.beginPath();
+			ctx.arc(cx, cy, cx - 2 * pr, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = "#ffffff";
+			ctx.lineWidth = 3 * pr;
+			ctx.stroke();
+		}
+
+		return {
+			data: ctx.getImageData(0, 0, canvas.width, canvas.height),
+			pixelRatio: pr,
+		};
+	}
+
 	async function ensureMapImage(kind, value) {
 		const imageId = `${kind}:${value}`;
 		if (map.hasImage(imageId)) return;
@@ -2933,8 +3251,10 @@ export function startLegacyMapillaryApp() {
 			} catch (e) {
 				// Add fallback
 				if (!map.hasImage(imageId)) {
-					const color = kind === "pt" ? "#7c3aed" : "#ff8400";
-					const fb = createFallbackImage(color, 24);
+					const color = kind === "pt" ? AI_CLASS_COLORS[value] || "#4b5563" : "#ff8400";
+					const fb = kind === "pt"
+						? createPointFallbackImage(value, 24)
+						: createFallbackImage(color, 24);
 					map.addImage(imageId, fb.data, { pixelRatio: fb.pixelRatio });
 				}
 			}
@@ -2958,11 +3278,12 @@ export function startLegacyMapillaryApp() {
 
 	// ===== DATA: POINT TYPES =====
 	const POINT_TYPES = [
-		{ value: "object--vehicle--car", label: "Car" },
-		{ value: "object--vehicle--bus", label: "Bus" },
-		{ value: "object--vehicle--truck", label: "Truck" },
-		{ value: "object--traffic-sign--front", label: "Traffic sign - front" },
-		{ value: "object--traffic-sign--back", label: "Traffic sign - back" },
+		{ value: "marking--general", label: "Road marking" },
+		{
+			value: "construction--flat--crosswalk-plain",
+			label: "Crosswalk - plain",
+		},
+		{ value: "marking--crosswalk-zebra", label: "Crosswalk - zebra" },
 		{ value: "object--banner", label: "Banner" },
 		{ value: "object--bench", label: "Bench" },
 		{ value: "object--bike-rack", label: "Bike rack" },
@@ -2984,473 +3305,208 @@ export function startLegacyMapillaryApp() {
 			label: "Traffic sign frame",
 		},
 		{ value: "object--support--utility-pole", label: "Utility pole" },
-		{ value: "object--traffic-cone", label: "Traffic cone" },
-		{
-			value: "object--traffic-light--cyclists",
-			label: "Traffic light - cyclists",
-		},
-		{
-			value: "object--traffic-light--general-horizontal",
-			label: "Traffic light - horizontal",
-		},
-		{
-			value: "object--traffic-light--general-single",
-			label: "Traffic light - single",
-		},
-		{
-			value: "object--traffic-light--general-upright",
-			label: "Traffic light - upright",
-		},
-		{ value: "object--traffic-light--other", label: "Traffic light - other" },
-		{
-			value: "object--traffic-light--pedestrians",
-			label: "Traffic light - pedestrians",
-		},
+		{ value: "object--traffic-light", label: "Traffic light" },
+		{ value: "object--traffic-sign--back", label: "Traffic sign - back" },
+		{ value: "object--traffic-sign--front", label: "Traffic sign - front" },
 		{ value: "object--trash-can", label: "Trash can" },
-		{ value: "object--water-valve", label: "Water valve" },
-		{
-			value: "construction--flat--crosswalk-plain",
-			label: "Crosswalk - plain",
-		},
-		{ value: "construction--flat--driveway", label: "Driveway" },
-		{ value: "construction--barrier--temporary", label: "Temporary barrier" },
 	];
 
 	const POINT_TYPES_MAP = {};
 	POINT_TYPES.forEach((t) => (POINT_TYPES_MAP[t.value] = t));
+	function svgDataUri(svg) {
+		return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+	}
+	const POINT_ICON_OVERRIDES = {
+		"marking--general": svgDataUri(
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="5" y="10" width="22" height="12" rx="2" fill="#374151"/><path d="M8 16h16" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
+		),
+		"marking--crosswalk-zebra": svgDataUri(
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="4" y="8" width="24" height="16" rx="2" fill="#111827"/><path d="M9 9v14M16 9v14M23 9v14" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>',
+		),
+		"object--traffic-light": svgDataUri(
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="11" y="4" width="10" height="24" rx="3" fill="#1f2937" stroke="#111827" stroke-width="2"/><circle cx="16" cy="10" r="3" fill="#ef4444"/><circle cx="16" cy="16" r="3" fill="#facc15"/><circle cx="16" cy="22" r="3" fill="#22c55e"/></svg>',
+		),
+		"object--traffic-sign--back": svgDataUri(
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M16 3 28 15 16 27 4 15Z" fill="#c0c0c0" stroke="#111827" stroke-width="2"/><path d="M16 27v4" stroke="#111827" stroke-width="2" stroke-linecap="round"/></svg>',
+		),
+		"object--traffic-sign--front": svgDataUri(
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M16 3 28 15 16 27 4 15Z" fill="#dcdc00" stroke="#111827" stroke-width="2"/><path d="M16 27v4" stroke="#111827" stroke-width="2" stroke-linecap="round"/></svg>',
+		),
+	};
+	const AI_CLASS_COLORS = {
+		"marking--general": "rgb(255,255,255)",
+		"construction--flat--crosswalk-plain": "rgb(140,140,200)",
+		"marking--crosswalk-zebra": "rgb(200,128,128)",
+		"object--banner": "rgb(255,255,128)",
+		"object--bench": "rgb(250,0,30)",
+		"object--bike-rack": "rgb(100,140,180)",
+		"object--catch-basin": "rgb(220,128,128)",
+		"object--cctv-camera": "rgb(222,40,40)",
+		"object--fire-hydrant": "rgb(100,170,30)",
+		"object--junction-box": "rgb(40,40,40)",
+		"object--mailbox": "rgb(33,33,33)",
+		"object--manhole": "rgb(100,128,160)",
+		"object--phone-booth": "rgb(142,0,0)",
+		"object--street-light": "rgb(210,170,100)",
+		"object--support--pole": "rgb(153,153,153)",
+		"object--support--traffic-sign-frame": "rgb(128,128,128)",
+		"object--support--utility-pole": "rgb(0,0,80)",
+		"object--traffic-light": "rgb(250,170,30)",
+		"object--traffic-light--general-upright": "rgb(250,170,30)",
+		"object--traffic-sign--back": "rgb(192,192,192)",
+		"object--traffic-sign--front": "rgb(220,220,0)",
+		"object--trash-can": "rgb(140,140,20)",
+	};
+	const AI_CLASS_TO_POINT_VALUE = {
+		"object--traffic-light--general-upright": "object--traffic-light",
+		"object--traffic-light--general-horizontal": "object--traffic-light",
+		"object--traffic-light--general-single": "object--traffic-light",
+		"object--traffic-light--cyclists": "object--traffic-light",
+		"object--traffic-light--pedestrians": "object--traffic-light",
+		"object--traffic-light--other": "object--traffic-light",
+	};
+	function mapAiClassToPointValue(value) {
+		const raw = String(value || "").trim();
+		if (!raw) return "object--banner";
+		if (POINT_TYPES_MAP[raw]) return raw;
+		return AI_CLASS_TO_POINT_VALUE[raw] || "object--banner";
+	}
+
+	function isAiTrafficSignPoint(point) {
+		const label = String(point?.label || "");
+		return point?.class_id === 53 || label === "object--traffic-sign--front";
+	}
 
 	// ===== DATA: TRAFFIC SIGN TYPES =====
 	const SIGN_TYPES = [
-		// Regulatory
-		{ value: "regulatory--stop--g1", label: "Stop", cat: "regulatory" },
-		{ value: "regulatory--yield--g1", label: "Yield", cat: "regulatory" },
-		{ value: "regulatory--no-entry--g1", label: "No entry", cat: "regulatory" },
-		{
-			value: "regulatory--maximum-speed-limit-30--g1",
-			label: "Speed limit 30",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--maximum-speed-limit-40--g1",
-			label: "Speed limit 40",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--maximum-speed-limit-50--g1",
-			label: "Speed limit 50",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--maximum-speed-limit-60--g1",
-			label: "Speed limit 60",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--maximum-speed-limit-70--g1",
-			label: "Speed limit 70",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--maximum-speed-limit-80--g1",
-			label: "Speed limit 80",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--maximum-speed-limit-100--g1",
-			label: "Speed limit 100",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--maximum-speed-limit-120--g1",
-			label: "Speed limit 120",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--no-overtaking--g1",
-			label: "No overtaking",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--no-parking--g1",
-			label: "No parking",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--no-stopping--g1",
-			label: "No stopping",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--no-u-turn--g1",
-			label: "No U-turn",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--no-left-turn--g1",
-			label: "No left turn",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--no-right-turn--g1",
-			label: "No right turn",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--no-pedestrians--g1",
-			label: "No pedestrians",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--no-bicycles--g1",
-			label: "No bicycles",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--no-motor-vehicles--g1",
-			label: "No motor vehicles",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--no-heavy-goods-vehicles--g1",
-			label: "No heavy vehicles",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--go-straight--g1",
-			label: "Go straight",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--turn-left--g1",
-			label: "Turn left",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--turn-right--g1",
-			label: "Turn right",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--go-straight-or-turn-left--g1",
-			label: "Straight or left",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--go-straight-or-turn-right--g1",
-			label: "Straight or right",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--keep-left--g1",
-			label: "Keep left",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--keep-right--g1",
-			label: "Keep right",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--roundabout--g1",
-			label: "Roundabout",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--one-way-left--g1",
-			label: "One way left",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--one-way-right--g1",
-			label: "One way right",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--pedestrians-only--g1",
-			label: "Pedestrians only",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--bicycles-only--g1",
-			label: "Bicycles only",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--priority-over-oncoming-vehicles--g1",
-			label: "Priority over oncoming",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--give-way-to-oncoming-traffic--g1",
-			label: "Give way to oncoming",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--priority-road--g1",
-			label: "Priority road",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--end-of-priority-road--g1",
-			label: "End of priority road",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--end-of-no-overtaking--g1",
-			label: "End of no overtaking",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--road-closed-to-vehicles--g1",
-			label: "Road closed",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--weight-limit--g1",
-			label: "Weight limit",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--height-limit--g1",
-			label: "Height limit",
-			cat: "regulatory",
-		},
-		{
-			value: "regulatory--width-limit--g1",
-			label: "Width limit",
-			cat: "regulatory",
-		},
-		// Warning
-		{ value: "warning--curve-left--g1", label: "Curve left", cat: "warning" },
-		{ value: "warning--curve-right--g1", label: "Curve right", cat: "warning" },
-		{
-			value: "warning--double-curve-first-left--g1",
-			label: "Double curve left",
-			cat: "warning",
-		},
-		{
-			value: "warning--double-curve-first-right--g1",
-			label: "Double curve right",
-			cat: "warning",
-		},
-		{
-			value: "warning--steep-ascent--g1",
-			label: "Steep ascent",
-			cat: "warning",
-		},
-		{
-			value: "warning--steep-descent--g1",
-			label: "Steep descent",
-			cat: "warning",
-		},
-		{
-			value: "warning--slippery-road-surface--g1",
-			label: "Slippery road",
-			cat: "warning",
-		},
-		{
-			value: "warning--road-narrows--g1",
-			label: "Road narrows",
-			cat: "warning",
-		},
-		{ value: "warning--roadworks--g1", label: "Road works", cat: "warning" },
-		{
-			value: "warning--traffic-signals--g1",
-			label: "Traffic signals",
-			cat: "warning",
-		},
-		{
-			value: "warning--pedestrians-crossing--g1",
-			label: "Pedestrian crossing",
-			cat: "warning",
-		},
-		{ value: "warning--children--g1", label: "Children", cat: "warning" },
-		{
-			value: "warning--bicycles-crossing--g1",
-			label: "Bicycles crossing",
-			cat: "warning",
-		},
-		{
-			value: "warning--wild-animals--g1",
-			label: "Wild animals",
-			cat: "warning",
-		},
-		{
-			value: "warning--domestic-animals--g1",
-			label: "Domestic animals",
-			cat: "warning",
-		},
-		{ value: "warning--crossroads--g1", label: "Crossroads", cat: "warning" },
-		{
-			value: "warning--roundabout--g1",
-			label: "Roundabout ahead",
-			cat: "warning",
-		},
-		{
-			value: "warning--two-way-traffic--g1",
-			label: "Two-way traffic",
-			cat: "warning",
-		},
-		{
-			value: "warning--railroad-crossing--g1",
-			label: "Railroad crossing",
-			cat: "warning",
-		},
-		{
-			value: "warning--railroad-crossing-with-barriers--g1",
-			label: "Railroad w/ barriers",
-			cat: "warning",
-		},
-		{
-			value: "warning--railroad-crossing-without-barriers--g1",
-			label: "Railroad w/o barriers",
-			cat: "warning",
-		},
-		{
-			value: "warning--falling-rocks-or-debris-right--g1",
-			label: "Falling rocks",
-			cat: "warning",
-		},
-		{
-			value: "warning--other-danger--g1",
-			label: "Other danger",
-			cat: "warning",
-		},
-		{ value: "warning--road-bump--g1", label: "Road bump", cat: "warning" },
-		{ value: "warning--uneven-road--g1", label: "Uneven road", cat: "warning" },
-		{ value: "warning--stop-ahead--g1", label: "Stop ahead", cat: "warning" },
-		{ value: "warning--yield-ahead--g1", label: "Yield ahead", cat: "warning" },
-		{ value: "warning--t-roads--g1", label: "T-junction", cat: "warning" },
-		{
-			value: "warning--divided-highway--g1",
-			label: "Divided highway",
-			cat: "warning",
-		},
-		{
-			value: "warning--narrow-bridge--g1",
-			label: "Narrow bridge",
-			cat: "warning",
-		},
-		{
-			value: "warning--loose-road-surface--g1",
-			label: "Loose road surface",
-			cat: "warning",
-		},
-		// Information
-		{ value: "information--parking--g1", label: "Parking", cat: "information" },
-		{
-			value: "information--hospital--g1",
-			label: "Hospital",
-			cat: "information",
-		},
-		{
-			value: "information--gas-station--g1",
-			label: "Gas station",
-			cat: "information",
-		},
-		{ value: "information--food--g1", label: "Food", cat: "information" },
-		{ value: "information--lodging--g1", label: "Lodging", cat: "information" },
-		{ value: "information--airport--g1", label: "Airport", cat: "information" },
-		{
-			value: "information--bus-stop--g1",
-			label: "Bus stop",
-			cat: "information",
-		},
-		{
-			value: "information--pedestrians-crossing--g1",
-			label: "Pedestrian crossing",
-			cat: "information",
-		},
-		{
-			value: "information--dead-end--g1",
-			label: "Dead end",
-			cat: "information",
-		},
-		{
-			value: "information--motorway--g1",
-			label: "Motorway",
-			cat: "information",
-		},
-		{
-			value: "information--end-of-motorway--g1",
-			label: "End of motorway",
-			cat: "information",
-		},
-		{
-			value: "information--living-street--g1",
-			label: "Living street",
-			cat: "information",
-		},
-		{
-			value: "information--highway-exit--g1",
-			label: "Highway exit",
-			cat: "information",
-		},
-		{
-			value: "information--telephone--g1",
-			label: "Telephone",
-			cat: "information",
-		},
-		{ value: "information--camping--g1", label: "Camping", cat: "information" },
-		{
-			value: "information--disabled-persons--g1",
-			label: "Disabled persons",
-			cat: "information",
-		},
-		// Complementary
-		{
-			value: "complementary--chevron-left--g1",
-			label: "Chevron left",
-			cat: "complementary",
-		},
-		{
-			value: "complementary--chevron-right--g1",
-			label: "Chevron right",
-			cat: "complementary",
-		},
-		{
-			value: "complementary--distance--g1",
-			label: "Distance",
-			cat: "complementary",
-		},
-		{
-			value: "complementary--both-directions--g1",
-			label: "Both directions",
-			cat: "complementary",
-		},
-		{
-			value: "complementary--obstacle-delineator--g1",
-			label: "Obstacle delineator",
-			cat: "complementary",
-		},
-		{
-			value: "complementary--one-direction-left--g1",
-			label: "One direction left",
-			cat: "complementary",
-		},
-		{
-			value: "complementary--one-direction-right--g1",
-			label: "One direction right",
-			cat: "complementary",
-		},
-		{
-			value: "complementary--tow-away-zone--g1",
-			label: "Tow-away zone",
-			cat: "complementary",
-		},
-		{
-			value: "complementary--trucks--g1",
-			label: "Trucks",
-			cat: "complementary",
-		},
-		{
-			value: "complementary--maximum-speed-limit-30--g1",
-			label: "Speed 30 (sub)",
-			cat: "complementary",
-		},
+		{ value: "warning--pedestrians-crossing--g1", label: "Pedestrian Crossing", cat: "warning" },
+		{ value: "warning--crossroads--g1", label: "Equal-level Intersection", cat: "warning" },
+		{ value: "regulatory--no-entry--g1", label: "No Entry", cat: "regulatory" },
+		{ value: "regulatory--turn-right--g1", label: "Right Turn Only", cat: "regulatory" },
+		{ value: "warning--crossroads--g1", label: "Intersection", cat: "warning" },
+		{ value: "warning--crossroads-with-priority-to-the-right--g1", label: "Intersection with a non-priority road", cat: "warning" },
+		{ value: "ai-sign--danger-left", label: "Danger zone on the left", cat: "warning" },
+		{ value: "regulatory--no-left-turn--g1", label: "No Left Turn", cat: "regulatory" },
+		{ value: "information--bus-stop--g1", label: "Bus Stop", cat: "information" },
+		{ value: "regulatory--roundabout--g1", label: "Roundabout", cat: "regulatory" },
+		{ value: "regulatory--no-stopping-no-parking--g1", label: "No Stopping and No Parking", cat: "regulatory" },
+		{ value: "ai-sign--u-turn-allowed", label: "U-Turn Allowed", cat: "regulatory" },
+		{ value: "ai-sign--lane-allocation", label: "Lane Allocation", cat: "information" },
+		{ value: "ai-sign--slow-down", label: "Slow Down", cat: "warning" },
+		{ value: "regulatory--no-heavy-goods-vehicles--g1", label: "No Trucks Allowed", cat: "regulatory" },
+		{ value: "warning--road-narrows-right--g1", label: "Narrow Road on the Right", cat: "warning" },
+		{ value: "regulatory--height-limit--g1", label: "Height Limit", cat: "regulatory" },
+		{ value: "regulatory--no-u-turn--g1", label: "No U-Turn", cat: "regulatory" },
+		{ value: "ai-sign--no-cars-trucks", label: "No Passenger Cars and Trucks", cat: "regulatory" },
+		{ value: "ai-sign--no-u-turn-right", label: "No U-Turn and No Right Turn", cat: "regulatory" },
+		{ value: "regulatory--no-motor-vehicles--g1", label: "No Cars Allowed", cat: "regulatory" },
+		{ value: "warning--road-narrows-left--g1", label: "Narrow Road on the Left", cat: "warning" },
+		{ value: "warning--uneven-road--g1", label: "Uneven Road", cat: "warning" },
+		{ value: "ai-sign--no-two-three-wheeled", label: "No Two or Three-wheeled Vehicles", cat: "regulatory" },
+		{ value: "ai-sign--customs-checkpoint", label: "Customs Checkpoint", cat: "regulatory" },
+		{ value: "regulatory--motorcycles-only--g1", label: "Motorcycles Only", cat: "regulatory" },
+		{ value: "complementary--obstacle-delineator--g1", label: "Obstacle on the Road", cat: "complementary" },
+		{ value: "warning--children--g1", label: "Children Present", cat: "warning" },
+		{ value: "complementary--trucks--g1", label: "Trucks and Containers", cat: "complementary" },
+		{ value: "regulatory--no-motorcycles--g1", label: "No Motorcycles Allowed", cat: "regulatory" },
+		{ value: "ai-sign--trucks-only", label: "Trucks Only", cat: "regulatory" },
+		{ value: "ai-sign--surveillance-camera", label: "Road with Surveillance Camera", cat: "information" },
+		{ value: "regulatory--no-right-turn--g1", label: "No Right Turn", cat: "regulatory" },
+		{ value: "warning--double-curve-first-right--g1", label: "Double curve first to right", cat: "warning" },
+		{ value: "ai-sign--no-containers", label: "No Containers Allowed", cat: "regulatory" },
+		{ value: "ai-sign--no-left-right-turn", label: "No Left or Right Turn", cat: "regulatory" },
+		{ value: "ai-sign--no-straight-right-turn", label: "No Straight and Right Turn", cat: "regulatory" },
+		{ value: "warning--t-roads--g1", label: "Intersection with T-Junction", cat: "warning" },
+		{ value: "regulatory--maximum-speed-limit-50--g1", label: "Speed limit (50km/h)", cat: "regulatory" },
+		{ value: "regulatory--maximum-speed-limit-60--g1", label: "Speed limit (60km/h)", cat: "regulatory" },
+		{ value: "regulatory--maximum-speed-limit-80--g1", label: "Speed limit (80km/h)", cat: "regulatory" },
+		{ value: "regulatory--maximum-speed-limit-40--g1", label: "Speed limit (40km/h)", cat: "regulatory" },
+		{ value: "regulatory--turn-left--g1", label: "Left Turn", cat: "regulatory" },
+		{ value: "regulatory--height-limit--g1", label: "Low Clearance", cat: "regulatory" },
+		{ value: "warning--other-danger--g1", label: "Other Danger", cat: "warning" },
+		{ value: "regulatory--one-way-right--g1", label: "One-way street", cat: "regulatory" },
+		{ value: "regulatory--no-parking--g1", label: "No Parking", cat: "regulatory" },
+		{ value: "ai-sign--no-u-turn-cars", label: "No U-Turn for Cars", cat: "regulatory" },
+		{ value: "warning--railroad-crossing-with-barriers--g1", label: "Level Crossing with Barriers", cat: "warning" },
+		{ value: "ai-sign--no-u-turn-left", label: "No U-Turn and No Left Turn", cat: "regulatory" },
+		{ value: "ai-sign--danger-right", label: "Danger zone on the right", cat: "warning" },
+		{ value: "ai-sign--obstacle-pass-right", label: "Warning: Obstacle ahead - pass on the right", cat: "warning" },
 	];
 	const SIGN_TYPES_MAP = {};
+	function signSvg(body, bg = "#ffffff", border = "#111827") {
+		return svgDataUri(
+			`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect x="4" y="4" width="32" height="32" rx="6" fill="${bg}" stroke="${border}" stroke-width="3"/>${body}</svg>`,
+		);
+	}
+	function warningSignSvg(symbol) {
+		return svgDataUri(
+			`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path d="M20 4 37 34H3Z" fill="#facc15" stroke="#111827" stroke-width="3" stroke-linejoin="round"/>${symbol}</svg>`,
+		);
+	}
+	function prohibitionSignSvg(symbol) {
+		return svgDataUri(
+			`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="#fff" stroke="#dc2626" stroke-width="4"/><path d="M10 30 30 10" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/>${symbol}</svg>`,
+		);
+	}
+	function textSignSvg(text, bg = "#2563eb") {
+		return signSvg(
+			`<text x="20" y="24" text-anchor="middle" font-family="Arial,sans-serif" font-size="${text.length > 3 ? 8 : 12}" font-weight="700" fill="#fff">${text}</text>`,
+			bg,
+			"#1e3a8a",
+		);
+	}
+	const SIGN_ICON_OVERRIDES = {
+		"ai-sign--danger-left": warningSignSvg('<path d="M24 12 14 20l10 8" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'),
+		"ai-sign--danger-right": warningSignSvg('<path d="M16 12 26 20l-10 8" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'),
+		"ai-sign--u-turn-allowed": signSvg('<path d="M25 29V15a6 6 0 0 0-12 0v2" fill="none" stroke="#111827" stroke-width="4" stroke-linecap="round"/><path d="M9 17h8l-4 5Z" fill="#111827"/>'),
+		"ai-sign--lane-allocation": textSignSvg("LANE"),
+		"ai-sign--slow-down": warningSignSvg('<text x="20" y="25" text-anchor="middle" font-family="Arial,sans-serif" font-size="8" font-weight="700" fill="#111827">SLOW</text>'),
+		"ai-sign--no-cars-trucks": prohibitionSignSvg('<text x="20" y="23" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#111827">CAR</text>'),
+		"ai-sign--no-u-turn-right": prohibitionSignSvg('<path d="M16 27V15a4 4 0 0 1 8 0v2" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/><path d="M24 17h7l-4 5Z" fill="#111827"/>'),
+		"ai-sign--no-two-three-wheeled": prohibitionSignSvg('<text x="20" y="23" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#111827">2/3W</text>'),
+		"ai-sign--customs-checkpoint": textSignSvg("HQ", "#0f766e"),
+		"ai-sign--trucks-only": textSignSvg("TRK", "#2563eb"),
+		"ai-sign--surveillance-camera": signSvg('<path d="M12 17h12l4-4v14l-4-4H12Z" fill="#111827"/><circle cx="17" cy="20" r="2" fill="#fff"/>', "#e0f2fe", "#0369a1"),
+		"ai-sign--no-containers": prohibitionSignSvg('<text x="20" y="23" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#111827">CONT</text>'),
+		"ai-sign--no-left-right-turn": prohibitionSignSvg('<path d="M20 28V14M20 14l-7 6M20 14l7 6" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'),
+		"ai-sign--no-straight-right-turn": prohibitionSignSvg('<path d="M15 28V12M15 12l-5 5M15 12l5 5M20 20h8l-4-4" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'),
+		"ai-sign--no-u-turn-cars": prohibitionSignSvg('<text x="20" y="17" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#111827">U</text><text x="20" y="26" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#111827">CAR</text>'),
+		"ai-sign--no-u-turn-left": prohibitionSignSvg('<path d="M24 27V15a4 4 0 0 0-8 0v2" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round"/><path d="M16 17H9l4 5Z" fill="#111827"/>'),
+		"ai-sign--obstacle-pass-right": warningSignSvg('<path d="M14 27h5l7-14h-5Z" fill="#111827"/><path d="M27 20h6l-4-4" fill="none" stroke="#111827" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'),
+		"regulatory--no-stopping-no-parking--g1": prohibitionSignSvg('<path d="M14 12v16M26 12v16" stroke="#111827" stroke-width="3" stroke-linecap="round"/>'),
+		"warning--road-narrows-right--g1": warningSignSvg('<path d="M14 28V13M26 28 21 13" stroke="#111827" stroke-width="4" stroke-linecap="round"/>'),
+		"warning--road-narrows-left--g1": warningSignSvg('<path d="M26 28V13M14 28l5-15" stroke="#111827" stroke-width="4" stroke-linecap="round"/>'),
+		"regulatory--motorcycles-only--g1": textSignSvg("MOTO", "#2563eb"),
+		"regulatory--no-motorcycles--g1": prohibitionSignSvg('<text x="20" y="23" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#111827">MOTO</text>'),
+	};
 	SIGN_TYPES.forEach((t) => (SIGN_TYPES_MAP[t.value] = t));
+	const SIGN_LABEL_TO_VALUE = {};
+	SIGN_TYPES.forEach((t) => {
+		SIGN_LABEL_TO_VALUE[t.label.toLowerCase()] = t.value;
+	});
+
+	function mapAiSignNameToSignValue(value) {
+		const raw = String(value || "").trim();
+		if (!raw) return "";
+		if (SIGN_TYPES_MAP[raw]) return raw;
+		return SIGN_LABEL_TO_VALUE[raw.toLowerCase()] || "";
+	}
+
+	function buildAiObjectPointProperties(point) {
+		const signValue = isAiTrafficSignPoint(point) ? mapAiSignNameToSignValue(point.sign_name || point.label) : "";
+		const objectValue = mapAiClassToPointValue(point.icon_value || point.label);
+		return {
+			id: point.point_id,
+			label: point.label,
+			value: signValue || objectValue,
+			icon_value: objectValue,
+			sign_value: signValue || undefined,
+			confidence: point.confidence,
+			num_obs: point.num_obs,
+			residual_m: point.residual_m,
+			seen_in: JSON.stringify(point.seen_in || []),
+		};
+	}
 
 	// ===== FILTER STATE =====
 	const activePointFilters = new Set();
@@ -3593,36 +3649,40 @@ export function startLegacyMapillaryApp() {
 	const ALL_OPTION = "__ALL__";
 
 	function applyPointFilter(selected) {
-		if (!map || !map.getLayer("mly-feature-points")) return;
+		if (!map) return;
+		const layerFilters = [];
+		if (map.getLayer("mly-feature-points")) layerFilters.push(["mly-feature-points", null]);
+		if (map.getLayer("ai-object-points-dots")) layerFilters.push(["ai-object-points-dots", ["!", ["has", "sign_value"]]]);
+		if (!layerFilters.length) return;
 		if (selected.has(ALL_OPTION)) {
-			map.setFilter("mly-feature-points", null); // show all
+			layerFilters.forEach(([id, baseFilter]) => map.setFilter(id, baseFilter)); // show all
 		} else if (selected.size === 0) {
-			map.setFilter("mly-feature-points", ["==", ["get", "value"], "__none__"]); // hide all
+			layerFilters.forEach(([id, baseFilter]) =>
+				map.setFilter(id, baseFilter ? ["all", baseFilter, ["==", ["get", "value"], "__none__"]] : ["==", ["get", "value"], "__none__"]),
+			); // hide all
 		} else {
-			map.setFilter("mly-feature-points", [
-				"match",
-				["get", "value"],
-				[...selected],
-				true,
-				false,
-			]);
+			layerFilters.forEach(([id, baseFilter]) =>
+				map.setFilter(id, baseFilter ? ["all", baseFilter, ["match", ["get", "value"], [...selected], true, false]] : ["match", ["get", "value"], [...selected], true, false]),
+			);
 		}
 	}
 
 	function applySignFilter(selected) {
-		if (!map || !map.getLayer("mly-traffic-signs")) return;
+		if (!map) return;
+		const layerFilters = [];
+		if (map.getLayer("mly-traffic-signs")) layerFilters.push(["mly-traffic-signs", null]);
+		if (map.getLayer("ai-traffic-sign-points-dots")) layerFilters.push(["ai-traffic-sign-points-dots", ["has", "sign_value"]]);
+		if (!layerFilters.length) return;
 		if (selected.has(ALL_OPTION)) {
-			map.setFilter("mly-traffic-signs", null); // show all
+			layerFilters.forEach(([id, baseFilter]) => map.setFilter(id, baseFilter)); // show all
 		} else if (selected.size === 0) {
-			map.setFilter("mly-traffic-signs", ["==", ["get", "value"], "__none__"]); // hide all
+			layerFilters.forEach(([id, baseFilter]) =>
+				map.setFilter(id, baseFilter ? ["all", baseFilter, ["==", ["get", "value"], "__none__"]] : ["==", ["get", "value"], "__none__"]),
+			); // hide all
 		} else {
-			map.setFilter("mly-traffic-signs", [
-				"match",
-				["get", "value"],
-				[...selected],
-				true,
-				false,
-			]);
+			layerFilters.forEach(([id, baseFilter]) =>
+				map.setFilter(id, baseFilter ? ["all", baseFilter, ["match", ["get", "value"], [...selected], true, false]] : ["match", ["get", "value"], [...selected], true, false]),
+			);
 		}
 	}
 

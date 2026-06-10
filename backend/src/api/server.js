@@ -305,14 +305,15 @@ async function upsertAiObjectPoints(payload, db = pool) {
   for (const point of points) {
     const result = await db.query(
       `INSERT INTO ai_object_points (
-        point_id, track_id, class_id, label, geom, lat, lon, confidence, residual_m, num_obs, seen_in
+        point_id, track_id, class_id, label, sign_name, geom, lat, lon, confidence, residual_m, num_obs, seen_in
       ) VALUES (
-        $1, $2, $3, $4, ST_SetSRID(ST_MakePoint($6, $5), 4326), $5, $6, $7, $8, $9, $10
+        $1, $2, $3, $4, $5, ST_SetSRID(ST_MakePoint($7, $6), 4326), $6, $7, $8, $9, $10, $11
       )
       ON CONFLICT (point_id) DO UPDATE SET
         track_id = EXCLUDED.track_id,
         class_id = EXCLUDED.class_id,
         label = EXCLUDED.label,
+        sign_name = EXCLUDED.sign_name,
         geom = EXCLUDED.geom,
         lat = EXCLUDED.lat,
         lon = EXCLUDED.lon,
@@ -321,12 +322,13 @@ async function upsertAiObjectPoints(payload, db = pool) {
         num_obs = EXCLUDED.num_obs,
         seen_in = EXCLUDED.seen_in,
         updated_at = now()
-      RETURNING point_id, track_id, class_id, label, lat, lon, confidence, residual_m, num_obs, seen_in`,
+      RETURNING point_id, track_id, class_id, label, sign_name, lat, lon, confidence, residual_m, num_obs, seen_in`,
       [
         point.point_id,
         String(point.track_id),
         point.class_id,
         point.label,
+        point.sign_name,
         point.lat,
         point.lon,
         point.confidence,
@@ -567,7 +569,7 @@ app.get('/api/v1/ai-object-points', async (req, res) => {
     }
     const safeLimit = Math.min(Math.max(parseInt(limit) || 1000, 1), 5000);
     const result = await pool.query(
-      `SELECT point_id, track_id, class_id, label, lat, lon, confidence, residual_m, num_obs, seen_in
+      `SELECT point_id, track_id, class_id, label, sign_name, lat, lon, confidence, residual_m, num_obs, seen_in
        FROM ai_object_points
        WHERE geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
        ORDER BY confidence DESC NULLS LAST, id

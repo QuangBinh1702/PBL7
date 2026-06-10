@@ -380,6 +380,7 @@
                     "instance_id": 20,
                     "class_id": 53,
                     "class_name": "object--traffic-sign--front",
+                    "sign_name": "Right Turn Only",
                     "score": 0.9782404899597168,
                     "area": 237,
                     "rgb": [
