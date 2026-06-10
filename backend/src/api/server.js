@@ -15,6 +15,7 @@ const app = express();
 const PORT = process.env.API_PORT || 3000;
 const DEFAULT_SEARCH_RADIUS_M = 50;
 const DEFAULT_SEARCH_LIMIT = 50;
+const MIN_TRAFFIC_SIGN_INSTANCE_AREA = parseNumber(process.env.MIN_TRAFFIC_SIGN_INSTANCE_AREA) || 900;
 const GEOCODER_SUGGEST_URL = 'https://photon.komoot.io/api/';
 const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
 // const CAPTION_API_URL = 'https://emsimv10--qwen3-vl-caption-server-fastapi-app-dev.modal.run/caption';
@@ -332,7 +333,11 @@ function registerImageLookupKey(imagesByKey, image) {
 }
 
 async function resolveInstanceIdForSeen(db, providerImageId, point, parsedSeen) {
-  if (parsedSeen.instance_id != null) return parsedSeen.instance_id;
+  const segment = await resolveSegmentForSeen(db, providerImageId, point, parsedSeen);
+  return segment?.instance_id ?? null;
+}
+
+async function resolveSegmentForSeen(db, providerImageId, point, parsedSeen) {
   const result = await db.query(
     `SELECT raw_json
      FROM image_segmentations
@@ -342,10 +347,66 @@ async function resolveInstanceIdForSeen(db, providerImageId, point, parsedSeen) 
   );
   for (const row of result.rows) {
     const raw = row.raw_json || {};
+    if (parsedSeen.instance_id != null && raw.instance_id !== parsedSeen.instance_id) continue;
     if (point.sign_name && raw.sign_name && raw.sign_name !== point.sign_name) continue;
-    if (raw.instance_id != null) return raw.instance_id;
+    if (raw.instance_id != null) return raw;
   }
   return null;
+}
+
+function isAiTrafficSignPoint(point) {
+  return point?.label === 'object--traffic-sign--front';
+}
+
+function hasUsableTrafficSignInstance(segment) {
+  if (!segment) return false;
+  const area = parseNumber(segment.area);
+  return area !== null && area >= MIN_TRAFFIC_SIGN_INSTANCE_AREA;
+}
+
+async function getAiObjectPointImages(point, options = {}) {
+  const { filterSmallTrafficSigns = false } = options;
+  const seenIn = Array.isArray(point.seen_in) ? point.seen_in : [];
+  const parsedSeenIn = seenIn.map(parseSeenInEntry).filter(Boolean);
+  if (parsedSeenIn.length === 0) return [];
+
+  const imageKeys = parsedSeenIn.map((seen) => seen.image.toLowerCase());
+
+  const imagesResult = await pool.query(
+    `SELECT provider_image_id, image_path, lat, lon, captured_at, compass_angle, width, height
+     FROM images
+     WHERE provider = 'ai_upload'
+       AND (
+         lower(provider_image_id) = ANY($1)
+         OR lower(regexp_replace(provider_image_id, '^ai-', '')) = ANY($1)
+         OR lower(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-jpg$', '')) = ANY($1)
+         OR lower(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-png$', '')) = ANY($1)
+         OR lower(replace(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-jpg$', ''), '-', '_')) = ANY($1)
+         OR lower(replace(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-png$', ''), '-', '_')) = ANY($1)
+       )`,
+    [imageKeys]
+  );
+
+  const imagesByKey = new Map();
+  for (const image of imagesResult.rows) {
+    registerImageLookupKey(imagesByKey, image);
+  }
+
+  const data = [];
+  for (const seen of parsedSeenIn) {
+    const key = seen.image.toLowerCase();
+    const image = imagesByKey.get(key) || imagesByKey.get(`ai-${key}`);
+    if (!image) continue;
+    const segment = await resolveSegmentForSeen(pool, image.provider_image_id, point, seen);
+    if (filterSmallTrafficSigns && isAiTrafficSignPoint(point) && !hasUsableTrafficSignInstance(segment)) continue;
+    data.push({
+      image,
+      instance_id: segment?.instance_id ?? null,
+      thumb_url: getThumbUrl(image.provider_image_id, 'downloaded'),
+    });
+  }
+
+  return data;
 }
 
 async function fetchJsonUrl(url, label) {
@@ -669,10 +730,17 @@ app.get('/api/v1/ai-object-points', async (req, res) => {
        LIMIT $5`,
       [minLon, minLat, maxLon, maxLat, safeLimit]
     );
-    res.json({
-      data: result.rows.map((r) => ({ ...r, lat: parseFloat(r.lat), lon: parseFloat(r.lon) })),
-      count: result.rowCount,
-    });
+    const data = [];
+    for (const row of result.rows) {
+      const point = { ...row, lat: parseFloat(row.lat), lon: parseFloat(row.lon) };
+      if (isAiTrafficSignPoint(point)) {
+        const images = await getAiObjectPointImages(point, { filterSmallTrafficSigns: true });
+        if (images.length === 0) continue;
+      }
+      data.push(point);
+    }
+
+    res.json({ data, count: data.length });
   } catch (err) {
     console.error('Error in /api/v1/ai-object-points:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -693,46 +761,7 @@ app.get('/api/v1/ai-object-points/:pointId/images', async (req, res) => {
     }
 
     const point = pointResult.rows[0];
-    const seenIn = Array.isArray(point.seen_in) ? point.seen_in : [];
-    const parsedSeenIn = seenIn.map(parseSeenInEntry).filter(Boolean);
-    if (parsedSeenIn.length === 0) {
-      return res.json({ data: [], count: 0, point });
-    }
-
-    const imageKeys = parsedSeenIn.map((seen) => seen.image.toLowerCase());
-
-    const imagesResult = await pool.query(
-      `SELECT provider_image_id, image_path, lat, lon, captured_at, compass_angle, width, height
-       FROM images
-       WHERE provider = 'ai_upload'
-         AND (
-           lower(provider_image_id) = ANY($1)
-           OR lower(regexp_replace(provider_image_id, '^ai-', '')) = ANY($1)
-           OR lower(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-jpg$', '')) = ANY($1)
-           OR lower(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-png$', '')) = ANY($1)
-           OR lower(replace(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-jpg$', ''), '-', '_')) = ANY($1)
-           OR lower(replace(regexp_replace(regexp_replace(provider_image_id, '^ai-', ''), '-png$', ''), '-', '_')) = ANY($1)
-         )`,
-      [imageKeys]
-    );
-
-    const imagesByKey = new Map();
-    for (const image of imagesResult.rows) {
-      registerImageLookupKey(imagesByKey, image);
-    }
-
-    const data = [];
-    for (const seen of parsedSeenIn) {
-      const key = seen.image.toLowerCase();
-      const image = imagesByKey.get(key) || imagesByKey.get(`ai-${key}`);
-      if (!image) continue;
-      const instanceId = await resolveInstanceIdForSeen(pool, image.provider_image_id, point, seen);
-      data.push({
-        image,
-        instance_id: instanceId,
-        thumb_url: getThumbUrl(image.provider_image_id, 'downloaded'),
-      });
-    }
+    const data = await getAiObjectPointImages(point);
 
     res.json({ data, count: data.length, point });
   } catch (err) {
@@ -1279,4 +1308,5 @@ module.exports = {
   sanitizeAnalysisRow,
   upsertAiUploadFrames,
   upsertAiObjectPoints,
+  hasUsableTrafficSignInstance,
 };

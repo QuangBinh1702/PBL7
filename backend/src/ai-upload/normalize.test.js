@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { normalizeAiUploadFrames, normalizeAiTriangulationPoints } = require('./normalize');
+const { hasUsableTrafficSignInstance } = require('../api/server');
 
 test('normalizes AI upload response with Windows paths, coordinates, and segmentation labels', () => {
   const payload = {
@@ -349,4 +350,12 @@ test('keeps traffic-sign class label and stores sign_name separately', () => {
       ],
     },
   ]);
+});
+
+test('filters traffic-sign instances that are too small for reliable recognition', () => {
+  assert.equal(hasUsableTrafficSignInstance({ area: 400 }), false);
+  assert.equal(hasUsableTrafficSignInstance({ area: 899 }), false);
+  assert.equal(hasUsableTrafficSignInstance({ area: 900 }), true);
+  assert.equal(hasUsableTrafficSignInstance({ area: 2500 }), true);
+  assert.equal(hasUsableTrafficSignInstance({}), false);
 });

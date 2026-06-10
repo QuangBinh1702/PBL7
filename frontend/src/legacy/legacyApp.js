@@ -4453,24 +4453,28 @@ export function startLegacyMapillaryApp() {
 			const json = await res.json();
 			if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
 			const items = json.data || [];
-			if (!items.length) {
+			const markerItems = buildSeenInMarkerItems(seenIn, items);
+			const displayItems = markerItems.length ? markerItems : items;
+			if (!displayItems.length) {
 				if (!seenIn.length) clearObjectSeenImageMarkers();
 				detList.innerHTML =
 					'<div style="padding:32px;text-align:center;color:#9ca3af;">No AI upload images found for this object.</div>';
 				return;
 			}
-			detTitle.textContent = `${label} · ${items.length} ảnh trên sequence`;
-			allDetections = items.map((item) => ({
+			detTitle.textContent = `${label} · ${displayItems.length} ảnh trên sequence`;
+			allDetections = displayItems.map((item) => {
+				const providerImageId = item.image?.provider_image_id;
+				return {
 				type: "ai-object-image",
 				image: item.image,
 				instance_id: item.instance_id,
-				thumb_url: item.thumb_url,
-			}));
+				thumb_url: item.thumb_url || (providerImageId ? `/api/v1/ai-images/${encodeURIComponent(providerImageId)}/image` : ""),
+				};
+			});
 			detPage = 0;
-			const markerItems = buildSeenInMarkerItems(seenIn, items);
-			if (markerItems.length) {
-				updateObjectSeenImageMarkers(markerItems);
-				fitMapToObjectSeenSequence(markerItems, objectCoords);
+			if (displayItems.length) {
+				updateObjectSeenImageMarkers(displayItems);
+				fitMapToObjectSeenSequence(displayItems, objectCoords);
 			}
 			renderDetectionPage();
 		} catch (err) {
