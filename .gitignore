@@ -30,3 +30,5 @@ docs
 .codex
 .agents
 .claude
+
+*.txt

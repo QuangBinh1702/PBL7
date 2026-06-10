@@ -2,6 +2,7 @@ import { Viewer as MlyViewer } from "mapillary-js";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "mapillary-js/dist/mapillary.css";
+import { createTrafficSignRegistry, resolveSignLabel } from "./trafficSignRegistry";
 
 /* eslint-disable no-unused-vars, no-empty */
 export function startLegacyMapillaryApp() {
@@ -54,6 +55,7 @@ export function startLegacyMapillaryApp() {
 	let syncingFromMap = false;
 	let urlUpdateTimer = null;
 	let searchMarker = null;
+	let seenImageHtmlMarkers = [];
 	let searchAbortController = null;
 	let searchSuggestionAbort = null;
 	let activeSuggestions = [];
@@ -976,9 +978,7 @@ export function startLegacyMapillaryApp() {
 					return;
 				}
 
-				const seenImgLayers = ["object-seen-images-dots", "object-seen-images-labels"].filter(
-					(id) => map.getLayer(id),
-				);
+				const seenImgLayers = ["object-seen-images-dots"].filter((id) => map.getLayer(id));
 				const seenImgHit = seenImgLayers.length
 					? map.queryRenderedFeatures(
 							[
@@ -1268,33 +1268,15 @@ export function startLegacyMapillaryApp() {
 				},
 			});
 
+			// Invisible hit targets; numbered pins are HTML markers (seen-image-seq-marker).
 			map.addLayer({
 				id: "object-seen-images-dots",
 				type: "circle",
 				source: "object-seen-images",
-				minzoom: 14,
+				minzoom: 12,
 				paint: {
-					"circle-radius": ["interpolate", ["linear"], ["zoom"], 14, 11, 20, 14],
-					"circle-color": "#ffffff",
-					"circle-stroke-color": "#111827",
-					"circle-stroke-width": 2,
-					"circle-opacity": 1,
-				},
-			});
-			map.addLayer({
-				id: "object-seen-images-labels",
-				type: "symbol",
-				source: "object-seen-images",
-				minzoom: 14,
-				layout: {
-					"text-field": ["get", "num"],
-					"text-size": 13,
-					"text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
-					"text-allow-overlap": true,
-					"text-ignore-placement": true,
-				},
-				paint: {
-					"text-color": "#111827",
+					"circle-radius": ["interpolate", ["linear"], ["zoom"], 12, 14, 16, 16, 20, 18],
+					"circle-opacity": 0,
 				},
 			});
 
@@ -1345,14 +1327,27 @@ export function startLegacyMapillaryApp() {
 				const json = await res.json();
 				if (signal.aborted) return;
 				const points = Array.isArray(json.data) ? json.data : [];
+				let addedDynamicSign = false;
+				for (const point of points) {
+					if (!isAiTrafficSignPoint(point) || !point.sign_name) continue;
+					const before = trafficSignRegistry.dynamicValues.size;
+					mapAiSignNameToSignValue(point.sign_name);
+					if (trafficSignRegistry.dynamicValues.size > before) addedDynamicSign = true;
+				}
+				if (addedDynamicSign) rebuildSignFilterDropdown();
+				const features = points.map((point) => ({
+					type: "Feature",
+					geometry: { type: "Point", coordinates: [point.lon, point.lat] },
+					properties: buildAiObjectPointProperties(point),
+				}));
 				map.getSource("ai-object-points").setData({
 					type: "FeatureCollection",
-					features: points.map((point) => ({
-						type: "Feature",
-						geometry: { type: "Point", coordinates: [point.lon, point.lat] },
-						properties: buildAiObjectPointProperties(point),
-					})),
+					features,
 				});
+				const signValues = new Set(
+					features.map((feature) => feature.properties.sign_value).filter(Boolean),
+				);
+				await Promise.all([...signValues].map((value) => ensureMapImage("sg", value)));
 			}
 
 			async function loadLocalImages() {
@@ -1466,6 +1461,7 @@ export function startLegacyMapillaryApp() {
 			.replace(/\.[^.]+$/, "")
 			.toLowerCase()
 			.replace(/^ai[-_]/, "")
+			.replace(/-(jpg|jpeg|png)$/i, "")
 			.replace(/[^a-z0-9]+/g, "-")
 			.replace(/^-+|-+$/g, "");
 	}
@@ -1484,6 +1480,15 @@ export function startLegacyMapillaryApp() {
 
 	function seenInEntryImageName(entry) {
 		if (typeof entry === "string") return entry;
+		if (entry?.image && typeof entry.image === "object") {
+			return (
+				entry.image.provider_image_id ||
+				entry.image.image_path ||
+				entry.image_path ||
+				entry.img_stem ||
+				""
+			);
+		}
 		return entry?.image || entry?.image_path || entry?.img_stem || "";
 	}
 
@@ -1543,46 +1548,166 @@ export function startLegacyMapillaryApp() {
 	}
 
 	function buildObjectSeenItemsFromSeenIn(seenIn) {
-		return normalizeObjectSeenItems(
-			(seenIn || []).map((entry) => {
-				const imageName = seenInEntryImageName(entry);
-				const resolved = findLocalImageCoordsByKey(imageName);
+		return buildSeenInMarkerItems(seenIn, []);
+	}
+
+	function indexResolvedSeenImages(resolvedRows) {
+		const imageByKey = new Map();
+		for (const row of resolvedRows || []) {
+			const img = row?.image || row;
+			if (!img) continue;
+			const keys = [
+				img.provider_image_id,
+				String(img.provider_image_id || "").replace(/^ai[-_]/i, ""),
+				seenInEntryImageName(row),
+			];
+			for (const key of keys) {
+				const comparable = toComparableImageKey(key);
+				if (!comparable) continue;
+				imageByKey.set(comparable, img);
+				imageByKey.set(comparable.replace(/-/g, "_"), img);
+			}
+		}
+		return imageByKey;
+	}
+
+	function buildMarkerItemsFromResolvedRows(resolvedRows) {
+		return (resolvedRows || [])
+			.map((row) => {
+				const img = row?.image || row;
+				const lon = Number(img?.lon);
+				const lat = Number(img?.lat);
+				if (!img || !Number.isFinite(lon) || !Number.isFinite(lat)) return null;
 				return {
-					image_name: imageName,
-					image: resolved
-						? { provider_image_id: resolved.provider_image_id, lon: resolved.lon, lat: resolved.lat }
-						: { provider_image_id: imageName },
-					instance_id: typeof entry === "object" ? entry.instance_id : null,
+					image: {
+						provider_image_id: img.provider_image_id || "",
+						lon,
+						lat,
+					},
+					instance_id: row?.instance_id ?? null,
 				};
-			}),
-		);
+			})
+			.filter(Boolean);
+	}
+
+	function buildSeenInMarkerItems(seenIn, resolvedRows) {
+		const imageByKey = indexResolvedSeenImages(resolvedRows);
+		const items = [];
+		for (const entry of seenIn || []) {
+			const imageName = seenInEntryImageName(entry);
+			if (!imageName) continue;
+			const comparable = toComparableImageKey(imageName);
+			let img =
+				imageByKey.get(comparable) ||
+				imageByKey.get(comparable.replace(/-/g, "_"));
+			if (!img) {
+				const local = findLocalImageCoordsByKey(imageName);
+				if (local) img = local;
+			}
+			const lon = Number(img?.lon);
+			const lat = Number(img?.lat);
+			if (!img || !Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+			items.push({
+				image: {
+					provider_image_id: img.provider_image_id || imageName,
+					lon,
+					lat,
+				},
+				instance_id: typeof entry === "object" ? (entry.instance_id ?? null) : null,
+			});
+		}
+		if (items.length) return items;
+		return buildMarkerItemsFromResolvedRows(resolvedRows);
+	}
+
+	function buildDetectionMarkerItems(detections) {
+		return (detections || [])
+			.map((det) => {
+				const imageId = det?.image?.id;
+				if (!imageId) return null;
+				const resolved = findLocalImageCoordsByKey(String(imageId));
+				if (!resolved) return null;
+				return {
+					image: {
+						provider_image_id: String(imageId),
+						lon: resolved.lon,
+						lat: resolved.lat,
+					},
+					instance_id: null,
+				};
+			})
+			.filter(Boolean);
+	}
+
+	function ensureObjectSeenLayersOnTop() {
+		if (!map?.getLayer("object-seen-images-dots")) return;
+		map.moveLayer("object-seen-images-dots");
+	}
+
+	function updateSeenInMarkers(seenIn, resolvedRows) {
+		updateObjectSeenImageMarkers(buildSeenInMarkerItems(seenIn, resolvedRows));
+	}
+
+	function clearSeenImageHtmlMarkers() {
+		for (const marker of seenImageHtmlMarkers) marker.remove();
+		seenImageHtmlMarkers = [];
 	}
 
 	function updateObjectSeenImageMarkers(items) {
 		const pointSource = map?.getSource("object-seen-images");
-		if (!pointSource) return;
+		if (!pointSource || !map) return;
 
-		const normalized = normalizeObjectSeenItems(items);
-		const features = normalized.map((item, index) => ({
-			type: "Feature",
-			geometry: {
-				type: "Point",
-				coordinates: [item.image.lon, item.image.lat],
-			},
-			properties: {
-				num: String(index + 1),
-				image_id: item.image.provider_image_id,
-				instance_id:
-					item.instance_id != null && item.instance_id !== ""
-						? String(item.instance_id)
-						: "",
-			},
-		}));
+		clearSeenImageHtmlMarkers();
+
+		const normalized = Array.isArray(items) && items.length && items[0]?.image?.lon != null
+			? items
+			: normalizeObjectSeenItems(items);
+		const features = normalized.map((item, index) => {
+			const lon = Number(item.image.lon);
+			const lat = Number(item.image.lat);
+			const num = index + 1;
+			if (Number.isFinite(lon) && Number.isFinite(lat)) {
+				const el = document.createElement("button");
+				el.type = "button";
+				el.className = "seen-image-seq-marker";
+				el.textContent = String(num);
+				el.title = `Ảnh ${num}`;
+				el.setAttribute("aria-label", `Ảnh ${num}`);
+				el.addEventListener("click", (ev) => {
+					ev.stopPropagation();
+					openObjectImageModalFromMap(
+						item.image.provider_image_id,
+						item.instance_id ?? null,
+					);
+				});
+				const marker = new maplibregl.Marker({ element: el, anchor: "center" })
+					.setLngLat([lon, lat])
+					.addTo(map);
+				seenImageHtmlMarkers.push(marker);
+			}
+			return {
+				type: "Feature",
+				geometry: {
+					type: "Point",
+					coordinates: [item.image.lon, item.image.lat],
+				},
+				properties: {
+					num: String(num),
+					image_id: item.image.provider_image_id,
+					instance_id:
+						item.instance_id != null && item.instance_id !== ""
+							? String(item.instance_id)
+							: "",
+				},
+			};
+		});
 
 		pointSource.setData({ type: "FeatureCollection", features });
+		ensureObjectSeenLayersOnTop();
 	}
 
 	function clearObjectSeenImageMarkers() {
+		clearSeenImageHtmlMarkers();
 		const empty = { type: "FeatureCollection", features: [] };
 		map?.getSource("object-seen-images")?.setData(empty);
 	}
@@ -2289,7 +2414,8 @@ export function startLegacyMapillaryApp() {
 	let objectImageModalSession = null;
 
 	function formatSegmentationTooltip(meta, instanceId) {
-		const name = meta.sign_name || meta.class_name || `class_${meta.class_id ?? instanceId}`;
+		const rawName = meta.sign_name || meta.class_name || `class_${meta.class_id ?? instanceId}`;
+		const name = meta.sign_name ? resolveSignLabel(meta.sign_name) : rawName;
 		const score = meta.score != null ? Number(meta.score).toFixed(3) : "n/a";
 		return `<strong>${name}</strong><span>instance #${instanceId} · score ${score}</span>`;
 	}
@@ -2851,6 +2977,8 @@ export function startLegacyMapillaryApp() {
 			}
 
 			const localPayload = await syncAiUploadToLocalDatabase(payload);
+			const signValues = registerAiSignNamesFromPayload(localPayload);
+			await Promise.all(signValues.map((value) => ensureMapImage("sg", value)));
 			uploadedFrameResults = normalizeUploadedImages(localPayload);
 			renderUploadResults(uploadedFrameResults);
 			if (map) {
@@ -3512,8 +3640,7 @@ export function startLegacyMapillaryApp() {
 		return `${POINT_ICON_BASE}${value}.svg`;
 	}
 	function getSignIconUrl(value) {
-		if (SIGN_ICON_OVERRIDES[value]) return SIGN_ICON_OVERRIDES[value];
-		return `${SIGN_ICON_BASE}${value}.svg`;
+		return trafficSignRegistry.getSignIconUrl(value);
 	}
 
 	async function loadSvgAsMapImage(url, cssSize) {
@@ -3673,14 +3800,27 @@ export function startLegacyMapillaryApp() {
 		if (imageLoadCache.has(imageId)) return imageLoadCache.get(imageId);
 		const promise = (async () => {
 			try {
+				if (kind === "sg") await trafficSignRegistry.ensureSignIconOverride(value);
 				const url =
 					kind === "pt" ? getPointIconUrl(value) : getSignIconUrl(value);
 				const size = kind === "pt" ? 32 : 36;
 				const { data, pixelRatio } = await loadSvgAsMapImage(url, size);
 				if (!map.hasImage(imageId)) map.addImage(imageId, data, { pixelRatio });
 			} catch (e) {
-				// Add fallback
 				if (!map.hasImage(imageId)) {
+					if (kind === "sg") {
+						const label = SIGN_TYPES_MAP[value]?.label || value;
+						try {
+							const generatedUrl =
+								SIGN_ICON_OVERRIDES[value] ||
+								trafficSignRegistry.buildGeneratedSignIconUrl(label);
+							const { data, pixelRatio } = await loadSvgAsMapImage(generatedUrl, 36);
+							map.addImage(imageId, data, { pixelRatio });
+							return;
+						} catch {
+							// fall through to colored circle
+						}
+					}
 					const color = kind === "pt" ? AI_CLASS_COLORS[value] || "#4b5563" : "#ff8400";
 					const fb = kind === "pt"
 						? createPointFallbackImage(value, 24)
@@ -3862,7 +4002,6 @@ export function startLegacyMapillaryApp() {
 		{ value: "ai-sign--danger-right", label: "Danger zone on the right", cat: "warning" },
 		{ value: "ai-sign--obstacle-pass-right", label: "Warning: Obstacle ahead - pass on the right", cat: "warning" },
 	];
-	const SIGN_TYPES_MAP = {};
 	function signSvg(body, bg = "#ffffff", border = "#111827") {
 		return svgDataUri(
 			`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect x="4" y="4" width="32" height="32" rx="6" fill="${bg}" stroke="${border}" stroke-width="3"/>${body}</svg>`,
@@ -3909,17 +4048,16 @@ export function startLegacyMapillaryApp() {
 		"regulatory--motorcycles-only--g1": textSignSvg("MOTO", "#2563eb"),
 		"regulatory--no-motorcycles--g1": prohibitionSignSvg('<text x="20" y="23" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="700" fill="#111827">MOTO</text>'),
 	};
-	SIGN_TYPES.forEach((t) => (SIGN_TYPES_MAP[t.value] = t));
-	const SIGN_LABEL_TO_VALUE = {};
-	SIGN_TYPES.forEach((t) => {
-		SIGN_LABEL_TO_VALUE[t.label.toLowerCase()] = t.value;
-	});
+	const trafficSignRegistry = createTrafficSignRegistry(SIGN_TYPES, SIGN_ICON_OVERRIDES);
+	const SIGN_TYPES_MAP = trafficSignRegistry.signTypesMap;
+	const SIGN_LABEL_TO_VALUE = trafficSignRegistry.signLabelToValue;
+	let rebuildSignFilterDropdown = () => {};
 
 	function mapAiSignNameToSignValue(value) {
 		const raw = String(value || "").trim();
 		if (!raw) return "";
 		if (SIGN_TYPES_MAP[raw]) return raw;
-		return SIGN_LABEL_TO_VALUE[raw.toLowerCase()] || "";
+		return trafficSignRegistry.resolveSignValue(raw);
 	}
 
 	function buildAiObjectPointProperties(point) {
@@ -3979,12 +4117,7 @@ export function startLegacyMapillaryApp() {
 		});
 		searchInput.addEventListener("click", (e) => e.stopPropagation());
 
-		// Build dropdown items — "All" option first
-		const allItems = [
-			{ value: ALL_OPTION, label: allLabel || "All" },
-			...items,
-		];
-		allItems.forEach((item) => {
+		function appendDropdownItem(item) {
 			const el = document.createElement("div");
 			el.className = "filter-dropdown-item";
 			el.dataset.value = item.value;
@@ -3999,7 +4132,6 @@ export function startLegacyMapillaryApp() {
 			el.innerHTML = `${iconHtml}<span>${item.label}${item.desc ? `<br><small style="color:#9ca3af;font-size:0.7rem">${item.desc}</small>` : ""}</span>`;
 			el.addEventListener("click", () => {
 				if (item.value === ALL_OPTION) {
-					// Toggle "All" — clears specific selections
 					if (selectedSet.has(ALL_OPTION)) {
 						selectedSet.clear();
 					} else {
@@ -4007,7 +4139,6 @@ export function startLegacyMapillaryApp() {
 						selectedSet.add(ALL_OPTION);
 					}
 				} else {
-					// Toggle specific item — remove "All" if present
 					selectedSet.delete(ALL_OPTION);
 					if (selectedSet.has(item.value)) {
 						selectedSet.delete(item.value);
@@ -4019,7 +4150,16 @@ export function startLegacyMapillaryApp() {
 				dropdownList.classList.remove("open");
 			});
 			dropdownList.appendChild(el);
-		});
+		}
+
+		function rebuildDropdownItems() {
+			dropdownList.querySelectorAll(".filter-dropdown-item").forEach((el) => el.remove());
+			appendDropdownItem({ value: ALL_OPTION, label: allLabel || "All" });
+			items.forEach((item) => appendDropdownItem(item));
+			renderFilterState();
+		}
+
+		rebuildDropdownItems();
 
 		// Toggle dropdown
 		dropdownBtn.addEventListener("click", (e) => {
@@ -4042,7 +4182,10 @@ export function startLegacyMapillaryApp() {
 			// Tags
 			tagsEl.innerHTML = "";
 			selectedSet.forEach((val) => {
-				const meta = items.find((i) => i.value === val);
+				const meta =
+					val === ALL_OPTION
+						? { label: allLabel || "All" }
+						: items.find((i) => i.value === val) || SIGN_TYPES_MAP[val];
 				if (!meta) return;
 				const tag = document.createElement("span");
 				tag.className = "filter-tag";
@@ -4073,7 +4216,7 @@ export function startLegacyMapillaryApp() {
 			onApply(selectedSet);
 		}
 
-		renderFilterState();
+		return rebuildDropdownItems;
 	}
 
 	const ALL_OPTION = "__ALL__";
@@ -4158,7 +4301,7 @@ export function startLegacyMapillaryApp() {
 			allLabel: "All points",
 		});
 
-		initFilterPanel({
+		rebuildSignFilterDropdown = initFilterPanel({
 			dropdownBtnId: "signsDropdownBtn",
 			dropdownListId: "signsDropdownList",
 			tagsId: "signsTags",
@@ -4171,6 +4314,26 @@ export function startLegacyMapillaryApp() {
 			onApply: applySignFilter,
 			allLabel: "All signs",
 		});
+	}
+
+	function registerAiSignNamesFromPayload(payload) {
+		let addedDynamicSign = false;
+		const names = new Set();
+		const collect = (value) => {
+			const raw = String(value || "").trim();
+			if (raw) names.add(raw);
+		};
+		for (const point of payload?.object_points || []) collect(point.sign_name);
+		for (const frame of payload?.data || []) {
+			for (const seg of frame.segmentations || []) collect(seg.sign_name);
+		}
+		for (const name of names) {
+			const before = trafficSignRegistry.dynamicValues.size;
+			mapAiSignNameToSignValue(name);
+			if (trafficSignRegistry.dynamicValues.size > before) addedDynamicSign = true;
+		}
+		if (addedDynamicSign) rebuildSignFilterDropdown();
+		return [...names].map((name) => mapAiSignNameToSignValue(name)).filter(Boolean);
 	}
 
 	// Close dropdowns on outside click
@@ -4223,6 +4386,7 @@ export function startLegacyMapillaryApp() {
 		detPageInfo.textContent = "";
 		detNextBtn.style.display = "none";
 		detPanel.classList.add("open");
+		clearObjectSeenImageMarkers();
 
 		try {
 			// Fetch detections via local backend API (cache-on-read)
@@ -4241,6 +4405,11 @@ export function startLegacyMapillaryApp() {
 			// Detections already have _thumb data from backend (cached with thumb URLs)
 			allDetections = detData;
 			detPage = 0;
+			const markerItems = buildDetectionMarkerItems(detData);
+			if (markerItems.length) {
+				updateObjectSeenImageMarkers(markerItems);
+				fitMapToObjectSeenSequence(markerItems, coords);
+			}
 
 			renderDetectionPage();
 		} catch (err) {
@@ -4259,7 +4428,7 @@ export function startLegacyMapillaryApp() {
 		const iconUrl = properties.sign_value
 			? getSignIconUrl(properties.sign_value)
 			: getPointIconUrl(properties.icon_value || properties.label);
-		const seenInPreview = buildObjectSeenItemsFromSeenIn(parseSeenInEntries(properties));
+		const seenIn = parseSeenInEntries(properties);
 
 		detTitle.textContent = label;
 		detIcon.style.display = "";
@@ -4273,9 +4442,8 @@ export function startLegacyMapillaryApp() {
 		detNextBtn.style.display = "none";
 		detPanel.classList.add("open");
 
-		if (seenInPreview.length) {
-			updateObjectSeenImageMarkers(seenInPreview);
-			fitMapToObjectSeenSequence(seenInPreview, objectCoords);
+		if (seenIn.length) {
+			updateSeenInMarkers(seenIn, []);
 		} else {
 			clearObjectSeenImageMarkers();
 		}
@@ -4286,7 +4454,7 @@ export function startLegacyMapillaryApp() {
 			if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
 			const items = json.data || [];
 			if (!items.length) {
-				clearObjectSeenImageMarkers();
+				if (!seenIn.length) clearObjectSeenImageMarkers();
 				detList.innerHTML =
 					'<div style="padding:32px;text-align:center;color:#9ca3af;">No AI upload images found for this object.</div>';
 				return;
@@ -4299,8 +4467,11 @@ export function startLegacyMapillaryApp() {
 				thumb_url: item.thumb_url,
 			}));
 			detPage = 0;
-			updateObjectSeenImageMarkers(items);
-			fitMapToObjectSeenSequence(items, objectCoords);
+			const markerItems = buildSeenInMarkerItems(seenIn, items);
+			if (markerItems.length) {
+				updateObjectSeenImageMarkers(markerItems);
+				fitMapToObjectSeenSequence(markerItems, objectCoords);
+			}
 			renderDetectionPage();
 		} catch (err) {
 			console.warn("AI object image fetch failed:", err);
