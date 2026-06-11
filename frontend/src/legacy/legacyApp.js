@@ -14,7 +14,10 @@ export function startLegacyMapillaryApp() {
 	const DEFAULT_PKEY = "1137674664114306";
 	const STORAGE_KEY = "mapillary_token";
 	const LOCAL_API = "http://localhost:3000/api/v1";
-	const VIDEO_UPLOAD_API = "https://emsimv10--pbl7-pipelineapi-web-dev.modal.run/pipeline/upload-from-fe";
+	const VIDEO_SUBMIT_URL_API = "https://emsimv10--pbl7-pipelineapi-web-dev.modal.run/pipeline/submit-url";
+	const VIDEO_STATUS_URL_BASE = "https://emsimv10--pbl7-pipelineapi-web-dev.modal.run/pipeline/status";
+	const VIDEO_STATUS_POLL_INTERVAL_MS = 20000;
+	const VIDEO_STATUS_MAX_POLLS = 720;
 	const RECENT_SEARCHES_KEY = "mapillary_recent_searches";
 	const LOCAL_ONLY_MODE = true;
 	const MAP_STYLES = {
@@ -2292,6 +2295,7 @@ export function startLegacyMapillaryApp() {
 	function updateSelectedUploadMeta(file) {
 		const nameEl = document.getElementById("uploadSelectedName");
 		const hintEl = document.getElementById("uploadSelectedHint");
+		updateUploadJobMeta(file?.name || "", file ? "Đã chọn video" : "Chưa gửi");
 		if (!nameEl || !hintEl) return;
 		if (!file) {
 			nameEl.textContent = "Chưa chọn video";
@@ -2301,6 +2305,114 @@ export function startLegacyMapillaryApp() {
 		}
 		nameEl.textContent = file.name;
 		hintEl.textContent = `${file.type || "video/*"} • ${formatUploadFileSize(file.size)}`;
+	}
+
+	function updateUploadJobMeta(fileName, statusText, url = "") {
+		const nameEl = document.getElementById("uploadJobName");
+		const statusEl = document.getElementById("uploadJobStatus");
+		const urlEl = document.getElementById("uploadJobUrl");
+		if (nameEl) nameEl.textContent = fileName || "Chưa có video";
+		if (statusEl) statusEl.textContent = statusText || "Chưa gửi";
+		if (urlEl) {
+			urlEl.textContent = url || "";
+			urlEl.hidden = !url;
+			urlEl.title = url || "";
+		}
+	}
+
+	async function uploadVideoToR2(file) {
+		const res = await fetch(`${LOCAL_API}/r2/videos`, {
+			method: "POST",
+			headers: {
+				"Content-Type": file.type || "application/octet-stream",
+				"X-File-Name": encodeURIComponent(file.name),
+			},
+			body: file,
+		});
+		const payload = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			throw new Error(payload?.error || `R2 upload failed with ${res.status}`);
+		}
+		if (!payload?.file_name || !payload?.url) {
+			throw new Error("R2 upload response thiếu file_name hoặc url.");
+		}
+		return payload;
+	}
+
+	async function submitR2VideoToAi({ file_name, url }) {
+		const res = await fetch(VIDEO_SUBMIT_URL_API, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ file_name, url }),
+		});
+		const payload = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			throw new Error(payload?.detail || payload?.error || `AI submit failed with ${res.status}`);
+		}
+		return payload;
+	}
+
+	function delay(ms) {
+		return new Promise((resolve) => window.setTimeout(resolve, ms));
+	}
+
+	async function fetchAiVideoStatus(fileName) {
+		const statusUrl = `${VIDEO_STATUS_URL_BASE.replace(/\/+$/, "")}/${encodeURIComponent(fileName)}`;
+		const res = await fetch(statusUrl);
+		const payload = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			throw new Error(payload?.detail || payload?.error || `AI status failed with ${res.status}`);
+		}
+		if (payload?.error) {
+			throw new Error(payload.error);
+		}
+		return payload;
+	}
+
+	function isAiSubmitReady(payload) {
+		return payload?.status === true || payload?.ready === true || payload?.done === true;
+	}
+
+	function getAiSubmitResultPayload(payload) {
+		return payload?.result || payload?.payload || payload?.data?.result || payload?.data || payload;
+	}
+
+	async function waitForAiVideoResult(fileName, r2Url) {
+		for (let attempt = 1; attempt <= VIDEO_STATUS_MAX_POLLS; attempt += 1) {
+			const statusPayload = await fetchAiVideoStatus(fileName);
+			const ready = isAiSubmitReady(statusPayload);
+			updateUploadJobMeta(
+				statusPayload?.file_name || fileName,
+				ready ? "AI đã xử lý xong" : "AI đang xử lý",
+				r2Url,
+			);
+
+			if (ready) return statusPayload;
+
+			uploadedFrameResults = [];
+			renderUploadResults(uploadedFrameResults);
+			setUploadState(
+				"uploading",
+				`Server AI đang xử lý ${statusPayload?.file_name || fileName}. Chưa có ảnh xử lý.`,
+			);
+			await delay(VIDEO_STATUS_POLL_INTERVAL_MS);
+		}
+
+		throw new Error("Quá thời gian chờ server AI xử lý video.");
+	}
+
+	async function syncAndRenderReadyAiPayload(aiPayload) {
+		const localPayload = await syncAiUploadToLocalDatabase(getAiSubmitResultPayload(aiPayload));
+		const signValues = registerAiSignNamesFromPayload(localPayload);
+		await Promise.all(signValues.map((value) => ensureMapImage("sg", value)));
+		uploadedFrameResults = normalizeUploadedImages(localPayload);
+		renderUploadResults(uploadedFrameResults);
+		if (map) {
+			const empty = { type: "FeatureCollection", features: [] };
+			map.getSource("local-images")?.setData(empty);
+			map.getSource("ai-object-points")?.setData(empty);
+		}
+		return uploadedFrameResults;
 	}
 
 	function normalizeUploadedImages(payload) {
@@ -2955,37 +3067,35 @@ export function startLegacyMapillaryApp() {
 
 		const submitBtn = document.getElementById("uploadSubmitBtn");
 		const browseBtn = document.getElementById("uploadBrowseBtn");
-		const form = new FormData();
-		form.append("videos", selectedUploadFile);
 
 		setUploadState(
 			"uploading",
-			`Đang gửi ${selectedUploadFile.name} lên pipeline AI. Kết quả frame sẽ xuất hiện ngay khi API phản hồi.`,
+			`Đang tải ${selectedUploadFile.name} lên Cloudflare R2.`,
 		);
+		updateUploadJobMeta(selectedUploadFile.name, "Đang tải lên R2");
 		if (submitBtn) submitBtn.disabled = true;
 		if (browseBtn) browseBtn.disabled = true;
 
 		try {
-			const res = await fetch(VIDEO_UPLOAD_API, {
-				method: "POST",
-				body: form,
-			});
-			const payload = await res.json().catch(() => ({}));
+			const r2Video = await uploadVideoToR2(selectedUploadFile);
+			updateUploadJobMeta(r2Video.file_name, "Đã upload R2, đang gửi sang AI", r2Video.url);
+			setUploadState(
+				"uploading",
+				`Đã upload video lên R2. Đang gửi URL sang server AI.`,
+			);
 
-			if (!res.ok) {
-				throw new Error(payload?.error || `Upload failed with ${res.status}`);
-			}
+			const aiSubmitPayload = await submitR2VideoToAi(r2Video);
+			const aiReady = isAiSubmitReady(aiSubmitPayload);
+			updateUploadJobMeta(
+				aiSubmitPayload?.file_name || r2Video.file_name,
+				aiReady ? "AI đã xử lý xong" : "AI đang xử lý",
+				r2Video.url,
+			);
 
-			const localPayload = await syncAiUploadToLocalDatabase(payload);
-			const signValues = registerAiSignNamesFromPayload(localPayload);
-			await Promise.all(signValues.map((value) => ensureMapImage("sg", value)));
-			uploadedFrameResults = normalizeUploadedImages(localPayload);
-			renderUploadResults(uploadedFrameResults);
-			if (map) {
-				const empty = { type: "FeatureCollection", features: [] };
-				map.getSource("local-images")?.setData(empty);
-				map.getSource("ai-object-points")?.setData(empty);
-			}
+			const readyPayload = aiReady
+				? aiSubmitPayload
+				: await waitForAiVideoResult(aiSubmitPayload?.file_name || r2Video.file_name, r2Video.url);
+			await syncAndRenderReadyAiPayload(readyPayload);
 
 			if (!uploadedFrameResults.length) {
 				setUploadState(

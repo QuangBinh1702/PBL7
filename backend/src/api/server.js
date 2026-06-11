@@ -23,6 +23,13 @@ const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
 const CAPTION_API_URL = 'https://emsimv10--qwen3-vl-caption-server-fastapi-app-dev.modal.run/caption';
 const AI_FETCH_IMAGE_URL = process.env.AI_FETCH_IMAGE_URL || 'https://emsimv10--pbl7-pipelineapi-web-dev.modal.run/fetch/image';
 const INCIDENT_SEND_URL = process.env.INCIDENT_SEND_URL || 'https://wk3nfr5z-8003.asse.devtunnels.ms/send';
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID || '';
+const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID || '';
+const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY || '';
+const R2_BUCKET = process.env.R2_BUCKET || 'pbl7';
+const R2_PUBLIC_BASE_URL = (process.env.R2_PUBLIC_BASE_URL || '').replace(/\/+$/, '');
+const R2_VIDEO_PREFIX = (process.env.R2_VIDEO_PREFIX || 'uploads').replace(/^\/+|\/+$/g, '');
+const R2_UPLOAD_LIMIT = process.env.R2_UPLOAD_LIMIT || '2gb';
 const DANANG_BBOX = {
   minLon: 107.9,
   minLat: 15.95,
@@ -33,7 +40,12 @@ const DANANG_BBOX = {
 // CORS for frontend
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept');
+  res.header('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept, X-File-Name');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
   next();
 });
 app.use(express.json({ limit: '15mb' }));
@@ -113,6 +125,99 @@ function parseCaptionResponse(text, providerImageId) {
     raw_caption: String(text || ''),
     source: 'ai',
   };
+}
+
+function hmac(key, value, encoding) {
+  return crypto.createHmac('sha256', key).update(value, 'utf8').digest(encoding);
+}
+
+function sha256(value, encoding = 'hex') {
+  return crypto.createHash('sha256').update(value).digest(encoding);
+}
+
+function getAwsSignatureKey(secretKey, dateStamp, region, service) {
+  const kDate = hmac(`AWS4${secretKey}`, dateStamp);
+  const kRegion = hmac(kDate, region);
+  const kService = hmac(kRegion, service);
+  return hmac(kService, 'aws4_request');
+}
+
+function toAmzDate(date = new Date()) {
+  return date.toISOString().replace(/[:-]|\.\d{3}/g, '');
+}
+
+function sanitizeR2FileName(name) {
+  const fallback = `video-${Date.now()}.mp4`;
+  return path.basename(String(name || fallback).replace(/\\/g, '/')).replace(/[^\w.\-() ]+/g, '_') || fallback;
+}
+
+function encodeR2Key(key) {
+  return String(key)
+    .split('/')
+    .map((part) => encodeURIComponent(part))
+    .join('/');
+}
+
+function buildR2ObjectUrl(objectKey) {
+  if (!R2_PUBLIC_BASE_URL) return '';
+  return `${R2_PUBLIC_BASE_URL}/${encodeR2Key(objectKey)}`;
+}
+
+async function putObjectToR2({ objectKey, buffer, contentType }) {
+  if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_PUBLIC_BASE_URL) {
+    throw new Error('Missing R2 env. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_BASE_URL.');
+  }
+
+  const method = 'PUT';
+  const region = 'auto';
+  const service = 's3';
+  const host = `${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+  const canonicalUri = `/${R2_BUCKET}/${encodeR2Key(objectKey)}`;
+  const endpoint = `https://${host}${canonicalUri}`;
+  const amzDate = toAmzDate();
+  const dateStamp = amzDate.slice(0, 8);
+  const payloadHash = sha256(buffer);
+  const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+  const canonicalHeaders = [
+    `host:${host}`,
+    `x-amz-content-sha256:${payloadHash}`,
+    `x-amz-date:${amzDate}`,
+    '',
+  ].join('\n');
+  const canonicalRequest = [
+    method,
+    canonicalUri,
+    '',
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join('\n');
+  const stringToSign = [
+    'AWS4-HMAC-SHA256',
+    amzDate,
+    credentialScope,
+    sha256(canonicalRequest),
+  ].join('\n');
+  const signingKey = getAwsSignatureKey(R2_SECRET_ACCESS_KEY, dateStamp, region, service);
+  const signature = hmac(signingKey, stringToSign, 'hex');
+  const authorization = `AWS4-HMAC-SHA256 Credential=${R2_ACCESS_KEY_ID}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const response = await fetch(endpoint, {
+    method,
+    headers: {
+      Authorization: authorization,
+      'Content-Type': contentType || 'application/octet-stream',
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date': amzDate,
+    },
+    body: buffer,
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    throw new Error(`R2 upload failed with ${response.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`);
+  }
 }
 
 function sanitizeAnalysisRow(row) {
@@ -228,7 +333,7 @@ function hasIncidentCaption(analysis) {
     text.includes('không phát hiện sự cố') ||
     text.includes('khong phat hien su co')
   ) { 
-    return false;
+    return true;
   }
   return text.includes('sự cố');
 }
@@ -825,6 +930,34 @@ async function ensureImageAnalysis(providerImageId, deps = {}) {
 }
 
 // ====== POST /api/v1/ai-uploads ======
+app.post('/api/v1/r2/videos', express.raw({ type: ['video/*', 'application/octet-stream'], limit: R2_UPLOAD_LIMIT }), async (req, res) => {
+  try {
+    const buffer = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    if (!buffer.length) {
+      return res.status(400).json({ error: 'Video body is required' });
+    }
+
+    const fileName = sanitizeR2FileName(decodeURIComponent(String(req.header('x-file-name') || '')));
+    const unique = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    const objectKey = `${R2_VIDEO_PREFIX}/${unique}-${fileName}`;
+    await putObjectToR2({
+      objectKey,
+      buffer,
+      contentType: req.header('content-type') || 'application/octet-stream',
+    });
+
+    res.json({
+      file_name: fileName,
+      object_key: objectKey,
+      url: buildR2ObjectUrl(objectKey),
+      size: buffer.length,
+    });
+  } catch (err) {
+    console.error('Error in POST /api/v1/r2/videos:', err);
+    res.status(500).json({ error: err.message || 'R2 upload failed' });
+  }
+});
+
 app.post('/api/v1/ai-uploads', async (req, res) => {
   try {
     const aiPayload = await resolveAiUploadPayload(req.body || {});

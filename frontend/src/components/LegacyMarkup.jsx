@@ -66,6 +66,17 @@ export function LegacyMarkup() {
         <span id="uploadSelectedName">Chưa chọn video</span>
         <span id="uploadSelectedHint">Hỗ trợ MP4, MOV, AVI hoặc video survey từ điện thoại.</span>
       </div>
+      <div class="upload-job-card" id="uploadJobCard">
+        <div>
+          <span>Video</span>
+          <strong id="uploadJobName">Chưa có video</strong>
+        </div>
+        <div>
+          <span>Trạng thái</span>
+          <strong id="uploadJobStatus">Chưa gửi</strong>
+        </div>
+        <small id="uploadJobUrl" hidden></small>
+      </div>
       <div class="upload-status-board" id="uploadStatusBoard" data-state="idle">
         <div class="upload-status-chip" id="uploadStatusChip">Idle</div>
         <p id="uploadStatusText">Chọn video để bắt đầu pipeline upload.</p>

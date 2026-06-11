@@ -413,6 +413,51 @@ body {
   line-height: 1.45;
 }
 
+.upload-job-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, auto);
+  gap: 10px 14px;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(12, 18, 26, 0.46);
+}
+
+.upload-job-card div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.upload-job-card span {
+  color: rgba(255, 243, 219, 0.5);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.upload-job-card strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #fff7e8;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-job-card small {
+  grid-column: 1 / -1;
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(255, 243, 219, 0.56);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .upload-status-board {
   display: grid;
   gap: 10px;
