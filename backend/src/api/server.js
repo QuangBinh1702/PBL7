@@ -16,11 +16,13 @@ const PORT = process.env.API_PORT || 3000;
 const DEFAULT_SEARCH_RADIUS_M = 50;
 const DEFAULT_SEARCH_LIMIT = 50;
 const MIN_TRAFFIC_SIGN_INSTANCE_AREA = parseNumber(process.env.MIN_TRAFFIC_SIGN_INSTANCE_AREA) || 900;
+const AI_UPLOAD_CAPTION_CONCURRENCY = Math.min(Math.max(parseInt(process.env.AI_UPLOAD_CAPTION_CONCURRENCY, 10) || 3, 1), 8);
 const GEOCODER_SUGGEST_URL = 'https://photon.komoot.io/api/';
 const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search';
 // const CAPTION_API_URL = 'https://emsimv10--qwen3-vl-caption-server-fastapi-app-dev.modal.run/caption';
 const CAPTION_API_URL = 'https://emsimv10--qwen3-vl-caption-server-fastapi-app-dev.modal.run/caption';
 const AI_FETCH_IMAGE_URL = process.env.AI_FETCH_IMAGE_URL || 'https://emsimv10--pbl7-pipelineapi-web-dev.modal.run/fetch/image';
+const INCIDENT_SEND_URL = process.env.INCIDENT_SEND_URL || 'https://wk3nfr5z-8003.asse.devtunnels.ms/send';
 const DANANG_BBOX = {
   minLon: 107.9,
   minLat: 15.95,
@@ -108,6 +110,7 @@ function parseCaptionResponse(text, providerImageId) {
     road_text: lines[2],
     safety_text: lines[3],
     sign_text: lines[4],
+    raw_caption: String(text || ''),
     source: 'ai',
   };
 }
@@ -158,6 +161,130 @@ async function generateAiAnalysis(providerImageId) {
   return parseCaptionResponse(text, providerImageId);
 }
 
+async function callCaptionApiWithBuffer(providerImageId, buffer, mimeType = 'image/jpeg') {
+  const ext = mimeType.includes('png') ? 'png' : 'jpg';
+  const form = new FormData();
+  form.append('file', new Blob([buffer], { type: mimeType }), `${providerImageId}.${ext}`);
+
+  console.log(`[analysis] Calling caption API for ${providerImageId}`);
+  const response = await fetch(CAPTION_API_URL, {
+    method: 'POST',
+    body: form,
+    signal: AbortSignal.timeout(30000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Caption API failed with ${response.status}`);
+  }
+
+  const text = await response.text();
+  console.log(`[analysis] Caption API success for ${providerImageId}`);
+  return parseCaptionResponse(text, providerImageId);
+}
+
+async function fetchAiUploadImageBuffer(imagePath) {
+  const imageUrl = isHttpUrl(imagePath)
+    ? imagePath
+    : (() => {
+        const url = new URL(AI_FETCH_IMAGE_URL);
+        url.searchParams.set('path', imagePath);
+        return url;
+      })();
+
+  const response = await fetch(imageUrl, { signal: AbortSignal.timeout(30000) });
+  if (!response.ok) {
+    throw new Error(`AI upload image fetch failed with ${response.status}`);
+  }
+
+  return {
+    buffer: Buffer.from(await response.arrayBuffer()),
+    mimeType: response.headers.get('content-type') || 'image/jpeg',
+  };
+}
+
+async function generateAiUploadImageAnalysis(frame) {
+  if (!frame?.provider_image_id || !frame?.image_path) return null;
+  const { buffer, mimeType } = await fetchAiUploadImageBuffer(frame.image_path);
+  return callCaptionApiWithBuffer(frame.provider_image_id, buffer, mimeType);
+}
+
+function buildCaptionText(analysis) {
+  return [
+    analysis?.scene_text,
+    analysis?.vehicle_text,
+    analysis?.road_text,
+    analysis?.safety_text,
+    analysis?.sign_text,
+  ].filter(Boolean).join('\n');
+}
+
+function hasIncidentCaption(analysis) {
+  const text = buildCaptionText(analysis)
+    .normalize('NFC')
+    .toLowerCase();
+  if (
+    text.includes('không có sự cố') ||
+    text.includes('khong co su co') ||
+    text.includes('không phát hiện sự cố') ||
+    text.includes('khong phat hien su co')
+  ) { 
+    return false;
+  }
+  return text.includes('sự cố');
+}
+
+async function sendIncidentCaption(frame, analysis) {
+  const payload = {
+    lat: parseFloat(frame.lat),
+    lon: parseFloat(frame.lon),
+    caption: buildCaptionText(analysis),
+  };
+
+  const response = await fetch(INCIDENT_SEND_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Incident send failed with ${response.status}`);
+  }
+}
+
+async function processAiUploadCaptions(frames) {
+  const summary = { captioned: 0, incidents_sent: 0, failed: 0 };
+  const queue = Array.isArray(frames) ? [...frames] : [];
+
+  async function processFrame(frame) {
+    try {
+      const analysis = await generateAiUploadImageAnalysis(frame);
+      if (!analysis) return;
+      await upsertImageAnalysis(analysis);
+      summary.captioned += 1;
+      if (hasIncidentCaption(analysis)) {
+        await sendIncidentCaption(frame, analysis);
+        summary.incidents_sent += 1;
+      }
+    } catch (err) {
+      summary.failed += 1;
+      console.warn(`[analysis] AI upload caption/send failed for ${frame?.provider_image_id}:`, err.message);
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(AI_UPLOAD_CAPTION_CONCURRENCY, queue.length) },
+    async () => {
+      while (queue.length) {
+        await processFrame(queue.shift());
+      }
+    }
+  );
+
+  await Promise.all(workers);
+  return summary;
+}
+
 async function generateAiAnalysisFromBase64(providerImageId, imageBase64) {
   const match = String(imageBase64 || '').match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
   if (!match) {
@@ -174,7 +301,7 @@ async function generateAiAnalysisFromBase64(providerImageId, imageBase64) {
   const response = await fetch(CAPTION_API_URL, {
     method: 'POST',
     body: form,
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(3000000),
   });
 
   if (!response.ok) {
@@ -703,7 +830,8 @@ app.post('/api/v1/ai-uploads', async (req, res) => {
     const aiPayload = await resolveAiUploadPayload(req.body || {});
     const data = await upsertAiUploadFrames(aiPayload);
     const object_points = await upsertAiObjectPoints(aiPayload);
-    res.json({ data, object_points, count: data.length, object_point_count: object_points.length });
+    const caption_summary = await processAiUploadCaptions(data);
+    res.json({ data, object_points, caption_summary, count: data.length, object_point_count: object_points.length });
   } catch (err) {
     console.error('Error in POST /api/v1/ai-uploads:', err);
     res.status(500).json({ error: err.message || 'Internal server error' });
@@ -1309,4 +1437,6 @@ module.exports = {
   upsertAiUploadFrames,
   upsertAiObjectPoints,
   hasUsableTrafficSignInstance,
+  hasIncidentCaption,
+  buildCaptionText,
 };

@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { normalizeAiUploadFrames, normalizeAiTriangulationPoints } = require('./normalize');
-const { hasUsableTrafficSignInstance } = require('../api/server');
+const { buildCaptionText, hasIncidentCaption, hasUsableTrafficSignInstance } = require('../api/server');
 
 test('normalizes AI upload response with Windows paths, coordinates, and segmentation labels', () => {
   const payload = {
@@ -358,4 +358,15 @@ test('filters traffic-sign instances that are too small for reliable recognition
   assert.equal(hasUsableTrafficSignInstance({ area: 900 }), true);
   assert.equal(hasUsableTrafficSignInstance({ area: 2500 }), true);
   assert.equal(hasUsableTrafficSignInstance({}), false);
+});
+
+test('detects incident captions before sending to incident service', () => {
+  assert.equal(hasIncidentCaption({ sign_text: 'Có sự cố: vỉa hè bị hỏng.' }), true);
+  assert.equal(hasIncidentCaption({ scene_text: 'Đường thông thoáng.', sign_text: 'Không có biển báo bất thường.' }), false);
+  assert.equal(hasIncidentCaption({ sign_text: 'Không có sự cố đáng chú ý.' }), false);
+  assert.equal(hasIncidentCaption({ raw_caption: '[SỰ CỐ] Không có vấn đề.', sign_text: 'Không có vấn đề.' }), false);
+  assert.match(
+    buildCaptionText({ scene_text: 'Tổng quan', sign_text: 'Có sự cố' }),
+    /Tổng quan\nCó sự cố/,
+  );
 });
