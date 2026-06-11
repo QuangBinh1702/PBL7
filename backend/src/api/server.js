@@ -333,7 +333,7 @@ function hasIncidentCaption(analysis) {
     text.includes('không phát hiện sự cố') ||
     text.includes('khong phat hien su co')
   ) { 
-    return true;
+    return false;
   }
   return text.includes('sự cố');
 }

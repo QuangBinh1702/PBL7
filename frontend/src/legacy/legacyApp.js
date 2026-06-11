@@ -757,11 +757,19 @@ export function startLegacyMapillaryApp() {
 					: null;
 				if (objectHit) {
 					map.getCanvas().style.cursor = "pointer";
-					const props = objectHit.properties;
-					hoverPreview.dataset.summary = `${props.label}${props.confidence ? ` ${(Number(props.confidence) * 100).toFixed(0)}%` : ""}`;
-					hoverPreview.classList.add("has-summary");
-					hoverPreview.style.display = "block";
-					positionPreview(e.originalEvent);
+					if (hoveredKey) {
+						hoveredKey = null;
+						clearRing("feature-hover");
+					}
+					if (map.getSource("local-hover"))
+						map
+							.getSource("local-hover")
+							.setData({ type: "FeatureCollection", features: [] });
+					if (map.getSource("local-compass"))
+						map
+							.getSource("local-compass")
+							.setData({ type: "FeatureCollection", features: [] });
+					hideImagePreview();
 					return;
 				}
 
@@ -893,9 +901,8 @@ export function startLegacyMapillaryApp() {
 						if (json.data.thumb_256_url) {
 							hoverImg.src = `http://localhost:3000${json.data.thumb_256_url}`;
 						}
-						const summary = json.data.segmentation_summary;
-						hoverPreview.dataset.summary = summary ? `Segmentation: ${summary}` : "";
-						hoverPreview.classList.toggle("has-summary", Boolean(summary));
+						hoverPreview.dataset.summary = "";
+						hoverPreview.classList.remove("has-summary");
 						hoverPreview.style.display = "block";
 					})
 					.catch(() => {});
